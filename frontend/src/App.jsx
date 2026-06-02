@@ -1,7 +1,7 @@
 import Hello from "./pages/hello/Hello";
 import Login from "./pages/login/Login";
 import Signup from "./pages/signup/Signup";
-
+import Dash from "./pages/dash/Dash";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 const router = createBrowserRouter([
@@ -17,6 +17,10 @@ const router = createBrowserRouter([
     path: "/signup",
     element: <Signup />,
   },
+  {
+    path: "/dash",
+    element: <Dash />,
+  }
 ]);
 
 function App() {
