@@ -1,0 +1,268 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.admin {
+  display: flex;
+  min-height: 100vh;
+  background: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--main);
+}
+
+/* Sidebar */
+
+.sidebar {
+  width: 260px;
+  background: var(--md-sys-color-surface-container);
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar h2 {
+  color: var(--md-sys-color-primary);
+  margin-bottom: 40px;
+  font-family: var(--heading);
+}
+
+.sidebar ul {
+  list-style: none;
+}
+
+.sidebar li {
+  padding: 14px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.sidebar li:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.active-menu {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-primary);
+}
+
+/* Settings */
+
+.settings-menu {
+  margin-top: auto;
+  padding: 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: 0.2s;
+}
+
+.settings-menu:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* Content */
+
+.content {
+  flex: 1;
+  padding: 30px;
+}
+
+.top-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.top-section h1 {
+  font-family: var(--heading);
+}
+
+.search {
+  width: 300px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Table */
+
+.table-container {
+  background: var(--md-sys-color-surface-container);
+  border-radius: 20px;
+  padding: 20px;
+  position: relative;
+  min-height: 500px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: var(--md-sys-color-surface-container-high);
+  padding: 16px;
+  text-align: left;
+}
+
+td {
+  padding: 18px 16px;
+  border-bottom: 1px solid
+    var(--md-sys-color-outline-variant);
+}
+
+/* Status */
+
+.status {
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-weight: 600;
+}
+
+.status.active {
+  background: #c8f7c5;
+  color: #2d5a27;
+}
+
+.status.inactive {
+  background: #ffc6cf;
+  color: #8b1d2c;
+}
+
+/* Action Buttons */
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 10px;
+  transition: 0.2s ease;
+}
+
+.icon-btn.edit {
+  color: var(--md-sys-color-primary);
+}
+
+.icon-btn.delete {
+  color: var(--md-sys-color-error);
+}
+
+.icon-btn:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+/* Floating Button */
+
+.floating-btn {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+
+  border: none;
+  border-radius: 16px;
+
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.floating-btn:hover {
+  opacity: 0.9;
+}
+
+/* Settings Page */
+
+.settings-card {
+  background: var(--md-sys-color-surface-container);
+  padding: 30px;
+  border-radius: 20px;
+  max-width: 600px;
+}
+
+.settings-card h1 {
+  margin-bottom: 25px;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.setting-item label {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.setting-item input {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-surface);
+}
+
+.save-btn {
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-weight: 600;
+}
+
+.save-btn:hover {
+  opacity: 0.9;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+
+  .search {
+    width: 100%;
+  }
+
+  .top-section {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .content {
+    padding: 20px;
+  }
+}
