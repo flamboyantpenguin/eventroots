@@ -1,0 +1,55 @@
+/* Looking for the imports of material theme css? Check index.html */
+
+:root {
+    --text: var(--md-sys-color-on-surface);
+    --text-h: var(--md-sys-color-on-surface);
+    --border: #e5e4e7;
+    --code-bg: #f4f3ec;
+    --accent: var(--md-sys-color-primary);
+    --accent-bg: var(--md-sys-color-primary);
+    --accent-border: rgba(--md-sys-color-primary);
+    --social-bg: rgba(244, 243, 236, 0.5);
+    --shadow:
+        rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+    --main: "ABeeZee";
+    --heading: "ADLaM Display";
+    --mono: ui-monospace, "Red Hat Mono";
+
+    font-family: var(--main);
+    color: var(--text);
+    background: var(--md-sys-color-surface);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    @media (max-width: 1024px) {
+        font-size: 16px;
+    }
+}
+
+#root {
+    padding: 20px;
+}
+
+h1,
+h2 {
+    font-family: var(--heading);
+}
+
+code,
+input,
+.counter {
+    font-family: var(--mono);
+    display: inline-flex;
+    border-radius: 4px;
+    color: var(--text-h);
+}
+
+code {
+    font-size: 15px;
+    line-height: 135%;
+    padding: 4px 8px;
+    background: var(--code-bg);
+}
