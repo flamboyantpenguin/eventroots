@@ -1,7 +1,26 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Hello.css';
 
-const Home = () => {
+const Hello = () => {
+  const navigate = useNavigate();
+
+  const handleNavigateToLogin = () => {
+    navigate('/login');
+  };
+
+  const handleNavigateToSignup = () => {
+    navigate('/signup');
+  };
+
+  const handleScrollToHowItWorks = (e) => {
+    e.preventDefault();
+    const element = document.getElementById('how-it-works-section');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="landing-container">
       {/* Top Navbar */}
@@ -14,19 +33,10 @@ const Home = () => {
           <span className="logo-text">EventRoots</span>
         </div>
         <div className="nav-actions">
-          <button className="btn-secondary">Sign in</button>
-          <button className="btn-primary">Create an account</button>
+          <button className="btn-secondary" onClick={handleNavigateToLogin}>Sign in</button>
+          <button className="btn-primary" onClick={handleNavigateToSignup}>Create an account</button>
         </div>
       </nav>
-
-      {/* Hero Announcement Banner */}
-      <div className="announcement-banner">
-        <div className="banner-content">
-          <span className="sparkle-icon">✨</span>
-          <p><strong>New:</strong> Plan structurally sound, culturally rich events with our AI Assistant.</p>
-          <a href="#chatbot-feature" className="banner-link">Explore Chatbot ➔</a>
-        </div>
-      </div>
 
       {/* Hero Section */}
       <header className="hero-section">
@@ -40,58 +50,42 @@ const Home = () => {
             From weddings to funerals, get personalized guidance, structured workflows, and smart vendor matches tailored to your community.
           </p>
           <div className="hero-cta-group">
-            <button className="btn-primary btn-large">Create an account</button>
-            <button className="btn-secondary btn-large">How it works</button>
-          </div>
-        </div>
-
-        {/* Hero Interactive UI Preview */}
-        <div className="hero-preview-container">
-          <div className="mock-window">
-            <div className="mock-header">
-              <span className="dot"></span><span className="dot"></span><span className="dot"></span>
-              <span className="mock-title">EventRoots Dashboard</span>
-            </div>
-            <div className="mock-body">
-              <div className="mock-sidebar">
-                <div className="sidebar-item active">📋 Dashboard</div>
-                <div className="sidebar-item">📅 Event Flow</div>
-                <div className="sidebar-item">🤝 Sample Vendors</div>
-              </div>
-              <div className="mock-content">
-                <div className="widget-row">
-                  <div className="widget card-progress">
-                    <h4>Kerala Hindu Wedding</h4>
-                    <div className="progress-bar-container">
-                      <div className="progress-bar" style={{ width: '40%' }}></div>
-                    </div>
-                    <span>12 of 30 tasks completed</span>
-                  </div>
-                </div>
-                
-                {/* Visual Highlight on Chatbot */}
-                <div className="widget card-chatbot-highlight" id="chatbot-feature">
-                  <div className="chatbot-header">
-                    <span className="bot-avatar">🤖</span>
-                    <div>
-                      <h5>EventGPT Assistant</h5>
-                      <p className="status">Online • Ready to guide</p>
-                    </div>
-                  </div>
-                  <div className="chat-bubble user">What is a Mehendi ceremony milestone timeline?</div>
-                  <div className="chat-bubble bot">
-                    Based on your North Indian cultural profile, it traditionally takes place 1-2 days before the wedding. Let me update your event checklist...
-                  </div>
-                  <div className="chat-input-mock">
-                    <span>Ask follow-up questions...</span>
-                    <button className="send-btn">➔</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <button className="btn-primary btn-large" onClick={handleNavigateToSignup}>Create an account</button>
+            <button className="btn-secondary btn-large" onClick={handleScrollToHowItWorks}>How it works</button>
           </div>
         </div>
       </header>
+
+      {/* How it Works / Core Sequence Intro Section */}
+      <section id="how-it-works-section" className="how-section">
+        <h2 className="section-title">How EventRoots Operates</h2>
+        <div className="steps-grid">
+          <div className="step-card">
+            <h3>1. Create Your Profile</h3>
+            <p>Tell us your location, religion, and community backgrounds so the platform saves your parameters automatically.</p>
+          </div>
+          <div className="step-card">
+            <h3>2. Create an Event</h3>
+            <p>Initialize your container for a Wedding, Funeral, Birthday, Naming Ceremony, or other custom family occasions.</p>
+          </div>
+          <div className="step-card">
+            <h3>3. Talk to EventGPT</h3>
+            <p>Engage with our AI assistant to receive structured, customized checklists, chronological timelines, and cultural guidance.</p>
+          </div>
+          <div className="step-card">
+            <h3>4. Review Event Flow</h3>
+            <p>See the complete sequence of structured activities organized cleanly inside your management workspace framework.</p>
+          </div>
+          <div className="step-card">
+            <h3>5. Explore Sample Vendors</h3>
+            <p>Browse pre-seeded baseline vendor profiles automatically categorized and matched according to your exact requirements.</p>
+          </div>
+          <div className="step-card">
+            <h3>6. Track Progress</h3>
+            <p>Monitor real-time task log completion percentages directly from your core interactive system dashboard control unit.</p>
+          </div>
+        </div>
+      </section>
 
       {/* Core Features Overview */}
       <section className="features-section">
@@ -99,7 +93,7 @@ const Home = () => {
         <div className="features-grid">
           <div className="feature-card highlighted-card">
             <div className="card-badge">CORE FEATURE</div>
-            <h3>Intelligent</h3>
+            <h3>Intelligent Chat</h3>
             <p>Engage with our conversational AI initialized directly with your cultural preferences and scope. Ask infinite follow-up questions without re-entering details.</p>
           </div>
           <div className="feature-card">
@@ -119,14 +113,9 @@ const Home = () => {
           <span>© 2026 EventRoots MVP. All rights reserved.</span>
           <span className="internship-tag">Dcube Intern Project</span>
         </div>
-        <div className="footer-right">
-          <a href="#privacy">Privacy</a>
-          <a href="#terms">Terms</a>
-          <button className="btn-link-auth">Sign In / Sign Up</button>
-        </div>
       </footer>
     </div>
   );
 };
 
-export default Home;
+export default Hello;

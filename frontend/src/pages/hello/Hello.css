@@ -355,11 +355,55 @@ button {
   justify-content: center;
 }
 
+/* How It Works Section */
+.how-section {
+  padding: 60px 6% 60px 6%;
+  max-width: 1400px;
+  margin: 0 auto;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.step-card {
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.step-card:hover {
+  transform: translateY(-4px);
+  background: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-outline);
+}
+
+.step-card h3 {
+  font-family: var(--heading);
+  margin-top: 0;
+  font-size: 18px;
+  color: var(--md-sys-color-primary);
+  margin-bottom: 12px;
+}
+
+.step-card p {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
 /* Core Functional Components Matrix Grid */
 .features-section {
   padding: 40px 6% 80px 6%;
   max-width: 1400px;
   margin: 0 auto;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .section-title {
