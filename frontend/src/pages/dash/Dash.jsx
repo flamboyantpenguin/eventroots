@@ -1,4 +1,6 @@
 import "./Dash.css";
+import AddIcon from "@mui/icons-material/Add";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 
 const templates = [
   {
@@ -66,24 +68,26 @@ export default function Dash() {
       <header className="dash-header">
         <div className="logo">EventRoots</div>
 
-        <div className="header-actions">
-          <button className="icon-btn">🔔</button>
+        <div className="header-welcome">
+             <h2>Welcome back, Riya! 👋</h2>
+  </div>
+
+  <div className="header-actions">
+          <button className="icon-btn">
+  <NotificationsNoneIcon  fontSize="large" />
+</button>
 
           <div className="profile">
             <img
               src="https://i.pravatar.cc/100"
               alt="profile"
             />
-            <span>Salwa</span>
+            <span>Riya</span>
           </div>
         </div>
       </header>
 
-      {/* Welcome */}
-      <section className="welcome-card">
-        <h1>Welcome back, Salwa! 👋</h1>
-        <p>Let's plan your next memorable event.</p>
-      </section>
+      
 
       {/* Event Templates */}
       <section className="section-card">
@@ -108,7 +112,9 @@ export default function Dash() {
 
         <div className="events-grid">
           <div className="create-card">
-            <div className="plus">+</div>
+           <div className="plus">
+  <AddIcon fontSize="large" />
+</div>
             <h3>Create New Event</h3>
           </div>
 
