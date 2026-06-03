@@ -4,6 +4,11 @@
   box-sizing: border-box;
 }
 
+#root {
+  padding: 0;
+}
+
+
 .admin {
   display: flex;
   min-height: 100vh;
@@ -41,12 +46,13 @@
 }
 
 .sidebar li:hover {
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--md-sys-color-secondary);
+  color: var(--md-sys-color-on-secondary)
 }
 
 .active-menu {
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
 }
 
 /* Settings */
@@ -63,7 +69,8 @@
 }
 
 .settings-menu:hover {
-  background: var(--md-sys-color-surface-container-high);
+   background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
 }
 
 /* Content */
@@ -98,18 +105,19 @@
 .table-container {
   background: var(--md-sys-color-surface-container);
   border-radius: 20px;
-  padding: 20px;
   position: relative;
   min-height: 500px;
 }
 
 table {
   width: 100%;
+  border-radius: 20px;
   border-collapse: collapse;
 }
 
 th {
-  background: var(--md-sys-color-surface-container-high);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
   padding: 16px;
   text-align: left;
 }
@@ -129,13 +137,13 @@ td {
 }
 
 .status.active {
-  background: #c8f7c5;
-  color: #2d5a27;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
 }
 
 .status.inactive {
-  background: #ffc6cf;
-  color: #8b1d2c;
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
 }
 
 /* Action Buttons */
