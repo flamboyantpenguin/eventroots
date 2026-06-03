@@ -1,3 +1,4 @@
+import Admin from "./pages/admin/Admin";
 import Hello from "./pages/hello/Hello";
 import Login from "./pages/login/Login";
 import Signup from "./pages/signup/Signup";
@@ -21,6 +22,9 @@ const router = createBrowserRouter([
     path: "/dash",
     element: <Dash />,
   }
+    path: "/admin",
+    element: <Admin />,
+  },
 ]);
 
 function App() {
