@@ -1,7 +1,7 @@
 // 1. Swap Handle for Separator
-import { useViewport } from "/services/getViewPort";
-import Desktop from "/layout/editor/Desktop";
-import Mobile from "/layout/editor/Phone";
+import { useViewport } from "/src/services/getViewPort";
+import Desktop from "/src/layout/editor/Desktop";
+import Mobile from "/src/layout/editor/Phone";
 
 const Editor = () => {
   const { isMobile } = useViewport();
