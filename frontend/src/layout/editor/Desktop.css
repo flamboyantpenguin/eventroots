@@ -1,0 +1,135 @@
+.navbar {
+    display: flex;
+    justify-content: space-between; /* Pushes title left, buttons right */
+    align-items: center; /* Vertically centers everything */
+    border: 2px solid var(--md-sys-color-surface-tint);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 10px;
+}
+
+.title {
+    font-family: var(--heading);
+    font-size: 3em;
+    margin: 0; /* Prevents default heading margins from throwing off alignment */
+}
+
+/* Group container for the buttons */
+.navActions {
+    display: flex;
+    gap: 12px; /* Puts a clean gap between the two buttons */
+}
+
+/* Base button styles */
+.navBtn {
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease;
+}
+
+.actionsBtn {
+    border: 2px solid var(--md-sys-color-secondary);
+    border-radius: 10px;
+    height: 40px;
+    width: 40px;
+    padding: 2px;
+    background-color: transparent;
+    color: var(--md-sys-color-primary);
+}
+
+/* Style specifically for deleting */
+
+.stBtn {
+    color: var(--md-sys-color-secondary);
+}
+.stBtn:hover {
+    color: var(--md-sys-color-on-secondary-container);
+    background-color: var(--md-sys-color-secondary-container);
+}
+
+.deleteBtn {
+    border-color: var(--md-sys-color-error);
+    color: var(--md-sys-color-error);
+}
+.deleteBtn:hover {
+    color: var(--md-sys-color-on-error-container);
+    background-color: var(--md-sys-color-error-container);
+}
+
+.profileBtn {
+    background-color: transparent;
+    border: none;
+}
+
+.profileAvatar {
+    border: 2px solid var(--md-sys-color-tertiary);
+    border-radius: 20px;
+    width: 40px;
+    height: 40px;
+    object-fit: cover; /* Prevents your profile photo from stretching stretching */
+}
+
+/* The wrapper just needs to span the screen */
+.container {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: var(--md-sys-color-background);
+    color: var(--text);
+    font-family: sans-serif;
+}
+
+.resize-handle {
+    width: 6px;
+    background-color: var(--md-sys-color-surface-variant);
+    cursor: col-resize;
+    transition: background-color 0.15s ease;
+}
+
+/* Lights up blue when hovered or actively being dragged */
+.resize-handle:hover,
+.resize-handle[data-separator][data-focus-visible],
+.resize-handle:active {
+    background-color: var(--md-sys-color-tertiary);
+}
+
+/* Ensure individual panels take up vertical space internally */
+.leftPanel,
+.centerPanel,
+.rightPanel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.leftPanel,
+.rightPanel {
+    background-color: var(--md-sys-color-surface);
+}
+
+.centerPanel {
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.panelHeader {
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-bottom: 1px var(--md-sys-color-primary);
+}
+
+.navLinks,
+.panelContent {
+    padding: 16px;
+}
+
+.placeholderText {
+    opacity: 0.6;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
