@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { DeleteForeverOutlined } from "@mui/icons-material";
+import {
+  ChatBubbleOutlineOutlined,
+  CloseOutlined,
+  DeleteForeverOutlined,
+} from "@mui/icons-material";
 import "./Chat.css"; // Pure CSS styles below
 
 const SUGGESTIONS = [
@@ -44,8 +48,8 @@ export function Chat({
       {/* Header */}
       <div className="chatHeader">
         <div className="headerTitle">
-          <span className="headerIcon">💬</span>
-          <span>Assistant Chat</span>
+          <ChatBubbleOutlineOutlined fontSize="large" />
+          <span>Chat</span>
         </div>
         <div className="headerActions">
           {messages.length > 0 && onClearMessages && (
@@ -60,10 +64,10 @@ export function Chat({
           {onCollapse && (
             <button
               onClick={onCollapse}
-              className="actionBtn collapseBtn"
+              className="actionBtn secButton"
               title="Collapse Panel"
             >
-              ‹
+              <CloseOutlined style={{ fontSize: 20 }} />
             </button>
           )}
         </div>

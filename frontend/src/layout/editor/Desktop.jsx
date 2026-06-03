@@ -119,14 +119,6 @@ const Desktop = () => {
             groupResizeBehavior="preserve-pixel-size"
           >
             <div className="panelHeader">Workspace</div>
-            <nav className="navLinks">
-              <div className="navItem active">📍 Dashboard</div>
-              <div className="navItem">
-                💬 Chat <span className="badge">3</span>
-              </div>
-              <div className="navItem">📅 Events</div>
-              <div className="navItem">⚙️ Settings</div>
-            </nav>
           </Panel>
 
           {/* 2. THE ACTUAL DRAG HANDLE */}
@@ -156,20 +148,7 @@ const Desktop = () => {
             minSize="20%"
             maxSize="40%"
             className="rightPanel"
-          >
-            <div className="panelHeader">📅 Event Editor</div>
-            <div className="panelContent">
-              <div className="formGroup">
-                <label>Event Title</label>
-                <input
-                  type="text"
-                  defaultValue="App Architecture Review"
-                  className="dummyInput"
-                />
-              </div>
-              <button className="dummyButton">Save Changes</button>
-            </div>
-          </Panel>
+          ></Panel>
         </Group>
       </div>
     </>
