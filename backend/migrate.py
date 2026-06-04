@@ -147,6 +147,68 @@ CREATE INDEX IF NOT EXISTS idx_events_data_gin ON events USING gin (data);
 CREATE INDEX IF NOT EXISTS idx_events_flow_gin ON events USING gin (flow);
 """
 
+SEED_SQL = """
+INSERT INTO category (name) VALUES
+('Photography'),
+('Videography'),
+('Catering'),
+('Floral & Decor'),
+('Sound & Lighting')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO vendors (name, category_id, location, data) VALUES
+(
+    'Pixel Perfect Studios',
+    (SELECT id FROM category WHERE name = 'Photography' LIMIT 1),
+    'New York, NY',
+    '{"rating": 4.9, "contact_email": "hello@pixelperfect.com", "price_tier": "$$$", "features": ["Drone Coverage", "Second Shooter", "Digital Gallery"]}'::jsonb
+),
+(
+    'Lumiere Wedding Captures',
+    (SELECT id FROM category WHERE name = 'Photography' LIMIT 1),
+    'Brooklyn, NY',
+    '{"rating": 4.7, "contact_email": "info@lumierecaptures.com", "price_tier": "$$", "features": ["Fine Art Style", "Engagement Session Included"]}'::jsonb
+);
+
+INSERT INTO vendors (name, category_id, location, data) VALUES
+(
+    'CineFrame Media Works',
+    (SELECT id FROM category WHERE name = 'Videography' LIMIT 1),
+    'Los Angeles, CA',
+    '{"rating": 4.8, "contact_email": "bookings@cineframe.media", "price_tier": "$$$$", "features": ["4K Cinematic Film", "Same-Day Edit Teaser"]}'::jsonb
+),
+(
+    'Velvet Motion Films',
+    (SELECT id FROM category WHERE name = 'Videography' LIMIT 1),
+    'Austin, TX',
+    '{"rating": 4.6, "contact_email": "velvetmotionfilms@gmail.com", "price_tier": "$$", "features": ["Documentary Style", "Raw Footage Delivery"]}'::jsonb
+);
+
+INSERT INTO vendors (name, category_id, location, data) VALUES
+(
+    'Artisanal Bites Catering',
+    (SELECT id FROM category WHERE name = 'Catering' LIMIT 1),
+    'Manhattan, NY',
+    '{"rating": 5.0, "contact_email": "events@artisanalbites.com", "price_tier": "$$$", "cuisines": ["Modern American", "French Fusion"], "dietary_options": ["Vegan", "Gluten-Free"]}'::jsonb
+);
+
+INSERT INTO vendors (name, category_id, location, data) VALUES
+(
+    'Blossom & Vine Floral Design',
+    (SELECT id FROM category WHERE name = 'Floral & Decor' LIMIT 1),
+    'Seattle, WA',
+    '{"rating": 4.8, "contact_email": "design@blossomvine.com", "price_tier": "$$", "specialties": ["Boho Chic", "Minimalist Installations"]}'::jsonb
+);
+
+INSERT INTO vendors (name, category_id, location, data) VALUES
+(
+    'Aura Sonic Productions',
+    (SELECT id FROM category WHERE name = 'Sound & Lighting' LIMIT 1),
+    'Miami, FL',
+    '{"rating": 4.9, "contact_email": "support@aurasonicevents.com", "price_tier": "$$$", "equipment": ["L-Acoustics Sound Array", "Intelligent Moving Head Lights"]}'::jsonb
+);
+"""
+
 
 def run_migrations():
     print("🚀 Initiating Workspace Database Migration Engine...")
@@ -156,6 +218,7 @@ def run_migrations():
             with conn.cursor() as cur:
                 print("Connecting to PostgreSQL context instance...")
                 cur.execute(MIGRATION_SQL)
+                cur.execute(SEED_SQL)
                 print("✅ Tables, Indices, and Extensions compiled successfully!")
 
     except Exception as e:
