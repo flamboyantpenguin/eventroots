@@ -33,11 +33,6 @@
     padding: 20px;
 }
 
-h1,
-h2 {
-    font-family: var(--heading);
-}
-
 code,
 input,
 .counter {
