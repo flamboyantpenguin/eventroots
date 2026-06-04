@@ -79,18 +79,6 @@ body {
     margin-bottom: 40px;
 }
 
-form input[type="email"],
-form input[type="password"],
-form input[type="text"] {
-    width: 100%;
-    padding: 16px;
-    margin-bottom: 16px;
-    border: 0px;
-    border-bottom: 1px solid black;
-    outline: none;
-    box-sizing: border-box;
-}
-
 .pass-input-div {
     position: relative;
 }
@@ -102,17 +90,6 @@ form input[type="text"] {
     bottom: 35px;
     cursor: pointer;
     outline: none;
-}
-
-form button[type="button"] {
-    width: 100%;
-    padding: 16px;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 30px;
-    font-weight: 600;
 }
 
 .login-center-options {

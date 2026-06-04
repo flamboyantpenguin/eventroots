@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { DeleteForeverOutlined } from "@mui/icons-material";
+import {
+  ChatBubbleOutlineOutlined,
+  CloseOutlined,
+  DeleteForeverOutlined,
+} from "@mui/icons-material";
 import "./Chat.css"; // Pure CSS styles below
 
 const SUGGESTIONS = [
@@ -10,16 +14,77 @@ const SUGGESTIONS = [
   "Rearrange the evening itinerary",
 ];
 
-export function Chat({
-  messages = [],
-  isStreaming = false,
-  onSendMessage,
-  onClearMessages,
-  onCollapse,
-}) {
+const MOCK_BOT_REPLIES = {
+  "Update Guest List Details":
+    "Opening the Guest Ledger... \n\nI found **142 confirmed attendees**. Would you like me to filter them by *Dietary Restrictions* or *Seating Chart clusters*?",
+  "Add a new item to the timeline":
+    "Let's update the itinerary. What time should we slot the new event? \n\nStandard placement for the *Cake Cutting ceremony* is usually right at **08:30 PM**, right before the dance floor opens.",
+  "Rearrange the evening itinerary":
+    "Understood. Fetching the evening grid...\n\nI can swap the *First Dance* and the *Toast Speeches*. Doing this gives the catering team an extra **15 minutes** to prep the main courses.",
+  DEFAULT:
+    "I’m processing that request against Saranya's Wedding data nodes right now. \n\nEverything looks perfectly aligned! Let me know if you want to push these updates live to the layout canvas.",
+};
+
+export function Chat({ onCollapse }) {
   const [input, setInput] = useState("");
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
+
+  const [messages, setMessages] = useState([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+
+  const simulateAISender = (userText) => {
+    setIsStreaming(true);
+
+    // Pick a tailored response from our mock bank, or fallback to default
+    const fullResponseText =
+      MOCK_BOT_REPLIES[userText] || MOCK_BOT_REPLIES["DEFAULT"];
+    const words = fullResponseText.split(" ");
+    let currentWordIndex = 0;
+
+    const botMessageId = Date.now();
+
+    // Create an empty placeholder bubble for the assistant
+    setMessages((prev) => [
+      ...prev,
+      { id: botMessageId, role: "assistant", content: "" },
+    ]);
+
+    // Text streaming interval loop
+    const streamer = setInterval(() => {
+      if (currentWordIndex < words.length) {
+        const partialContent = words.slice(0, currentWordIndex + 1).join(" ");
+
+        // Update the target message content dynamically
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === botMessageId ? { ...m, content: partialContent } : m,
+          ),
+        );
+
+        currentWordIndex++;
+      } else {
+        // Stream completed cleanly
+        clearInterval(streamer);
+        setIsStreaming(false);
+      }
+    }, 80); // Adjusting speed of incoming words
+  };
+
+  const handleSendMessage = async (text) => {
+    // Instantly append user chat bubble
+    const userMessage = { id: Date.now(), role: "human", content: text };
+    setMessages((prev) => [...prev, userMessage]);
+
+    // Small delay to simulate server network round-trip before stream begins
+    setTimeout(() => {
+      simulateAISender(text);
+    }, 600);
+  };
+
+  const handleClearChat = () => {
+    if (!isStreaming) setMessages([]);
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,7 +101,7 @@ export function Chat({
     const t = input.trim();
     if (!t || isStreaming) return;
     setInput("");
-    if (onSendMessage) await onSendMessage(t);
+    if (handleSendMessage) await handleSendMessage(t);
   };
 
   return (
@@ -44,13 +109,13 @@ export function Chat({
       {/* Header */}
       <div className="chatHeader">
         <div className="headerTitle">
-          <span className="headerIcon">💬</span>
-          <span>Assistant Chat</span>
+          <ChatBubbleOutlineOutlined fontSize="large" />
+          <span>Chat</span>
         </div>
         <div className="headerActions">
-          {messages.length > 0 && onClearMessages && (
+          {messages.length > 0 && handleClearChat && (
             <button
-              onClick={onClearMessages}
+              onClick={handleClearChat}
               className="actionBtn deleteBtn"
               title="Clear Chat"
             >
@@ -60,10 +125,10 @@ export function Chat({
           {onCollapse && (
             <button
               onClick={onCollapse}
-              className="actionBtn collapseBtn"
+              className="actionBtn secButton"
               title="Collapse Panel"
             >
-              ‹
+              <CloseOutlined style={{ fontSize: 20 }} />
             </button>
           )}
         </div>
@@ -72,7 +137,7 @@ export function Chat({
       {/* Messages Feed */}
       <div className="messagesFeed">
         {messages.length === 0 ? (
-          <EmptyState onSelectSuggestion={onSendMessage} />
+          <EmptyState onSelectSuggestion={handleSendMessage} />
         ) : (
           messages.map((m) => <Bubble key={m.id || m.timestamp} msg={m} />)
         )}
@@ -138,7 +203,6 @@ function Bubble({ msg }) {
   return (
     <div className={`bubbleRow ${isUser ? "rowUser" : "rowAssistant"}`}>
       <div className={`msgBubble ${isUser ? "bubbleUser" : "bubbleAssistant"}`}>
-        <span className="bubbleLabel">{isUser ? "You" : "Assistant"}</span>
         <div className="bubbleContent">
           {isUser ? (
             <p className="plainText">{msg.content}</p>
