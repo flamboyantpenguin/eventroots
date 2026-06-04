@@ -4,7 +4,6 @@ import {
   AddCircleOutlineOutlined,
   DeleteForeverOutlined,
   SettingsOutlined,
-  EventNoteOutlined,
   AccountBalanceWalletOutlined,
 } from "@mui/icons-material";
 import "./Overview.css";

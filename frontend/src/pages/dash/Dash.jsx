@@ -35,29 +35,25 @@ const events = [
     title: "Arun & Diya Wedding",
     status: "Upcoming",
     progress: "60%",
-    image:
-      "https://images.unsplash.com/photo-1511285560929-80b456fea0bc",
+    image: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc",
   },
   {
     title: "Our House Warming",
     status: "Completed",
     progress: "100%",
-    image:
-      "https://images.unsplash.com/photo-1568605114967-8130f3a36994",
+    image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994",
   },
   {
     title: "Live in Kochi Concert",
     status: "Planning",
     progress: "30%",
-    image:
-      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f",
+    image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f",
   },
   {
     title: "Ayesha's Birthday",
     status: "Planning",
     progress: "20%",
-    image:
-      "https://images.unsplash.com/photo-1530103862676-de8c9debad1d",
+    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d",
   },
 ];
 
@@ -68,26 +64,20 @@ export default function Dash() {
       <header className="dash-header">
         <div className="logo">EventRoots</div>
 
-        <div className="header-welcome">
-             <h2>Welcome back, Riya! 👋</h2>
-  </div>
-
-  <div className="header-actions">
+        <div className="header-actions">
           <button className="icon-btn">
-  <NotificationsNoneIcon  fontSize="large" />
-</button>
+            <NotificationsNoneIcon fontSize="large" />
+          </button>
 
           <div className="profile">
-            <img
-              src="https://i.pravatar.cc/100"
-              alt="profile"
-            />
-            <span>Riya</span>
+            <img src="https://i.pravatar.cc/100" alt="profile" />
           </div>
         </div>
       </header>
 
-      
+      <div className="header-welcome">
+        <h2>Welcome back, Riya! 👋</h2>
+      </div>
 
       {/* Event Templates */}
       <section className="section-card">
@@ -112,9 +102,9 @@ export default function Dash() {
 
         <div className="events-grid">
           <div className="create-card">
-           <div className="plus">
-  <AddIcon fontSize="large" />
-</div>
+            <div className="plus">
+              <AddIcon fontSize="large" />
+            </div>
             <h3>Create New Event</h3>
           </div>
 
