@@ -2,7 +2,7 @@
     display: flex;
     flex-direction: column;
     overflow: none;
-    height: 100%;
+    height: 100vh;
 }
 
 .navbar {
@@ -11,7 +11,6 @@
     align-items: center; /* Vertically centers everything */
     border-bottom: 2px solid var(--md-sys-color-surface-tint);
     padding: 20px;
-    margin-bottom: 10px;
 }
 
 .title {
@@ -66,7 +65,8 @@
     display: flex;
     padding: 10px;
     width: 100vw;
-    overflow: none;
+    height: 100%;
+    overflow: hidden;
     background-color: var(--md-sys-color-surface-dim);
     color: var(--text);
     font-family: sans-serif;
@@ -93,6 +93,12 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
+    background-color: var(--md-sys-color-surface);
+    overflow: hidden;
+    font-family: sans-serif;
+    border-radius: 20px;
+    border: 2px solid var(--md-sys-color-outline);
 }
 .centerPanel {
     overflow-y: auto;
