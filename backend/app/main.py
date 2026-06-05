@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from app.api import auth, events, health, think, users, vendor
 
 app = FastAPI(

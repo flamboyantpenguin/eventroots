@@ -1,56 +1,113 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
+import psycopg
 
-from app.core.security import create_access_token, hash_password, verify_password
-from app.database.database import db
-from app.schemas.auth_schema import AuthResponse, AuthUser, LoginRequest, SignupRequest
+from app.api.users import get_connection
+from app.core.security import create_access_token, decode_access_token, hash_password, verify_password
+from app.schemas.auth_schema import LoginRequest, SignupRequest
 from app.utils.response import error, success
-from app.utils.validators import is_valid_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+def _format_user(row):
+    user_id, username, email = row
+    display_name = username or email.split("@")[0]
+    return {
+        "id": str(user_id),
+        "username": username or display_name,
+        "email": email,
+        "display_name": display_name,
+    }
 
-def _find_account_by_email(email: str):
-    return next((a for a in db.accounts if a["email"].lower() == email.lower()), None)
+
+def _auth_payload(row):
+    user = _format_user(row)
+    token = create_access_token(user["id"], {"email": user["email"]})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": user,
+    }
 
 
 @router.post("/signup")
 def signup(body: SignupRequest):
-    if not is_valid_email(str(body.email)):
-        return error("Invalid email", 422)
-    if _find_account_by_email(str(body.email)):
-        return error("Email already registered", 409)
+    conn = get_connection()
+    cur = conn.cursor()
 
-    account = {
-        "id": db._next_account_id,
-        "username": body.username.strip(),
-        "email": str(body.email).lower(),
-        "password_hash": hash_password(body.password),
-        "display_name": body.username.strip(),
-    }
-    db._next_account_id += 1
-    db.accounts.append(account)
+    try:
+        cur.execute(
+            """
+            INSERT INTO users (username, email, hashed_password)
+            VALUES (%s, %s, %s)
+            RETURNING id, username, email
+            """,
+            (body.username, body.email.lower(), hash_password(body.password)),
+        )
+        row = cur.fetchone()
+        conn.commit()
+    except psycopg.errors.UniqueViolation:
+        conn.rollback()
+        return error("Email is already registered", status_code=409)
+    finally:
+        cur.close()
+        conn.close()
 
-    token = create_access_token(str(account["id"]), {"email": account["email"]})
-    user = AuthUser(
-        id=account["id"],
-        username=account["username"],
-        email=account["email"],
-        display_name=account["display_name"],
-    )
-    return success(AuthResponse(access_token=token, user=user).model_dump(), status_code=201)
+    return success(_auth_payload(row), message="Signup successful", status_code=201)
 
 
 @router.post("/login")
 def login(body: LoginRequest):
-    account = _find_account_by_email(str(body.email))
-    if not account or not verify_password(body.password, account["password_hash"]):
-        return error("Invalid email or password", 401)
+    conn = get_connection()
+    cur = conn.cursor()
 
-    token = create_access_token(str(account["id"]), {"email": account["email"]})
-    user = AuthUser(
-        id=account["id"],
-        username=account["username"],
-        email=account["email"],
-        display_name=account["display_name"],
+    cur.execute(
+        """
+        SELECT id, username, email, hashed_password
+        FROM users
+        WHERE email = %s AND is_active = TRUE
+        """,
+        (body.email.lower(),),
     )
-    return success(AuthResponse(access_token=token, user=user).model_dump())
+    row = cur.fetchone()
+
+    if not row or not verify_password(body.password, row[3]):
+        cur.close()
+        conn.close()
+        return error("Invalid email or password", status_code=401)
+
+    cur.execute("UPDATE users SET last_online = CURRENT_TIMESTAMP WHERE id = %s", (row[0],))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return success(_auth_payload(row[:3]), message="Login successful")
+
+
+@router.get("/me")
+def me(authorization: str | None = Header(default=None)):
+    if not authorization or not authorization.lower().startswith("bearer "):
+        return error("Missing bearer token", status_code=401)
+
+    payload = decode_access_token(authorization.split(" ", 1)[1])
+    if not payload or not payload.get("sub"):
+        return error("Invalid token", status_code=401)
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT id, username, email
+        FROM users
+        WHERE id = %s AND is_active = TRUE
+        """,
+        (payload["sub"],),
+    )
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if not row:
+        return error("User not found", status_code=404)
+
+    return success({"user": _format_user(row)})
