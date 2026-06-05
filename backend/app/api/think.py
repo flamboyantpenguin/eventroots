@@ -5,9 +5,8 @@ from fastapi import APIRouter, HTTPException, status
 from google import genai
 from google.genai import types
 
-# Import your v2 Pydantic schemas explicitly
 from app.schemas.think_schema import ThinkRequest, ThinkResponse, ThinkStructure
-from app.store.db import db  # 🚀 Your centralized global database engine instance
+from app.store.db import db
 from app.utils.response import success
 
 router = APIRouter(prefix="/think", tags=["think"])
@@ -38,7 +37,6 @@ async def chat(body: ThinkRequest):
         text = "User did not type anything. Respond with a query"
 
     try:
-        # 1. 💡 Cast incoming identifier string safely to a true Python UUID object
         event_uuid = UUID(str(body.event_id))
     except ValueError:
         raise HTTPException(
@@ -47,7 +45,6 @@ async def chat(body: ThinkRequest):
         )
 
     try:
-        # 2. 🚀 Single line database read using your centralized storage worker
         current_event = db.get_event_by_id(event_uuid)
 
         if not current_event:
@@ -56,7 +53,6 @@ async def chat(body: ThinkRequest):
                 detail="The requested event workspace could not be located in the database logs.",
             )
 
-        # 3. Assemble full context package for Gemini
         context_block = f"""
         [CURRENT DATABASE TRUTH SNAPSHOT]
         Event Title: {current_event["title"]}
@@ -70,7 +66,6 @@ async def chat(body: ThinkRequest):
         User Workspace Command: "{text}"
         """
 
-        # 4. Fire the generation payload over to Gemini enforcing Structured Outputs
         response = client.models.generate_content(
             model="gemini-3.5-flash",
             contents=prompt_with_context,
@@ -88,11 +83,9 @@ async def chat(body: ThinkRequest):
                 detail="Received an empty text generation structure from the AI core.",
             )
 
-        # 5. Parse Gemini's structured response into validation fields
         print("RAW GEMINI TEXT:", response.text)
         ai_result = ThinkStructure.model_validate_json(response.text)
 
-        # 6. MUTATE & SAVE directly via db store if changes are detected
         final_state = current_event.copy()
 
         if ai_result.update_detected:
@@ -108,7 +101,6 @@ async def chat(body: ThinkRequest):
                     mode="json", exclude_none=True
                 )
 
-            # 🚀 7. Run a clean write mutation via your unified class execution pipeline
             db.update_event_workspace(
                 event_id=event_uuid,
                 title=final_state["title"],
@@ -116,7 +108,6 @@ async def chat(body: ThinkRequest):
                 flow=final_state["flow"],
             )
 
-        # 8. Package everything into the expected frontend response layout
         reply = ThinkResponse(
             content=ai_result.content,
             updated_state=final_state,
@@ -125,7 +116,6 @@ async def chat(body: ThinkRequest):
         return success(reply.model_dump(mode="json"))
 
     except HTTPException:
-        # Re-raise explicit HTTP exceptions cleanly
         raise
     except Exception as e:
         raise HTTPException(
