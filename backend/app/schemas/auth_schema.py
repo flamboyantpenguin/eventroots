@@ -13,7 +13,7 @@ class LoginRequest(BaseModel):
 
 
 class AuthUser(BaseModel):
-    id: int
+    id: str
     username: str
     email: str
     display_name: str

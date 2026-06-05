@@ -1,56 +1,157 @@
-from fastapi import APIRouter
+from datetime import datetime, timedelta, timezone
+from typing import Any
+from uuid import UUID
 
-from app.core.security import create_access_token, hash_password, verify_password
-from app.database.database import db
-from app.schemas.auth_schema import AuthResponse, AuthUser, LoginRequest, SignupRequest
+from fastapi import APIRouter, Header, HTTPException, status
+
+from app.core.security import (
+    create_access_token,
+    decode_access_token,
+    hash_password,
+    verify_password,
+)
+from app.schemas.auth_schema import LoginRequest, SignupRequest
+from app.store.db import db
 from app.utils.response import error, success
-from app.utils.validators import is_valid_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def _find_account_by_email(email: str):
-    return next((a for a in db.accounts if a["email"].lower() == email.lower()), None)
+def _format_user(row: dict[str, Any]) -> dict[str, Any]:
+    """Map a raw database dictionary row safely into a presentation-layer schema."""
+    user_id = row["id"]
+    username = row.get("username")
+    email = row["email"]
 
+    # Clean visual fallback string for names
+    display_name = username or email.split("@")[0]
 
-@router.post("/signup")
-def signup(body: SignupRequest):
-    if not is_valid_email(str(body.email)):
-        return error("Invalid email", 422)
-    if _find_account_by_email(str(body.email)):
-        return error("Email already registered", 409)
-
-    account = {
-        "id": db._next_account_id,
-        "username": body.username.strip(),
-        "email": str(body.email).lower(),
-        "password_hash": hash_password(body.password),
-        "display_name": body.username.strip(),
+    return {
+        "id": str(user_id),
+        "username": username or display_name,
+        "email": email,
+        "display_name": display_name,
     }
-    db._next_account_id += 1
-    db.accounts.append(account)
 
-    token = create_access_token(str(account["id"]), {"email": account["email"]})
-    user = AuthUser(
-        id=account["id"],
-        username=account["username"],
-        email=account["email"],
-        display_name=account["display_name"],
-    )
-    return success(AuthResponse(access_token=token, user=user).model_dump(), status_code=201)
+
+def _auth_payload(row: dict[str, Any]) -> dict[str, Any]:
+    """Generate authentication tracking primitives and return an active context envelope."""
+    user = _format_user(row)
+
+    # Create the immutable cryptographic identity token
+    token = create_access_token(subject=user["id"])
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": user,
+    }
+
+
+@router.post("/signup", status_code=201)
+def signup(body: SignupRequest):
+    if db.get_user_by_email(body.email):
+        return error(
+            "Email is already registered", status_code=status.HTTP_409_CONFLICT
+        )
+
+    hashed = hash_password(body.password)
+
+    try:
+        db.create_user(username=body.username, email=body.email, hashed_password=hashed)
+    except Exception:
+        return error(
+            "An unexpected system exception occurred during profiling.", status_code=500
+        )
+
+    return success(message="Signup successful")
 
 
 @router.post("/login")
 def login(body: LoginRequest):
-    account = _find_account_by_email(str(body.email))
-    if not account or not verify_password(body.password, account["password_hash"]):
-        return error("Invalid email or password", 401)
+    user_hash = db.get_user_password_by_email(body.email)
 
-    token = create_access_token(str(account["id"]), {"email": account["email"]})
-    user = AuthUser(
-        id=account["id"],
-        username=account["username"],
-        email=account["email"],
-        display_name=account["display_name"],
+    if not user_hash:
+        return error(
+            "Invalid email or password credentials.",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    if not verify_password(body.password, user_hash):
+        return error(
+            "Invalid email or password credentials.",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    db_row = db.get_user_by_email(body.email)
+
+    if db_row is None:
+        return error(
+            "Invalid email or password credentials.",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    user_row = db_row
+
+    payload = _auth_payload(user_row)
+
+    expiry_horizon = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+
+    db.create_session(
+        user_id=payload["user"]["id"],
+        session_token=payload["access_token"],
+        expires_at=expiry_horizon,
+        is_admin=False,  # Switch dynamically as your user profiles demand
     )
-    return success(AuthResponse(access_token=token, user=user).model_dump())
+
+    return success(data=payload, message="Login successful")
+
+
+@router.delete("/logout")
+def logout(authorization: str | None = Header(None)):
+    """Terminate the active session context and invalidate the transmission token."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header context missing or malformed.",
+        )
+
+    token = authorization.split(" ")[1]
+
+    try:
+        db.delete_session_by_token(token)
+    except Exception:
+        return error(
+            "An unexpected system exception occurred during session revocation.",
+            status_code=500,
+        )
+
+    return success(message="Logout successful. Session cache invalidated.")
+
+
+@router.get("/me")
+def get_current_active_identity(authorization: str | None = Header(None)):
+    """Fetch the current context identity context using the bearer handshake string."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header context missing or malformed.",
+        )
+
+    token = authorization.split(" ")[1]
+
+    user_id = decode_access_token(token)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token signature has expired or is invalid.",
+        )
+
+    user_profile = db.get_user_by_id(UUID(user_id))
+    if not user_profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User instance could not be found.",
+        )
+
+    return success(data=_format_user(user_profile))
