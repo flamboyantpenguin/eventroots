@@ -2,11 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth, category, events, health, think, users, vendor
+from app.config import settings
 
 app = FastAPI(
-    title="EventRoots API",
+    title=settings.PROJECT_NAME,
     description="Backend for EventRoots MVP (auth, admin, dashboard, editor chat).",
-    version="0.1.0",
+    version=settings.PROJECT_VERSION,
 )
 
 app.add_middleware(

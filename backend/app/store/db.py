@@ -161,7 +161,7 @@ class DatabaseStore:
         user_id: str,
         data: dict,  # 💡 Change from str to dict
         flow: dict | None,  # 💡 Change from str to dict
-    ) -> None:
+    ):
         """Onboard a brand new event instance into live storage."""
         query = """
                 INSERT INTO events (title, banner_url, user_id, data, flow)
@@ -172,6 +172,18 @@ class DatabaseStore:
             query, (title, banner_url, user_id, Json(data), Json(flow)), fetch_all=False
         )
         return str(result["id"])
+
+    def update_event_workspace(
+        self, event_id: UUID, title: str, data: dict, flow: dict
+    ) -> None:
+        """Sync a modified event workspace state directly back down to live disk."""
+        query = """
+                UPDATE events
+                SET title = %s, data = %s, flow = %s
+                WHERE id = %s;
+            """
+        # Explicitly wrap the dict components in psycopg's Json adapter
+        self._execute_mutation(query, (title, Json(data), Json(flow), event_id))
 
     def create_session(
         self, user_id: str, session_token: str, expires_at: str, is_admin: bool
