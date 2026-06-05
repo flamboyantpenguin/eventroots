@@ -2,12 +2,13 @@ import os
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from jose import JWTError, jwt
 import bcrypt
+from jose import JWTError, jwt
 
 SECRET_KEY = os.getenv("JWT_SECRET", "eventroots-dev-secret-change-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 30  # matches "remember 30 days" on login UI
+# 💡 Cleaned up the variable name to reflect actual days for readable math
+ACCESS_TOKEN_EXPIRE_DAYS = 30
 
 
 def hash_password(password: str) -> str:
@@ -21,15 +22,19 @@ def verify_password(plain: str, hashed: str) -> bool:
 def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> str:
     payload = {
         "sub": subject,
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        "exp": datetime.now(timezone.utc) + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS),
     }
     if extra:
         payload.update(extra)
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def decode_access_token(token: str) -> dict[str, Any] | None:
+# 💡 FIX: Return type hint changed to str | None, and we explicitly extract the "sub" claim
+def decode_access_token(token: str) -> str | None:
+    """Decode token securely and return the raw string subject (user_id)."""
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # Extract the user ID string stored inside the "sub" claim
+        return str(payload.get("sub"))
+    except (JWTError, AttributeError):
         return None

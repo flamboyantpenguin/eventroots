@@ -53,9 +53,19 @@ class DatabaseStore:
 
         return self._execute_query(query, (user_id,), fetch_all=False)
 
+    def get_user_password_by_email(self, email: str) -> str | None:
+        """Fetch a single user's hashed password string by their email address."""
+        query = "SELECT hashed_password FROM users WHERE email = %s;"
+        result = self._execute_query(query, (email,), fetch_all=False)
+
+        if not result:
+            return None
+
+        return str(result["hashed_password"])
+
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         """Fetch a single user profile from the database by their email"""
-        query = "SELECT username, email, is_active, last_online FROM users WHERE email = %s;"
+        query = "SELECT id, username, email, is_active, last_online FROM users WHERE email = %s;"
 
         return self._execute_query(query, (email,), fetch_all=False)
 
@@ -169,9 +179,14 @@ class DatabaseStore:
         """Onboard a brand new vendor instance into live storage."""
         query = """
             INSERT INTO sessions (user_id, session_token, expires_at, is_admin)
-            VALUES (%s, %s, %s, %);
+            VALUES (%s, %s, %s, %s);
         """
         self._execute_mutation(query, (user_id, session_token, expires_at, is_admin))
+
+    def delete_session_by_token(self, session_token: str) -> None:
+        """Purge an active session token row completely from storage upon logout."""
+        query = "DELETE FROM sessions WHERE session_token = %s;"
+        self._execute_mutation(query, (session_token,))
 
 
 db = DatabaseStore()
