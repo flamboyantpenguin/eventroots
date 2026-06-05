@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -20,10 +21,11 @@ class EventResponse(BaseModel):
 
 
 class EventCreate(BaseModel):
-    title: str = Field(min_length=1)
-    status: EventStatus = "Planning"
-    progress: str = "0%"
-    image: str = ""
+    user_id: str
+    title: str
+    banner_url: str | None = None
+    data: dict
+    flow: dict | None = None
 
 
 class EventUpdate(BaseModel):
@@ -31,3 +33,7 @@ class EventUpdate(BaseModel):
     status: EventStatus | None = None
     progress: str | None = None
     image: str | None = None
+
+
+class EventDelete(BaseModel):
+    id: UUID

@@ -1,22 +1,19 @@
 import os
+from uuid import UUID
 
-import psycopg
 from fastapi import APIRouter, HTTPException, status
 from google import genai
 from google.genai import types
-from psycopg.rows import dict_row
 
 # Import your v2 Pydantic schemas explicitly
 from app.schemas.think_schema import ThinkRequest, ThinkResponse, ThinkStructure
+from app.store.db import db  # 🚀 Your centralized global database engine instance
 from app.utils.response import success
 
 router = APIRouter(prefix="/think", tags=["think"])
 
 # Initialize Gemini engine client
 client = genai.Client()
-
-# Grab database URL config context from the system environment
-DB_URL = os.getenv("DATABASE_URL")
 
 SYSTEM_INSTRUCTION = """
 You are the advanced intelligence core for an event management aggregator platform with AI assistance for users.
@@ -40,20 +37,18 @@ async def chat(body: ThinkRequest):
     if not text:
         text = "User did not type anything. Respond with a query"
 
-    if not DB_URL:
+    try:
+        # 1. 💡 Cast incoming identifier string safely to a true Python UUID object
+        event_uuid = UUID(str(body.event_id))
+    except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database connection string configuration is missing on the server backend.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The provided event_id token structure is an invalid UUID schema.",
         )
 
     try:
-        with psycopg.Connection.connect(DB_URL, row_factory=dict_row) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT title, data, flow FROM events WHERE id = %s;",
-                    (str(body.event_id),),
-                )
-                current_event = cur.fetchone()
+        # 2. 🚀 Single line database read using your centralized storage worker
+        current_event = db.get_event_by_id(event_uuid)
 
         if not current_event:
             raise HTTPException(
@@ -97,17 +92,13 @@ async def chat(body: ThinkRequest):
         print("RAW GEMINI TEXT:", response.text)
         ai_result = ThinkStructure.model_validate_json(response.text)
 
-        # 6. MUTATE & SAVE directly to Postgres if changes are detected
-        # Default our final return state to what we pulled from the database
-        # 6. MUTATE & SAVE directly to Postgres if changes are detected
+        # 6. MUTATE & SAVE directly via db store if changes are detected
         final_state = current_event.copy()
 
         if ai_result.update_detected:
-            # Apply individual structural changes if provided by Gemini
             if ai_result.new_title is not None:
                 final_state["title"] = ai_result.new_title
 
-            # 💡 FIX: Use model_dump(mode="json") to completely flatten these objects into primitive dictionaries
             if ai_result.new_data is not None:
                 final_state["data"] = ai_result.new_data.model_dump(
                     mode="json", exclude_none=True
@@ -117,35 +108,24 @@ async def chat(body: ThinkRequest):
                     mode="json", exclude_none=True
                 )
 
-            # Run a clean write update operation to sync the database row back to disk
-            with psycopg.connect(DB_URL) as conn:
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        UPDATE events
-                        SET title = %s, data = %s, flow = %s
-                        WHERE id = %s;
-                        """,
-                        (
-                            final_state["title"],
-                            psycopg.types.json.Json(final_state["data"]),
-                            psycopg.types.json.Json(final_state["flow"]),
-                            str(body.event_id),
-                        ),
-                    )
+            # 🚀 7. Run a clean write mutation via your unified class execution pipeline
+            db.update_event_workspace(
+                event_id=event_uuid,
+                title=final_state["title"],
+                data=final_state["data"],
+                flow=final_state["flow"],
+            )
 
-        # 7. Package everything into the expected frontend response layout
+        # 8. Package everything into the expected frontend response layout
         reply = ThinkResponse(
             content=ai_result.content,
-            # final_state is now guaranteed to contain purely primitive, serializable dictionaries!
             updated_state=final_state,
         )
 
-        # 🚀 Use Pydantic's native serializer instead of raw json.dumps(reply.__dict__)
         return success(reply.model_dump(mode="json"))
 
     except HTTPException:
-        # Re-raise explicit HTTP exceptions without catching them as generic errors
+        # Re-raise explicit HTTP exceptions cleanly
         raise
     except Exception as e:
         raise HTTPException(
