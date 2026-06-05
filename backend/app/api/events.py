@@ -1,27 +1,14 @@
+from uuid import UUID
+
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import psycopg2
-import psycopg2.extras
+
+from app.schemas.event_schema import EventCreate, EventDelete, EventResponse
+from app.store.db import db
+from app.utils.response import error
 
 router = APIRouter(prefix="/events", tags=["events"])
-
-
-def get_connection():
-    return psycopg2.connect(
-        host="localhost",
-        port=5432,
-        database="erdb0",
-        user="postgres",
-        password="1234"
-    )
-
-
-class EventCreate(BaseModel):
-    user_id: str | None = None
-    title: str
-    banner_url: str | None = None
-    data: dict = {}
-    flow: dict = {}
 
 
 class EventUpdate(BaseModel):
@@ -33,237 +20,80 @@ class EventUpdate(BaseModel):
 
 @router.get("/templates")
 def get_templates():
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT id, title, banner_url, data, flow, created_at, updated_at
-        FROM event_templates
-        ORDER BY created_at DESC
-    """)
-
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    templates = []
-
-    for row in rows:
-        templates.append({
-            "template_id": str(row[0]),
-            "name": row[1],
-            "banner_url": row[2],
-            "data": row[3],
-            "flow": row[4],
-            "created_at": str(row[5]),
-            "updated_at": str(row[6])
-        })
-
-    return {
-        "status": "success",
-        "templates": templates
-    }
-
-
-@router.get("/main")
-def get_events():
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT id, user_id, title, banner_url, data, flow, created_at, updated_at
-        FROM events
-        ORDER BY created_at DESC
-    """)
-
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    events = []
-
-    for row in rows:
-        events.append({
-            "id": str(row[0]),
-            "user_id": str(row[1]) if row[1] else None,
-            "title": row[2],
-            "banner_url": row[3],
-            "data": row[4],
-            "flow": row[5],
-            "created_at": str(row[6]),
-            "updated_at": str(row[7])
-        })
-
-    return {
-        "status": "success",
-        "events": events
-    }
+    return {"status": "success", "templates": db.templates}
 
 
 @router.get("/{event_id}")
-def get_event(event_id: str):
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT id, user_id, title, banner_url, data, flow, created_at, updated_at
-        FROM events
-        WHERE id = %s
-    """, (event_id,))
-
-    row = cur.fetchone()
-    cur.close()
-    conn.close()
+def get_event(event_id: UUID):
+    row = db.get_event_by_id(event_id)
 
     if not row:
-        return {
-            "status": "error",
-            "message": "Event not found"
-        }
+        return {"status": "error", "message": "Event not found"}
 
     return {
         "status": "success",
         "event": {
-            "id": str(row[0]),
-            "user_id": str(row[1]) if row[1] else None,
-            "title": row[2],
-            "banner_url": row[3],
-            "data": row[4],
-            "flow": row[5],
-            "created_at": str(row[6]),
-            "updated_at": str(row[7])
-        }
+            "id": event_id,
+            "user_id": row["user_id"],
+            "title": row["title"],
+            "banner_url": row["banner_url"],
+            "data": row["data"],
+            "flow": row["flow"],
+        },
     }
 
 
-@router.post("/main")
+@router.post("/")
 def create_event(body: EventCreate):
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        INSERT INTO events (user_id, title, banner_url, data, flow)
-        VALUES (%s, %s, %s, %s, %s)
-        RETURNING id, user_id, title, banner_url, data, flow, created_at, updated_at
-    """, (
-        body.user_id,
+    id = db.create_event(
         body.title,
         body.banner_url,
-        psycopg2.extras.Json(body.data),
-        psycopg2.extras.Json(body.flow)
-    ))
-
-    row = cur.fetchone()
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    return {
-        "status": "success",
-        "message": "Event created",
-        "data": {
-            "id": str(row[0]),
-            "user_id": str(row[1]) if row[1] else None,
-            "title": row[2],
-            "banner_url": row[3],
-            "data": row[4],
-            "flow": row[5],
-            "created_at": str(row[6]),
-            "updated_at": str(row[7])
-        }
-    }
+        body.user_id,
+        body.data,
+        body.flow,
+    )
+    return {"status": "success", "message": "Event created", "id": id}
 
 
-@router.patch("/main/{event_id}")
-def update_event(event_id: str, body: EventUpdate):
-    conn = get_connection()
-    cur = conn.cursor()
-
+@router.patch("/{event_id}")
+def patch_event(self, event_id: str, update_fields: dict) -> dict | None:
+    """Dynamically update specific fields of an event and return the updated row."""
     updates = []
     params = []
 
-    if body.title is not None:
-        updates.append("title = %s")
-        params.append(body.title)
-
-    if body.banner_url is not None:
-        updates.append("banner_url = %s")
-        params.append(body.banner_url)
-
-    if body.data is not None:
-        updates.append("data = %s")
-        params.append(psycopg2.extras.Json(body.data))
-
-    if body.flow is not None:
-        updates.append("flow = %s")
-        params.append(psycopg2.extras.Json(body.flow))
+    # 💡 Build query components using your explicit ::jsonb casting schema style
+    for key, value in update_fields.items():
+        if value is not None:
+            if key in ("data", "flow"):
+                updates.append(f"{key} = %s::jsonb")
+                # With psycopg v3, we can pass dicts directly into params!
+                params.append(value)
+            else:
+                updates.append(f"{key} = %s")
+                params.append(value)
 
     if not updates:
-        cur.close()
-        conn.close()
-        return {
-            "status": "error",
-            "message": "No fields to update"
-        }
+        return None
 
+    # Add the lookup parameter for the WHERE clause
     params.append(event_id)
 
-    cur.execute(f"""
-        UPDATE events
-        SET {", ".join(updates)}
-        WHERE id = %s
-        RETURNING id, title, banner_url, data, flow
-    """, params)
+    query = f"""
+            UPDATE events
+            SET {", ".join(updates)}
+            WHERE id = %s
+            RETURNING id, title, banner_url, data, flow;
+        """
 
-    row = cur.fetchone()
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    if not row:
-        return {
-            "status": "error",
-            "message": "Event not found"
-        }
-
-    return {
-        "status": "success",
-        "updated_fields": {
-            "id": str(row[0]),
-            "title": row[1],
-            "banner_url": row[2],
-            "data": row[3],
-            "flow": row[4]
-        }
-    }
+    # Execute query using your dictionary row factory engine
+    return self._execute_query(query, tuple(params), fetch_all=False)
 
 
-@router.get("/categories")
-def get_categories():
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT id, name
-        FROM category
-        ORDER BY name ASC
-    """)
-
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    categories = []
-
-    for row in rows:
-        categories.append({
-            "id": str(row[0]),
-            "name": row[1]
-        })
-
-    return {
-        "status": "success",
-        "categories": categories
-    }
+@router.delete("/{event_id}")
+def delete_event(body: EventDelete):
+    """Deleted an event"""
+    db.delete_event_by_id(body.id)
+    if db.get_event_by_id(body.id):
+        return error("Event cannot be deleted", status_code=409)
+    else:
+        return {"status": "success", "message": "Event deleted"}

@@ -1,118 +1,34 @@
+from uuid import UUID
+
 from fastapi import APIRouter
-from pydantic import BaseModel
-import psycopg2
 
 from app.core.security import hash_password
+from app.schemas.user_schema import UserCreate
+from app.store.db import db
+from app.utils.response import error
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-def get_connection():
-    return psycopg2.connect(
-        host="localhost",
-        port=5432,
-        database="erdb0",
-        user="postgres",
-        password="1234"
-    )
-
-
-class UserCreate(BaseModel):
-    username: str
-    email: str
-    password: str
-
-
 @router.get("")
 def get_users():
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT id, username, email, is_active, created_at, updated_at, last_online
-        FROM users
-        ORDER BY created_at DESC
-    """)
-
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    users = []
-
-    for row in rows:
-        users.append({
-            "id": str(row[0]),
-            "username": row[1],
-            "email": row[2],
-            "is_active": row[3],
-            "created_at": str(row[4]),
-            "updated_at": str(row[5]),
-            "last_online": str(row[6])
-        })
-
-    return {
-        "status": "success",
-        "users": users
-    }
+    return {"status": "success", "users": db.users}
 
 
 @router.post("")
 def create_user(body: UserCreate):
-    conn = get_connection()
-    cur = conn.cursor()
+    info = db.get_user_by_email(body.email)
+    if info is not None:
+        return error("Email is already registered", status_code=409)
 
-    cur.execute("""
-        INSERT INTO users (username, email, hashed_password)
-        VALUES (%s, %s, %s)
-        RETURNING id, username, email
-    """, (
-        body.username,
-        body.email.lower(),
-        hash_password(body.password)
-    ))
-
-    row = cur.fetchone()
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    return {
-        "status": "success",
-        "message": "User generated",
-        "data": {
-            "user_id": str(row[0]),
-            "username": row[1],
-            "email": row[2]
-        }
-    }
+    db.create_user(body.username, body.email, hash_password(body.password))
+    return {"status": "success", "message": "User generated"}
 
 
 @router.delete("/{user_id}")
-def delete_user(user_id: str):
-    conn = get_connection()
-    cur = conn.cursor()
+def delete_user(user_id: UUID):
+    if not db.get_user_by_id(user_id):
+        return {"status": "error", "message": "User not found"}
 
-    cur.execute("""
-        DELETE FROM users
-        WHERE id = %s
-        RETURNING id
-    """, (user_id,))
-
-    row = cur.fetchone()
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    if not row:
-        return {
-            "status": "error",
-            "message": "User not found"
-        }
-
-    return {
-        "status": "success",
-        "message": "User identity successfully purged."
-    }
+    db.set_user_to_be_deleted_by_id(user_id)
+    return {"status": "success", "message": "User successfully deleted."}
