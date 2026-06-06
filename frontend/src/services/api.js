@@ -2,36 +2,6 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
-async function request(endpoint, options = {}) {
-  const url = `${BASE_URL}${endpoint}`;
-
-  options.headers = {
-    "Content-Type": "application/json",
-    ...options.headers,
-  };
-
-  const token = localStorage.getItem("auth_token");
-  if (token) {
-    options.headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  try {
-    const response = await fetch(url, options);
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        result.detail || result.message || "An API exception occurred.",
-      );
-    }
-
-    return result;
-  } catch (error) {
-    console.error("Backend API Route Failure [${endpoint}]:", error.message);
-    throw error;
-  }
-}
-
 export const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -52,53 +22,52 @@ apiClient.interceptors.request.use(
   },
 );
 
+apiClient.interceptors.response.use(
+  (response) => {
+    return response?.data?.data || response.data;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
 export const authAPI = {
   async signup(username, email, password) {
-    return request("/auth/signup", {
-      method: "POST",
-      body: JSON.stringify({ username, email, password }),
+    return apiClient.post("/auth/signup", {
+      body: { username, email, password },
     });
   },
 
   async login(email, password, is_admin = false) {
-    try {
-      const response = await request("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password, is_admin }),
-      });
+    const response = await apiClient.post("/auth/login", {
+      email,
+      password,
+      is_admin,
+    });
 
-      if (response && response.access_token) {
-        localStorage.setItem("auth_token", response.access_token);
-      }
-
-      return response.data;
-    } catch (error) {
-      console.warn("Login failed: ", error);
-    }
+    return response?.data?.data || response;
   },
 
   async getMe() {
-    return request("/auth/me", { method: "GET" });
+    return apiClient.get("/auth/me");
   },
 
   async logout() {
     try {
-      await request("/auth/logout", { method: "DELETE" });
+      await apiClient.delete("/auth/logout");
     } catch (error) {
       console.warn("Backend session already stale or missing:", error.message);
-    } finally {
-      localStorage.removeItem("auth_token");
     }
   },
 };
 
 export const adminAPI = {
   getUsers: async () => {
-    return request("/users", { method: "GET" });
+    return apiClient.get("/users");
   },
 
   getVendors: async () => {
-    return request("/vendor", { method: "GET" });
+    return apiClient.get("/vendor");
   },
 
   addUser: (data) => apiClient.post("/users", data),

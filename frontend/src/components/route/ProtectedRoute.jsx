@@ -8,7 +8,7 @@ export function ProtectedRoute({
   requireAdmin = false,
   guestOnly = false,
 }) {
-  const { isAuthenticated, user, loading } = useAuth();
+  const { isAuthenticated, isAdmin, loading } = useAuth();
   const { startLoading, stopLoading } = useLoading();
 
   useEffect(() => {
@@ -27,18 +27,14 @@ export function ProtectedRoute({
     return null;
   }
 
-  // 🚪 2. Client Eviction Gate: If someone is logged in but they are NOT an admin,
-  // lock them out of /admin routes completely and send them to the user dashboard.
-  if (requireAdmin && isAuthenticated && user && !user.is_admin) {
+  if (requireAdmin && isAuthenticated && !isAdmin) {
     return <Navigate to="/dash" replace />;
   }
 
-  // 🚪 3. Standard Guest-Only Gate: Redirect authenticated users away from /login or /signup
   if (guestOnly && isAuthenticated) {
     return <Navigate to="/dash" replace />;
   }
 
-  // 🔒 4. Standard Auth Gate: Kick out unauthenticated users ONLY if it's a standard user route
   if (!guestOnly && !requireAdmin && !isAuthenticated) {
     return <Navigate to="/login" replace />;
   }

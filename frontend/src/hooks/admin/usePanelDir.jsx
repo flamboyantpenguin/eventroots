@@ -25,6 +25,7 @@ export function usePanelDir() {
     setErrors((prev) => ({ ...prev, users: null }));
     try {
       const data = await adminAPI.getUsers();
+      console.log(data);
       setUsers(data.users || data);
     } catch (err) {
       setErrors((prev) => ({

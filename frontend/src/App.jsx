@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./components/route/ProtectedRoute";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { LoadingProvider } from "./context/LoadingProvider";
 import { PanelProvider } from "./context/admin/PanelProvider";
+import { AuthProvider } from "./context/auth/AuthProvider";
 
 const router = createBrowserRouter([
   {
@@ -18,9 +19,11 @@ const router = createBrowserRouter([
     path: "/login",
     element: (
       <>
-        <ProtectedRoute guestOnly>
-          <Login />
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute guestOnly>
+            <Login />
+          </ProtectedRoute>
+        </AuthProvider>
       </>
     ),
   },
@@ -28,9 +31,11 @@ const router = createBrowserRouter([
     path: "/signup",
     element: (
       <>
-        <ProtectedRoute guestOnly>
-          <Signup />
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute guestOnly>
+            <Signup />
+          </ProtectedRoute>
+        </AuthProvider>
       </>
     ),
   },
@@ -38,9 +43,11 @@ const router = createBrowserRouter([
     path: "/editor",
     element: (
       <>
-        <ProtectedRoute>
-          <Editor />
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute>
+            <Editor />
+          </ProtectedRoute>
+        </AuthProvider>
       </>
     ),
   },
@@ -48,9 +55,11 @@ const router = createBrowserRouter([
     path: "/dash",
     element: (
       <>
-        <ProtectedRoute>
-          <Dash />
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute>
+            <Dash />
+          </ProtectedRoute>
+        </AuthProvider>
       </>
     ),
   },
@@ -58,11 +67,13 @@ const router = createBrowserRouter([
     path: "/admin",
     element: (
       <>
-        <ProtectedRoute requireAdmin>
-          <PanelProvider>
-            <Admin />
-          </PanelProvider>
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute requireAdmin>
+            <PanelProvider>
+              <Admin />
+            </PanelProvider>
+          </ProtectedRoute>
+        </AuthProvider>
       </>
     ),
   },
