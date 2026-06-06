@@ -4,7 +4,9 @@ import Login from "./pages/login/Login";
 import Editor from "./pages/event/Editor";
 import Signup from "./pages/signup/Signup";
 import Dash from "./pages/dash/Dash";
+import { ProtectedRoute } from "./components/route/ProtectedRoute";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { LoadingProvider } from "./context/LoadingProvider";
 
 const router = createBrowserRouter([
   {
@@ -13,28 +15,64 @@ const router = createBrowserRouter([
   },
   {
     path: "/login",
-    element: <Login />,
+    element: (
+      <>
+        <ProtectedRoute guestOnly>
+          <Login />
+        </ProtectedRoute>
+      </>
+    ),
   },
   {
     path: "/signup",
-    element: <Signup />,
+    element: (
+      <>
+        <ProtectedRoute guestOnly>
+          <Signup />
+        </ProtectedRoute>
+      </>
+    ),
   },
   {
     path: "/editor",
-    element: <Editor />,
+    element: (
+      <>
+        <ProtectedRoute>
+          <Editor />
+        </ProtectedRoute>
+      </>
+    ),
   },
   {
     path: "/dash",
-    element: <Dash />,
+    element: (
+      <>
+        <ProtectedRoute>
+          <Dash />
+        </ProtectedRoute>
+      </>
+    ),
   },
   {
     path: "/admin",
-    element: <Admin />,
+    element: (
+      <>
+        <ProtectedRoute requireAdmin>
+          <Admin />
+        </ProtectedRoute>
+      </>
+    ),
   },
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <LoadingProvider>
+        <RouterProvider router={router} />
+      </LoadingProvider>
+    </>
+  );
 }
 
 export default App;

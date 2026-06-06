@@ -34,7 +34,7 @@ def _format_user(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _auth_payload(row: dict[str, Any]) -> dict[str, Any]:
+def _auth_payload(row: dict[str, Any], is_admin=False) -> dict[str, Any]:
     """Generate authentication tracking primitives and return an active context envelope."""
     user = _format_user(row)
 
@@ -45,6 +45,7 @@ def _auth_payload(row: dict[str, Any]) -> dict[str, Any]:
         "access_token": token,
         "token_type": "bearer",
         "user": user,
+        "is_admin": is_admin,
     }
 
 
@@ -69,9 +70,14 @@ def signup(body: SignupRequest):
 
 @router.post("/login")
 def login(body: LoginRequest):
-    user_hash = db.get_user_password_by_email(body.email)
+    if body.is_admin:
+        user_hash = db.get_admin_password_by_email(body.email)
+        db_row = db.get_admin_by_email(body.email)
+    else:
+        user_hash = db.get_user_password_by_email(body.email)
+        db_row = db.get_user_by_email(body.email)
 
-    if not user_hash:
+    if not user_hash or db_row is None:
         return error(
             "Invalid email or password credentials.",
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -83,17 +89,7 @@ def login(body: LoginRequest):
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
-    db_row = db.get_user_by_email(body.email)
-
-    if db_row is None:
-        return error(
-            "Invalid email or password credentials.",
-            status_code=status.HTTP_401_UNAUTHORIZED,
-        )
-
-    user_row = db_row
-
-    payload = _auth_payload(user_row)
+    payload = _auth_payload(db_row, body.is_admin)
 
     expiry_horizon = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
 
@@ -101,7 +97,7 @@ def login(body: LoginRequest):
         user_id=payload["user"]["id"],
         session_token=payload["access_token"],
         expires_at=expiry_horizon,
-        is_admin=False,  # Switch dynamically as your user profiles demand
+        is_admin=True if body.is_admin else False,
     )
 
     return success(data=payload, message="Login successful")

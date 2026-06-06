@@ -32,19 +32,78 @@
 #root {
     padding: 20px;
 }
-
-code,
-input,
-.counter {
-    font-family: var(--mono);
-    display: inline-flex;
-    border-radius: 4px;
-    color: var(--text-h);
+.loading-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100vw;
+    /* 💡 Fixed typo from 'vat' to 'var' to enable the native design token */
+    background-color: var(--md-sys-color-background);
+    margin: 0;
+    padding: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
 }
 
-code {
-    font-size: 15px;
-    line-height: 135%;
-    padding: 4px 8px;
-    background: var(--code-bg);
+.loading-card {
+    text-align: center;
+    /* 🚀 Using surface container high for floating UI elements with elegant translucency */
+    background: var(--md-sys-color-surface-container-high);
+    padding: 2.5rem 3.5rem;
+
+    /* Material 3 specifications suggest a shape-corner-large or extra-large for dialogs/cards */
+    border-radius: var(--md-sys-shape-corner-large, 16px);
+
+    /* Using outline-variant token for subtle borders */
+    border: 1px solid var(--md-sys-color-outline-variant);
+
+    /* Mapping standard Material elevation levels (Elevation 3 or 4) */
+    box-shadow: var(--md-sys-elevation-3, 0px 4px 8px rgba(0, 0, 0, 0.15));
+    backdrop-filter: blur(12px);
+    max-width: 400px;
+    width: 90%;
+}
+
+/* Crisp, animated spinning tracking indicator ring */
+.spinner {
+    width: 48px;
+    height: 48px;
+    /* Muted background track using the surface-variant line profile */
+    border: 4px solid var(--md-sys-color-surface-variant);
+    /* 🚀 Primary brand color acts as the rolling leading edge accent */
+    border-left-color: var(--md-sys-color-primary);
+    border-radius: 50%;
+    margin: 0 auto 1.5rem auto;
+    animation: spin 1s linear infinite;
+}
+
+/* Typography styles matching our calm theme */
+.loading-card h2 {
+    /* Title Large / Headline Small semantic type tracking tokens */
+    color: var(--md-sys-color-on-surface);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.025em;
+}
+
+.loading-card p {
+    /* Body Medium / Variant copy tracking token for secondary descriptions */
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.925rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Smooth rotational keyframe timeline configuration */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }

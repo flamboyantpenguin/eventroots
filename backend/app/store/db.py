@@ -63,9 +63,25 @@ class DatabaseStore:
 
         return str(result["hashed_password"])
 
+    def get_admin_password_by_email(self, email: str) -> str | None:
+        """Fetch a single admin's hashed password string by their email address."""
+        query = "SELECT hashed_password FROM admin WHERE email = %s;"
+        result = self._execute_query(query, (email,), fetch_all=False)
+
+        if not result:
+            return None
+
+        return str(result["hashed_password"])
+
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         """Fetch a single user profile from the database by their email"""
         query = "SELECT id, username, email, is_active, last_online FROM users WHERE email = %s;"
+
+        return self._execute_query(query, (email,), fetch_all=False)
+
+    def get_admin_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Fetch a single admin profile from the database by their email"""
+        query = "SELECT id, email FROM admin WHERE email = %s;"
 
         return self._execute_query(query, (email,), fetch_all=False)
 
@@ -77,7 +93,7 @@ class DatabaseStore:
     @property
     def admin_users(self) -> List[Dict[str, Any]]:
         """Fetch all administrative users dynamically from the database."""
-        query = "SELECT email FROM admin_users ORDER BY id ASC;"
+        query = "SELECT email FROM admin ORDER BY id ASC;"
         return self._execute_query(query)
 
     @property
