@@ -24,53 +24,52 @@ export function useAuth() {
     return null;
   }, []);
 
-  // 💡 The Synchronization Hook
   useEffect(() => {
-    let isMounted = true;
     const token = localStorage.getItem("auth_token");
 
     if (!token) {
-      // No token? No state updates needed. Everything stays false/null natively.
       return;
     }
 
     async function verifyAndSync() {
-      const profileData = await fetchUserProfile();
+      try {
+        const profileData = await fetchUserProfile();
 
-      if (isMounted) {
         if (profileData) {
+          setIsAdmin(true);
           setUser(profileData);
           setIsAuthenticated(true);
         } else {
-          // Token was bad, wipe it
-          localStorage.removeItem("auth_token");
-          setUser(null);
-          setIsAuthenticated(false);
+          throw new Error("Invalid profile session");
         }
+      } catch (err) {
+        console.warn("Auth sync failed, clearing session:", err.message);
+        localStorage.removeItem("auth_token");
+        setUser(null);
+        setIsAdmin(false);
+        setIsAuthenticated(false);
+      } finally {
         setLoading(false);
       }
     }
 
     verifyAndSync();
-
-    return () => {
-      isMounted = false; // Cleanup tracker
-    };
   }, [fetchUserProfile]);
 
-  /**
-   * Imperative Actions (Login, Signup, Logout)
-   */
   const login = async (email, password, is_admin = false) => {
     setLoading(true);
     try {
       const userData = await authAPI.login(email, password, is_admin);
+      if (userData?.access_token) {
+        localStorage.setItem("auth_token", userData.access_token);
+      }
       setUser(userData.user);
-      if (userData.is_admin) setIsAdmin(true);
+      setIsAdmin(!!userData.is_admin);
       setIsAuthenticated(true);
-      return userData.user;
+      return userData;
     } catch (error) {
       setUser(null);
+      setIsAdmin(false);
       setIsAuthenticated(false);
       throw error;
     } finally {
@@ -96,6 +95,7 @@ export function useAuth() {
       setUser(null);
       setIsAuthenticated(false);
       setLoading(false);
+      setIsAdmin(false);
     }
   };
 

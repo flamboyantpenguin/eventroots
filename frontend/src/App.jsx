@@ -7,6 +7,7 @@ import Dash from "./pages/dash/Dash";
 import { ProtectedRoute } from "./components/route/ProtectedRoute";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { LoadingProvider } from "./context/LoadingProvider";
+import { PanelProvider } from "./context/admin/PanelProvider";
 
 const router = createBrowserRouter([
   {
@@ -58,7 +59,9 @@ const router = createBrowserRouter([
     element: (
       <>
         <ProtectedRoute requireAdmin>
-          <Admin />
+          <PanelProvider>
+            <Admin />
+          </PanelProvider>
         </ProtectedRoute>
       </>
     ),

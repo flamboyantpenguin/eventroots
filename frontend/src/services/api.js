@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 async function request(endpoint, options = {}) {
@@ -30,6 +32,26 @@ async function request(endpoint, options = {}) {
   }
 }
 
+export const apiClient = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
 export const authAPI = {
   async signup(username, email, password) {
     return request("/auth/signup", {
@@ -39,16 +61,20 @@ export const authAPI = {
   },
 
   async login(email, password, is_admin = false) {
-    const response = await request("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password, is_admin }),
-    });
+    try {
+      const response = await request("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password, is_admin }),
+      });
 
-    if (response.data && response.data.access_token) {
-      localStorage.setItem("auth_token", response.data.access_token);
+      if (response && response.access_token) {
+        localStorage.setItem("auth_token", response.access_token);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.warn("Login failed: ", error);
     }
-
-    return response.data;
   },
 
   async getMe() {
@@ -64,4 +90,17 @@ export const authAPI = {
       localStorage.removeItem("auth_token");
     }
   },
+};
+
+export const adminAPI = {
+  getUsers: async () => {
+    return request("/users", { method: "GET" });
+  },
+
+  getVendors: async () => {
+    return request("/vendor", { method: "GET" });
+  },
+
+  addUser: (data) => apiClient.post("/users", data),
+  addVendor: (data) => apiClient.post("/vendor", data),
 };

@@ -143,11 +143,15 @@ def get_current_active_identity(authorization: str | None = Header(None)):
             detail="Token signature has expired or is invalid.",
         )
 
+    is_admin = False
     user_profile = db.get_user_by_id(UUID(user_id))
     if not user_profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User instance could not be found.",
-        )
+        user_profile = db.get_admin_by_id(UUID(user_id))
+        is_admin = True
+        if not user_profile:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User instance could not be found.",
+            )
 
-    return success(data=_format_user(user_profile))
+    return success(_auth_payload(user_profile, is_admin))

@@ -47,9 +47,13 @@ class DatabaseStore:
 
     def get_user_by_id(self, user_id: UUID) -> Optional[Dict[str, Any]]:
         """Fetch a single user profile from the database by their unique UUID."""
-        query = (
-            "SELECT username, email, is_active, last_online FROM users WHERE id = %s;"
-        )
+        query = "SELECT id, username, email, is_active, last_online FROM users WHERE id = %s;"
+
+        return self._execute_query(query, (user_id,), fetch_all=False)
+
+    def get_admin_by_id(self, user_id: UUID) -> Optional[Dict[str, Any]]:
+        """Fetch a single user profile from the database by their unique UUID."""
+        query = "SELECT id, email FROM admin WHERE id = %s;"
 
         return self._execute_query(query, (user_id,), fetch_all=False)
 
@@ -98,10 +102,18 @@ class DatabaseStore:
 
     @property
     def vendors(self) -> List[Dict[str, Any]]:
-        """Fetch the active vendor list data schema on demand."""
-        query = (
-            "SELECT id, name, category_id, location, data FROM vendors ORDER BY id ASC;"
-        )
+        """Fetch the active vendor list with resolved category names."""
+        query = """
+            SELECT
+                v.id,
+                v.name,
+                c.name AS category,
+                v.location,
+                v.data
+            FROM vendors v
+            INNER JOIN category c ON v.category_id = c.id
+            ORDER BY v.id ASC;
+        """
         return self._execute_query(query)
 
     @property
