@@ -33,9 +33,7 @@ apiClient.interceptors.response.use(
 
 export const authAPI = {
   async signup(username, email, password) {
-    return apiClient.post("/auth/signup", {
-      body: { username, email, password },
-    });
+    return apiClient.post("/auth/signup", { username, email, password });
   },
 
   async login(email, password, is_admin = false) {
@@ -44,7 +42,6 @@ export const authAPI = {
       password,
       is_admin,
     });
-
     return response?.data?.data || response;
   },
 

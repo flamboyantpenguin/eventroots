@@ -6,11 +6,12 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false); // Defaulting to false instead of null for safer evaluations
 
-  // Synchronous token checks on Frame 1
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const token = localStorage.getItem("auth_token");
     return !!token;
   });
+
+  const [failed, setFailed] = useState(null);
 
   const [loading, setLoading] = useState(() => {
     return (
@@ -33,6 +34,8 @@ export const AuthProvider = ({ children }) => {
     }
 
     async function verifyAndSync() {
+      setFailed(null);
+      setLoading(true);
       try {
         const profileData = await fetchUserProfile();
 
@@ -41,9 +44,11 @@ export const AuthProvider = ({ children }) => {
           setUser(profileData?.user); // Soft fallback if backend layout shifts
           setIsAuthenticated(true);
         } else {
+          setFailed("Invalid profile session");
           throw new Error("Invalid profile session");
         }
       } catch (err) {
+        setFailed("Auth sync failed");
         console.warn("Auth sync failed, clearing session:", err.message);
         localStorage.removeItem("auth_token");
         setUser(null);
@@ -58,6 +63,7 @@ export const AuthProvider = ({ children }) => {
   }, [fetchUserProfile]);
 
   const login = async (email, password, is_admin = false) => {
+    setFailed(null);
     setLoading(true);
     try {
       const userData = await authAPI.login(email, password, is_admin);
@@ -69,6 +75,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       return userData;
     } catch (error) {
+      setFailed(error.message);
       localStorage.removeItem("auth_token");
       setUser(null);
       setIsAdmin(false);
@@ -80,15 +87,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signup = async (username, email, password) => {
+    setFailed(null);
     setLoading(true);
     try {
       return await authAPI.signup(username, email, password);
+    } catch (error) {
+      setFailed(error.message);
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
   const logout = async () => {
+    setFailed(null);
     setLoading(true);
     try {
       await authAPI.logout();
@@ -105,6 +117,7 @@ export const AuthProvider = ({ children }) => {
   const contextValue = useMemo(
     () => ({
       user,
+      failed,
       loading,
       isAuthenticated,
       isAdmin,
@@ -113,7 +126,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       refreshUser: fetchUserProfile,
     }),
-    [user, loading, isAuthenticated, isAdmin, fetchUserProfile],
+    [user, failed, loading, isAuthenticated, isAdmin, fetchUserProfile],
   );
 
   return (

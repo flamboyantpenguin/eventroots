@@ -14,17 +14,15 @@ const Login = () => {
 
   const navigate = useNavigate();
 
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, failed } = useAuth();
   const { startLoading, stopLoading } = useLoading();
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [loginError, setLoginError] = useState("");
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     isAuthenticated;
-    setLoginError("");
     startLoading(
       "Authorizing Gateway",
       "Verifying administrative permissions...",
@@ -33,8 +31,6 @@ const Login = () => {
     try {
       await login(loginEmail, loginPassword);
       navigate("/dash", { replace: true });
-    } catch (err) {
-      setLoginError(err.message || "Invalid system administrator credentials.");
     } finally {
       stopLoading();
     }
@@ -54,8 +50,8 @@ const Login = () => {
 
           <div className="login-center">
             <h2>Welcome back!</h2>
-            {!loginError && <p>Login to continue</p>}
-            {loginError && <p>{loginError}</p>}
+            {!failed && <p>Login to continue</p>}
+            {failed && <p>{failed}</p>}
 
             <form onSubmit={(e) => e.preventDefault()}>
               <div className="m3-input-group">
@@ -63,6 +59,7 @@ const Login = () => {
                   type="email"
                   placeholder=" "
                   id="email"
+                  value={loginEmail}
                   required
                   onChange={(e) => setLoginEmail(e.target.value)}
                 />
