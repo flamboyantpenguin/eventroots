@@ -6,7 +6,7 @@
 .login-left {
     flex-grow: 1;
     height: 100vh;
-    background-color: var(--md-sys-color-surface-variant);
+    background-color: var(--md-sys-color-tertiary) !important;
     display: flex;
     justify-content: center;
     align-items: center;

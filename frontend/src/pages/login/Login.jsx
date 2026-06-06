@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Face2Rounded, Visibility, VisibilityOff } from "@mui/icons-material";
 
 import "./Login.css";
 
-import Logo from "/src/assets/react.svg";
-import Banner from "/src/assets/images/banner.png";
+import Logo from "/src/assets/favicon.svg";
 import { useAuth } from "../../hooks/useAuth";
 import { useLoading } from "../../hooks/useLoadingContext";
 import { useNavigate } from "react-router-dom";
@@ -39,7 +38,13 @@ const Login = () => {
   return (
     <div className="login-main m3-theme">
       <div className="login-left">
-        <img src={Banner} alt="Banner Graphic" />
+        {/* <img src={Banner} alt="Banner Graphic" /> */}
+        <Face2Rounded
+          style={{
+            fontSize: "20rem",
+            color: "var(--md-sys-color-on-tertiary)",
+          }}
+        ></Face2Rounded>
       </div>
 
       <div className="login-right">
