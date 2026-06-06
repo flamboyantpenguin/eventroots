@@ -5,77 +5,74 @@ import Editor from "./pages/event/Editor";
 import Signup from "./pages/signup/Signup";
 import Dash from "./pages/dash/Dash";
 import { ProtectedRoute } from "./components/route/ProtectedRoute";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import { LoadingProvider } from "./context/LoadingProvider";
 import { PanelProvider } from "./context/admin/PanelProvider";
 import { AuthProvider } from "./context/auth/AuthProvider";
+import NotFound from "./pages/misc/Error";
+import SystemError from "./pages/misc/Error";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Hello />,
-  },
-  {
-    path: "/login",
     element: (
-      <>
-        <AuthProvider>
+      <AuthProvider>
+        <Outlet />
+      </AuthProvider>
+    ),
+    errorElement: <SystemError />,
+    children: [
+      {
+        path: "",
+        element: <Hello />,
+      },
+      {
+        path: "login",
+        element: (
           <ProtectedRoute guestOnly>
             <Login />
           </ProtectedRoute>
-        </AuthProvider>
-      </>
-    ),
-  },
-  {
-    path: "/signup",
-    element: (
-      <>
-        <AuthProvider>
+        ),
+      },
+      {
+        path: "signup",
+        element: (
           <ProtectedRoute guestOnly>
             <Signup />
           </ProtectedRoute>
-        </AuthProvider>
-      </>
-    ),
-  },
-  {
-    path: "/editor",
-    element: (
-      <>
-        <AuthProvider>
+        ),
+      },
+      {
+        path: "editor",
+        element: (
           <ProtectedRoute>
             <Editor />
           </ProtectedRoute>
-        </AuthProvider>
-      </>
-    ),
-  },
-  {
-    path: "/dash",
-    element: (
-      <>
-        <AuthProvider>
+        ),
+      },
+      {
+        path: "dash",
+        element: (
           <ProtectedRoute>
             <Dash />
           </ProtectedRoute>
-        </AuthProvider>
-      </>
-    ),
-  },
-  {
-    path: "/admin",
-    element: (
-      <>
-        <AuthProvider>
+        ),
+      },
+      {
+        path: "admin",
+        element: (
           <ProtectedRoute requireAdmin>
             <PanelProvider>
               <Admin />
             </PanelProvider>
           </ProtectedRoute>
-        </AuthProvider>
-      </>
-    ),
+        ),
+      },
+      {
+        path: "*",
+        element: <NotFound />,
+      },
+    ],
   },
 ]);
 
