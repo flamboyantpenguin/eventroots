@@ -1,12 +1,12 @@
+import os
+import shutil
 from uuid import UUID
 
-from fastapi import APIRouter
-from fastapi.param_functions import Depends
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer
-from starlette import status
-from starlette.exceptions import HTTPException
 
 from app.api.auth import get_current_user_claims
+from app.config import Settings
 from app.schemas.event_schema import (
     EventCreateEmpty,
     EventCreateFromTemplate,
@@ -14,10 +14,11 @@ from app.schemas.event_schema import (
     EventUpdate,
 )
 from app.store.db import db
-from app.utils.response import error
+from app.utils.response import error, success
 
 router = APIRouter(prefix="/events", tags=["events"])
 
+UPLOAD_BANNER = Settings.UPLOAD_BANNER
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -183,6 +184,58 @@ def patch_event(
         raise HTTPException(status_code=404, detail="Event not found or unauthorized")
 
     return {"status": "success", "event": updated_event}
+
+
+@router.patch("/banner/{event_id}", response_model=None)
+async def upload_event_banner(
+    event_id: UUID,
+    file: UploadFile = File(...),
+    claims: dict = Depends(get_current_user_claims),
+):
+    user_id_str = claims.get("user_id")
+    if not user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized."
+        )
+
+    user_uuid = UUID(str(user_id_str))
+
+    # 1. Verify workspace ownership
+    current_event = db.get_event_by_id(event_id)
+    if not current_event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Workspace not found."
+        )
+    if current_event.get("user_id") != user_uuid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied."
+        )
+
+    # 2. Validate file extension style
+    extension = os.path.splitext(str(file.filename))[1].lower()
+    if extension not in [".jpg", ".jpeg", ".png", ".webp", ".avif"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image format type."
+        )
+
+    file_name = f"{event_id}{extension}"
+    file_path = os.path.join(UPLOAD_BANNER, file_name)
+
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Disk write error: {str(e)}",
+        )
+
+    banner_url = f"/{file_path}"
+    updated_row = db.update_event(
+        event_id=event_id, user_id=user_uuid, updates={"banner_url": banner_url}
+    )
+
+    return success({"banner_url": banner_url, "updated_state": updated_row})
 
 
 @router.delete("/{event_id}")

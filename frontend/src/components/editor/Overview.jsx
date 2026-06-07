@@ -1,8 +1,11 @@
 import { useRef, useState, useCallback } from "react";
 import { useEventContext } from "/src/hooks/event/useEventContext";
+import { useError } from "/src/hooks/misc/useErrorContext";
+
 import {
   DeleteForeverOutlined,
   AccountBalanceWalletOutlined,
+  CameraAltOutlined, // Added for elegant asset picker action
 } from "@mui/icons-material";
 import "./Overview.css";
 
@@ -28,8 +31,13 @@ export const useDebounce = (callback, delay) => {
 };
 
 export function Overview() {
-  const { formData, updateFormData, saveEvent } = useEventContext();
+  const { formData, updateFormData, saveEvent, uploadAndSetBanner } =
+    useEventContext();
+  const { triggerError } = useError();
   const eventData = formData.data || {};
+
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
 
   const staticKeys = [
     "type",
@@ -45,7 +53,6 @@ export function Overview() {
     "notes",
   ];
 
-  // Destructure both the trigger and the cancel mechanism
   const [debouncedSave, cancelPendingSaves] = useDebounce((id, data) => {
     saveEvent(id, data);
   }, 1000);
@@ -69,44 +76,78 @@ export function Overview() {
     debouncedSave(formData.id, payload);
   };
 
-  console.log(formData);
   const handleAdd = async (e) => {
     e.preventDefault();
     const cleanKey = newKey.trim();
     if (!cleanKey || staticKeys.includes(cleanKey)) return;
 
     updateFormData("data", cleanKey, newValue.trim());
-
-    // Flush straight to network to prevent keystroke collisions
     await saveEvent(formData.id, { data: { [cleanKey]: newValue.trim() } });
 
     setNewKey("");
     setNewValue("");
   };
 
-  // Structural Deletion: Clears standard input queues and deletes cleanly
   const handleDelete = async (keyToDelete) => {
-    // 1. Terminate any pending keystroke saves (like un-saved text in Notes) immediately
     cancelPendingSaves();
 
-    // 2. Perform structural removal for our local UI layout cache
     const localUpdatedData = { ...eventData };
     delete localUpdatedData[keyToDelete];
     updateFormData("data", localUpdatedData);
 
-    // 3. Formulate the precise tombstone extraction payload for our backend Null-Pruner
     const backendPayload = {
       data: {
         [keyToDelete]: null,
       },
     };
 
-    // 4. Fire directly through the immediate pipeline. Skip the debounce completely!
     await saveEvent(formData.id, backendPayload);
+  };
+
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      // Elegant, decoupled action dispatching
+      await uploadAndSetBanner(formData.id, file);
+    } catch (err) {
+      triggerError("Banner Upload Failed", err);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
     <div className="inspectorBody">
+      {/* 💡 Elegant Banner Management Control Bar */}
+      <div className="formSection bannerControlSection">
+        <div
+          className="bannerPreviewWrapper"
+          style={{ backgroundImage: `url(${formData.banner_url})` }}
+        >
+          <div className="bannerScrimOverlay">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleBannerUpload}
+              accept="image/*"
+              style={{ display: "none" }}
+            />
+            <button
+              type="button"
+              className="m3Button bannerUploadBtn"
+              disabled={uploading}
+              onClick={() => fileInputRef.current.click()}
+            >
+              <CameraAltOutlined style={{ fontSize: 18, marginRight: "6px" }} />
+              {uploading ? "Uploading Image..." : "Change Workspace Banner"}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="formSection">
         <div className="m3FormGrid">
           {/* Event Type */}
@@ -203,7 +244,7 @@ export function Overview() {
                 onChange={(e) =>
                   handleUpdate("data", "currency", e.target.value)
                 }
-              ></input>
+              />
             </div>
           </div>
 
@@ -228,7 +269,6 @@ export function Overview() {
           <span>Miscellaneous Info</span>
         </div>
 
-        {/* Dynamic Parameter Addition Form */}
         <form
           onSubmit={handleAdd}
           className="kvAddForm"

@@ -37,6 +37,24 @@ export const EventProvider = ({ children }) => {
 
   const resetForm = useCallback(() => setFormData(INITIAL_STATE), []);
 
+  const uploadAndSetBanner = async (eventId, file) => {
+    try {
+      const result = await editorAPI.uploadEventBanner(eventId, file);
+
+      const newUrl = result.data?.banner_url || result.banner_url;
+
+      setFormData((prev) => ({
+        ...prev,
+        banner_url: newUrl,
+      }));
+
+      return newUrl;
+    } catch (error) {
+      console.error("Context layer file stream sync failed:", error);
+      throw error;
+    }
+  };
+
   const loadEvent = useCallback(async (eventId) => {
     if (!eventId) return null;
 
@@ -221,6 +239,7 @@ export const EventProvider = ({ children }) => {
   const contextValue = useMemo(
     () => ({
       formData,
+      uploadAndSetBanner,
       availableCategories,
       availableVendors,
       contextLoading,
