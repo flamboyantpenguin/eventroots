@@ -40,8 +40,14 @@ class EventCreate(BaseModel):
 
 
 class EventUpdate(BaseModel):
-    id: str
-    update_fields: dict
+    id: Optional[str] = None  # Included because your payload has it
+    title: str | None = None
+    banner_url: str | None = None
+    data: dict | None = None
+    flow: dict | None = None
+
+    class Config:
+        extra = "forbid"
 
 
 class EventDelete(BaseModel):

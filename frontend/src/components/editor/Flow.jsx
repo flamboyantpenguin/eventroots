@@ -1,4 +1,4 @@
-import { useEventContext } from "/src/hooks/useEventContext";
+import { useEventContext } from "/src/hooks/event/useEventContext";
 import {
   CameraAltOutlined,
   VideocamOutlined,

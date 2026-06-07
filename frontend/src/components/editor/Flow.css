@@ -1,7 +1,7 @@
 /* Bounding structural card for a single category group */
 .categoryWrapperCard {
     background-color: var(--md-sys-color-surface-container-low);
-    border: 2px solid var(--md-sys-color-primary);
+    border: 1px solid var(--md-sys-color-outline-variant); /* Cleaned up 2px primary border to a crisp M3 divider line */
     border-radius: 16px;
     padding: 12px;
     display: flex;
@@ -23,30 +23,32 @@
     width: 100%;
     background-color: var(--md-sys-color-surface);
     overflow: hidden;
+    border-radius: 24px; /* Matches 24px M3 design token architecture of previous panels */
+    border: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .selectorHeader {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
-    background-color: var(--md-sys-color-surface-dim);
+    padding: 12px 16px;
+    background-color: var(--md-sys-color-surface-container);
     border-bottom: 1px solid var(--md-sys-color-outline-variant);
     flex-shrink: 0;
 }
 
 .selectorTitle {
-    font-size: 2rem;
-    font-weight: 600;
-    color: var(--md-sys-color-on-surface-variant);
-    letter-spacing: 0.03em;
+    font-size: 1.125rem; /* M3 Title Large: crisp, premium, legible */
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+    letter-spacing: 0;
 }
 
 .selectorCountBadge {
-    font-size: 1.2rem;
-    font-weight: 700;
+    font-size: 0.6875rem; /* M3 Label Small */
+    font-weight: 600;
     padding: 2px 8px;
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: var(--md-sys-color-primary-container);
     color: var(--md-sys-color-on-primary-container);
 }
@@ -58,7 +60,7 @@
     background-color: var(--md-sys-color-surface);
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
 }
 
 /* Category Structural Block Layouts */
@@ -77,12 +79,12 @@
 
 .categoryIcon {
     color: var(--md-sys-color-primary);
-    font-size: x-large !important;
+    font-size: 1.25rem !important; /* Replaced x-large with an exact geometric scale icon size */
 }
 
 .categoryGroupLabel {
-    font-size: 1.6rem;
-    font-weight: 700;
+    font-size: 0.875rem; /* M3 Title Small */
+    font-weight: 500;
     color: var(--md-sys-color-on-surface-variant);
     text-transform: capitalize;
 }
@@ -99,20 +101,23 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: var(--md-sys-color-surface-container);
-    padding: 10px 14px;
+    background-color: var(--md-sys-color-surface-container-low);
+    padding: 8px 12px;
     border-radius: 12px;
     border: 1px solid var(--md-sys-color-outline-variant);
-    transition: border-color 0.15s ease;
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease;
 }
 
 .vendorItemRow:hover {
     border-color: var(--md-sys-color-outline);
+    background-color: var(--md-sys-color-surface-container-high);
 }
 
 .vendorItemName {
-    font-size: 1.3rem;
-    font-weight: 500;
+    font-size: 0.9375rem; /* M3 Body Medium: clean conversational weight */
+    font-weight: 400;
     color: var(--md-sys-color-on-surface);
 }
 
@@ -126,7 +131,7 @@
     padding: 6px;
     border-radius: 100px;
     cursor: pointer;
-    transition: all 0.15s linear;
+    transition: all 0.15s ease;
 }
 
 .vendorDeleteBtn:hover {
@@ -143,16 +148,16 @@
     gap: 12px;
     height: 100%;
     min-height: 160px;
-    opacity: 0.6;
+    opacity: 0.7;
 }
 
 .emptyVendorsIcon {
-    font-size: 2.5rem !important;
+    font-size: 1.5rem !important; /* Scaled down from 2.5rem to remain elegant inside panels */
     color: var(--md-sys-color-on-surface-variant);
 }
 
 .emptyVendorsText {
-    font-size: 0.875rem;
+    font-size: 0.875rem; /* M3 Body Small */
     color: var(--md-sys-color-on-surface-variant);
     text-align: center;
     font-style: italic;
@@ -162,13 +167,13 @@
 .headerMetaGroup {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 /* Material 3 Sandbox Status Pill */
 .sandboxBadge {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 0.6875rem; /* M3 Label Small: aligned to standard status indicators */
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     padding: 2px 6px;

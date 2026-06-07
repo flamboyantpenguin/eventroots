@@ -1,89 +1,110 @@
 #root {
     display: flex;
     flex-direction: column;
-    overflow: none;
+    overflow: hidden;
     height: 100vh;
+    background-color: var(--md-sys-color-surface);
 }
 
 .navbar {
     display: flex;
     justify-content: space-between; /* Pushes title left, buttons right */
     align-items: center; /* Vertically centers everything */
-    border-bottom: 2px solid var(--md-sys-color-surface-tint);
-    padding: 20px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant); /* Replaced heavy 2px surface-tint border with an elegant divider line */
+    padding: 12px 16px; /* Material 3 standard structural header padding */
+    background-color: var(--md-sys-color-surface-container);
 }
 
 .title {
-    font-family: var(--heading);
-    font-size: 3em;
-    margin: 0; /* Prevents default heading margins from throwing off alignment */
+    font-family: var(--heading), sans-serif;
+    font-size: 2rem; /* M3 Headline Small: commands clean hierarchy without consuming massive screen space */
+    font-weight: 400;
+    color: var(--md-sys-color-on-surface);
+    margin: 0;
 }
 
 /* Group container for the buttons */
 .navActions {
     display: flex;
-    gap: 12px; /* Puts a clean gap between the two buttons */
+    align-items: center;
+    gap: 8px; /* Standardize tight action button tracking grids */
 }
 
 /* Base button styles */
 .navBtn {
-    padding: 10px 16px;
-    border-radius: 6px;
-    font-size: 1rem;
-    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 100px; /* Standard pill shape for M3 structural layout buttons */
+    font-size: 0.875rem; /* M3 Label Large */
+    font-weight: 500;
     cursor: pointer;
     border: none;
-    transition: background-color 0.2s ease;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
 }
 
 .actionsBtn {
-    border: 2px solid var(--md-sys-color-secondary);
-    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--md-sys-color-outline); /* Cleaned up 2px outline */
+    border-radius: 100px; /* Shifted to standard circle target */
     height: 40px;
     width: 40px;
-    padding: 2px;
+    padding: 0;
     background-color: transparent;
     color: var(--md-sys-color-primary);
+    transition: background-color 0.15s ease;
+}
+
+.actionsBtn:hover {
+    background-color: var(--md-sys-color-surface-container-high);
 }
 
 .profileBtn {
     background-color: transparent;
     border: none;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 100px;
 }
 
 .profileAvatar {
-    border: 2px solid var(--md-sys-color-tertiary);
-    border-radius: 20px;
-    width: 40px;
-    height: 40px;
-    object-fit: cover; /* Prevents your profile photo from stretching stretching */
+    border: 1px solid var(--md-sys-color-outline-variant); /* 1px crisp separation */
+    border-radius: 100px; /* Fully circular target mask */
+    width: 50px; /* Balanced down slightly to sit clean next to a 40px target action wrapper */
+    height: 50px;
+    object-fit: cover;
 }
 
 /* The wrapper just needs to span the screen */
 .container {
     flex: 1;
     display: flex;
-    padding: 10px;
+    padding: 12px; /* Paces outer window edge away from screen frame boundaries */
+    gap: 0; /* Handled cleanly by structural handles */
     width: 100vw;
     height: 100%;
     overflow: hidden;
-    background-color: var(--md-sys-color-surface-dim);
-    color: var(--text);
+    background-color: var(--md-sys-color-surface-container-lowest);
+    color: var(--md-sys-color-on-surface);
     font-family: sans-serif;
 }
 
 .resize-handle {
-    width: 6px;
-    background-color: var(--md-sys-color-surface-dim);
+    width: 8px; /* Slightly wider drag footprint target for modern mouse pointer targets */
+    background-color: transparent; /* Seamless when idling */
     cursor: col-resize;
-    transition: background-color 0.15s ease;
+    margin: 0 4px; /* Pulls drag surface space out without widening the visual separator */
+    border-radius: 100px;
+    transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* Lights up blue when hovered or actively being dragged */
+/* Lights up muted slate blue when hovered or actively being dragged */
 .resize-handle:hover,
 .resize-handle[data-separator][data-focus-visible],
 .resize-handle:active {
-    background-color: var(--md-sys-color-tertiary);
+    background-color: var(--md-sys-color-outline-variant);
 }
 
 /* Ensure individual panels take up vertical space internally */
@@ -97,19 +118,21 @@
     background-color: var(--md-sys-color-surface);
     overflow: hidden;
     font-family: sans-serif;
-    border-radius: 20px;
-    border: 2px solid var(--md-sys-color-outline);
+    border-radius: 24px; /* Aligned to our comprehensive 24px panel curve standard */
+    border: 1px solid var(--md-sys-color-outline-variant); /* Cleaned heavy 2px outline lines */
 }
+
 .centerPanel {
     overflow-y: auto;
-    padding: 20px;
+    padding: 16px;
 }
 
 .panelHeader {
-    padding: 16px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    border-bottom: 1px var(--md-sys-color-primary);
+    padding: 12px 16px;
+    font-size: 0.875rem; /* M3 Title Small */
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .navLinks,
@@ -118,25 +141,33 @@
 }
 
 .placeholderText {
-    opacity: 0.6;
-    font-size: 0.9rem;
+    opacity: 0.7;
+    font-size: 0.875rem; /* M3 Body Small */
     line-height: 1.5;
+    color: var(--md-sys-color-on-surface-variant);
 }
 
+/* Standard Secondary Functional Buttons styling */
 .stBtn {
     color: var(--md-sys-color-secondary);
+    background-color: transparent;
 }
+
 .stBtn:hover {
     color: var(--md-sys-color-on-secondary-container);
     background-color: var(--md-sys-color-secondary-container);
 }
+
+/* Inverse styling fix: Material spec maps container colors inverse to text states */
 .deleteBtn {
-    color: var(--md-sys-color-error-container);
-    background-color: var(--md-sys-color-on-error-container);
-}
-.deleteBtn:hover {
-    background-color: var(--md-sys-color-on-error);
+    border: none;
     color: var(--md-sys-color-error);
+    background-color: var(--md-sys-color-error-container);
+}
+
+.deleteBtn:hover {
+    background-color: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
 }
 
 .secButton {
@@ -145,6 +176,7 @@
 }
 
 .secButton:hover {
+    background-color: var(--md-sys-color-surface-container-highest);
     color: var(--md-sys-color-secondary);
-    background-color: var(--md-sys-color-on-secondary);
+    box-shadow: 0 0 0 1px var(--md-sys-color-outline);
 }

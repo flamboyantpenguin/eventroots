@@ -10,6 +10,8 @@ import { LoadingProvider } from "./context/LoadingProvider";
 import { PanelProvider } from "./context/admin/PanelProvider";
 import { ErrorProvider } from "./context/misc/ErrorProvider";
 import { AuthProvider } from "./context/auth/AuthProvider";
+import { EventProvider } from "./context/event/EventProvider";
+
 import NotFound from "./pages/misc/Error";
 import SystemError from "./pages/misc/Error";
 
@@ -47,7 +49,9 @@ const router = createBrowserRouter([
         path: "editor",
         element: (
           <ProtectedRoute>
-            <Editor />
+            <EventProvider>
+              <Editor />
+            </EventProvider>
           </ProtectedRoute>
         ),
       },
@@ -55,7 +59,9 @@ const router = createBrowserRouter([
         path: "dash",
         element: (
           <ProtectedRoute>
-            <Dash />
+            <EventProvider>
+              <Dash />
+            </EventProvider>
           </ProtectedRoute>
         ),
       },

@@ -81,7 +81,18 @@ export const dashboardAPI = {
     const response = await apiClient.post("/events/from-template", {
       template_id: templateId,
     });
-    return response.data;
+    return response;
+  },
+};
+
+export const editorAPI = {
+  getEventById: async (eventId) => {
+    const response = await apiClient.get(`/events/${eventId}`);
+    return response;
+  },
+  patchEvent: async (eventId, updates) => {
+    const response = await apiClient.patch(`/events/${eventId}`, updates);
+    return response;
   },
 };
 

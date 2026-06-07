@@ -5,8 +5,10 @@ import { useAuth } from "../../hooks/useAuth";
 import { useDashboardData } from "../../hooks/dash/useDashData";
 import { useError } from "/src/hooks/misc/useErrorContext";
 import { useLoading } from "/src/hooks/useLoadingContext";
+import { useEventContext } from "/src/hooks/event/useEventContext";
 
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Dash() {
   const { user, openProfile } = useAuth();
@@ -15,6 +17,10 @@ export default function Dash() {
 
   const { triggerError } = useError();
   const { startLoading, stopLoading } = useLoading();
+
+  const { loadEvent } = useEventContext();
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function initializeWorkspace() {
@@ -56,7 +62,10 @@ export default function Dash() {
       `Cloning database architecture sequences for the "${templateTitle}" node layout...`,
     );
     try {
-      await createEventFromTemplate(templateId);
+      const newEventId = await createEventFromTemplate(templateId);
+      console.log(newEventId);
+      await loadEvent(newEventId);
+      navigate(`/editor?id=${newEventId}`);
     } catch (err) {
       console.error("Template structural clone exception caught locally:", err);
     } finally {

@@ -21,7 +21,6 @@ export function useDashboardData() {
     };
   }
 
-  // Fetch Logic moved outside useEffect so we can call it again if we want an absolute hard refresh
   const fetchDashboardContent = useCallback(async () => {
     try {
       setLoading(true);
@@ -31,8 +30,6 @@ export function useDashboardData() {
         dashboardAPI.getEvents(),
         dashboardAPI.getTemplates(),
       ]);
-
-      console.log(eventsResponse);
 
       const hydratedTemplates = (templatesResponse?.templates || []).map(
         hydrateAssetPaths,
@@ -54,13 +51,10 @@ export function useDashboardData() {
   const createEventFromTemplate = useCallback(async (templateId) => {
     setError(null);
     try {
-      const response = await dashboardAPI.createEventFromTemplate(templateId);
+      const result = await dashboardAPI.createEventFromTemplate(templateId);
+      const eventId = result.id;
 
-      const newEvent = hydrateAssetPaths(response.event || response);
-
-      setEvents((currentEvents) => [newEvent, ...currentEvents]);
-
-      return newEvent;
+      return eventId;
     } catch (err) {
       console.error(
         "Failed to construct event instantiation node payload:",

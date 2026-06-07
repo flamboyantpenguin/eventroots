@@ -86,10 +86,11 @@ def create_event_by_template(
         data=template["data"],
         flow=template["flow"],
     )
-
-    new_event_record = db.get_event_by_id(UUID(new_event_id))
-
-    return new_event_record
+    return {
+        "status": "success",
+        "message": "Event created from template",
+        "data": {"id": new_event_id},
+    }
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -128,35 +129,32 @@ def create_empty_event(
 
 
 @router.patch("/{event_id}")
-def patch_event(body: EventUpdate) -> dict | None:
-    """Dynamically update specific fields of an event and return the updated row."""
-    updates = []
-    params = []
+def patch_event(
+    event_id: UUID,
+    body: EventUpdate,
+    current_user: dict = Depends(get_current_user_claims),
+):
+    user_id = UUID(current_user["user_id"])
+    print("--- RAW BODY DICT ---", body.model_dump())
+    print("--- EXCLUDE UNSET DICT ---", body.model_dump(exclude_unset=True))
 
-    # 💡 Build query components using your explicit ::jsonb casting schema style
-    for key, value in body.update_fields.items():
-        if value is not None:
-            if key in ("data", "flow"):
-                updates.append(f"{key} = %s::jsonb")
-                # With psycopg v3, we can pass dicts directly into params!
-                params.append(value)
-            else:
-                updates.append(f"{key} = %s")
-                params.append(value)
+    # 1. Get the dict, exclude unset fields
+    updates = body.dict(exclude_unset=True)
 
-    if not updates:
-        return None
+    # 2. Remove 'id' if present, because we don't want to update the primary key
+    updates.pop("id", None)
 
-    params.append(body.id)
+    # 3. Perform the update
+    updated_event = db.update_event(
+        event_id=event_id,
+        user_id=user_id,
+        updates=updates,
+    )
 
-    query = f"""
-            UPDATE events
-            SET {", ".join(updates)}
-            WHERE id = %s
-            RETURNING id, title, banner_url, data, flow;
-        """
+    if not updated_event:
+        raise HTTPException(status_code=404, detail="Event not found or unauthorized")
 
-    return db._execute_query(query, tuple(params), fetch_all=False)
+    return {"status": "success", "event": updated_event}
 
 
 @router.delete("/{event_id}")

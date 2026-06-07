@@ -1,4 +1,5 @@
 import os
+from email import message
 from typing import Any, Dict, List, LiteralString, Optional
 from uuid import UUID
 
@@ -213,19 +214,50 @@ class DatabaseStore:
         result = self._execute_query(
             query, (title, banner_url, user_id, Json(data), Json(flow)), fetch_all=False
         )
+        if not result:
+            raise ValueError("Database failed to insert record and return ID.")
         return str(result["id"])
 
-    def update_event_workspace(
-        self, event_id: UUID, title: str, data: dict, flow: dict
-    ) -> None:
-        """Sync a modified event workspace state directly back down to live disk."""
-        query = """
-                UPDATE events
-                SET title = %s, data = %s, flow = %s
-                WHERE id = %s;
-            """
-        # Explicitly wrap the dict components in psycopg's Json adapter
-        self._execute_mutation(query, (title, Json(data), Json(flow), event_id))
+    def update_event(self, event_id: UUID, user_id: UUID, updates: dict):
+        set_fields = []
+        set_params = []
+
+        json_columns = {"data": "data", "flow": "flow"}
+
+        for key, value in updates.items():
+            if key in json_columns and isinstance(value, dict):
+                keys_to_delete = [k for k, v in value.items() if v is None]
+                clean_updates = {k: v for k, v in value.items() if v is not None}
+
+                sql_expr = json_columns[key]
+
+                for dead_key in keys_to_delete:
+                    sql_expr = f"({sql_expr} - %s)"
+                    set_params.append(dead_key)
+
+                if clean_updates:
+                    sql_expr = f"{sql_expr} || %s::jsonb"
+                    set_params.append(Json(clean_updates))
+
+                set_fields.append(f"{json_columns[key]} = {sql_expr}")
+
+            else:
+                set_fields.append(f"{key} = %s")
+                set_params.append(value)
+
+        set_fields.append("updated_at = CURRENT_TIMESTAMP")
+
+        where_params = [event_id, user_id]
+        final_params = tuple(set_params + where_params)
+
+        query = f"""
+            UPDATE events
+            SET {", ".join(set_fields)}
+            WHERE id = %s AND user_id = %s
+            RETURNING id, title, banner_url, data, flow;
+        """
+
+        return self._execute_query(query, final_params, fetch_all=False)
 
     def create_session(self, user_id: str, session_token: str, expires_at: str) -> None:
         """Onboard a brand new vendor instance into live storage."""
