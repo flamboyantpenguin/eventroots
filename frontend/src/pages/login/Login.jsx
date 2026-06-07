@@ -56,7 +56,7 @@ const Login = () => {
           <div className="login-center">
             <h2>Welcome back!</h2>
             {!failed && <p>Login to continue</p>}
-            {failed && <p>{failed}</p>}
+            {failed && <p className="error">{failed}</p>}
 
             <form onSubmit={(e) => e.preventDefault()}>
               <div className="m3-input-group">

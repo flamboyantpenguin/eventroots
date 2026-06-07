@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./components/route/ProtectedRoute";
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
 import { LoadingProvider } from "./context/LoadingProvider";
 import { PanelProvider } from "./context/admin/PanelProvider";
+import { ErrorProvider } from "./context/misc/ErrorProvider";
 import { AuthProvider } from "./context/auth/AuthProvider";
 import NotFound from "./pages/misc/Error";
 import SystemError from "./pages/misc/Error";
@@ -79,9 +80,11 @@ const router = createBrowserRouter([
 function App() {
   return (
     <>
-      <LoadingProvider>
-        <RouterProvider router={router} />
-      </LoadingProvider>
+      <ErrorProvider>
+        <LoadingProvider>
+          <RouterProvider router={router} />
+        </LoadingProvider>
+      </ErrorProvider>
     </>
   );
 }

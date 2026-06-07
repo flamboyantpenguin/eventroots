@@ -58,6 +58,13 @@
     margin-bottom: 32px;
 }
 
+.login-center p.error {
+    font-weight: 400;
+    font-size: 1.2rem;
+    color: var(--md-sys-color-error);
+    margin-bottom: 32px;
+}
+
 /* --- Material 3 Dynamic Floating Label Inputs --- */
 .m3-input-group {
     position: relative;

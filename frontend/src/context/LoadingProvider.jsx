@@ -24,7 +24,6 @@ export function LoadingProvider({ children }) {
     setIsLoading(false);
   }, []);
 
-  // 🟢 Stop cascading re-renders for consumers who only care about actions
   const contextValue = useMemo(
     () => ({
       startLoading,
@@ -37,7 +36,6 @@ export function LoadingProvider({ children }) {
   return (
     <LoadingContext.Provider value={contextValue}>
       {children}{" "}
-      {/* This component tree remains perfectly untouched and active! */}
       {isLoading &&
         createPortal(
           <div
@@ -50,7 +48,7 @@ export function LoadingProvider({ children }) {
               <p>{loadingMessage.description}</p>
             </div>
           </div>,
-          document.body, // Injects the loader completely outside your React root tree
+          document.body,
         )}
     </LoadingContext.Provider>
   );

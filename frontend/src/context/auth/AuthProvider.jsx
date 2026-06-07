@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { authAPI } from "/src/services/api.js";
 import { AuthContext } from "./AuthContext";
+import { createPortal } from "react-dom";
+import {
+  CloseOutlined,
+  FingerprintOutlined,
+  LogoutOutlined,
+  ShieldMoonOutlined,
+  TerminalOutlined,
+} from "@mui/icons-material";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -11,6 +19,10 @@ export const AuthProvider = ({ children }) => {
     return !!token;
   });
 
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const openProfile = useCallback(() => setIsProfileOpen(true), []);
+  const closeProfile = useCallback(() => setIsProfileOpen(false), []);
+
   const [failed, setFailed] = useState(null);
 
   const [loading, setLoading] = useState(() => {
@@ -19,7 +31,19 @@ export const AuthProvider = ({ children }) => {
     );
   });
 
-  // Stable profile fetcher
+  const inflateUserPayload = (userData) => {
+    if (!userData) return null;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+
+    return {
+      ...userData,
+      pfp:
+        userData.pfp && userData.pfp.startsWith("/")
+          ? `${baseUrl}${userData.pfp}`
+          : userData.pfp,
+    };
+  };
+
   const fetchUserProfile = useCallback(async () => {
     const response = await authAPI.getMe();
     return response;
@@ -41,7 +65,7 @@ export const AuthProvider = ({ children }) => {
 
         if (profileData) {
           setIsAdmin(!!profileData.is_admin);
-          setUser(profileData?.user); // Soft fallback if backend layout shifts
+          setUser(inflateUserPayload(profileData?.user)); // Soft fallback if backend layout shifts
           setIsAuthenticated(true);
         } else {
           setFailed("Invalid profile session");
@@ -62,7 +86,7 @@ export const AuthProvider = ({ children }) => {
     verifyAndSync();
   }, [fetchUserProfile]);
 
-  const login = async (email, password, is_admin = false) => {
+  const login = useCallback(async (email, password, is_admin = false) => {
     setFailed(null);
     setLoading(true);
     try {
@@ -70,7 +94,7 @@ export const AuthProvider = ({ children }) => {
       if (userData?.access_token) {
         localStorage.setItem("auth_token", userData.access_token);
       }
-      setUser(userData.user);
+      setUser(inflateUserPayload(userData.user));
       setIsAdmin(!!userData.is_admin);
       setIsAuthenticated(true);
       return userData;
@@ -84,22 +108,25 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const signup = async (username, email, password) => {
+  const signup = useCallback(async (formData) => {
     setFailed(null);
     setLoading(true);
     try {
-      return await authAPI.signup(username, email, password);
+      const response = await authAPI.signup(formData);
+      return response;
     } catch (error) {
-      setFailed(error.message);
+      const errMsg =
+        error.response?.data?.detail || error.message || "Registration failed";
+      setFailed(errMsg);
       throw error;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setFailed(null);
     setLoading(true);
     try {
@@ -111,9 +138,8 @@ export const AuthProvider = ({ children }) => {
       setIsAdmin(false);
       setLoading(false);
     }
-  };
+  }, []);
 
-  // 3. Optimize values using useMemo to stop unnecessary cascading child tree re-renders
   const contextValue = useMemo(
     () => ({
       user,
@@ -124,12 +150,92 @@ export const AuthProvider = ({ children }) => {
       login,
       signup,
       logout,
+      openProfile,
+      closeProfile,
       refreshUser: fetchUserProfile,
     }),
-    [user, failed, loading, isAuthenticated, isAdmin, fetchUserProfile],
+    [
+      login,
+      logout,
+      signup,
+      user,
+      failed,
+      loading,
+      isAuthenticated,
+      isAdmin,
+      fetchUserProfile,
+      openProfile,
+      closeProfile,
+    ],
   );
-
   return (
-    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>
+      {children}
+      {/* 🔮 THE UNIQUE PROFILE CONTROL BOARD PORTAL */}
+      {isProfileOpen &&
+        user &&
+        createPortal(
+          <div
+            className="omni-portal-envelope"
+            style={{ position: "fixed", inset: 0, zIndex: 9998 }}
+          >
+            {/* The Blurring Mask Layer */}
+            <div className="omni-backdrop-shroud" onClick={closeProfile} />
+
+            {/* Asymmetrical Command Window Layout Card */}
+            <div className="omni-command-board">
+              <button className="omni-close-btn" onClick={closeProfile}>
+                <CloseOutlined />
+              </button>
+
+              {/* Left Column Section: Identity & Clearance Status */}
+              <div className="omni-panel-identity">
+                <div className="omni-avatar-frame">
+                  <img src={user.pfp} alt="User Avatar" />
+                  <div className="identity-status-pulse" />
+                </div>
+                <h2>{user.username}</h2>
+                <p className="user-token-string">{user.email}</p>
+
+                {isAdmin && (
+                  <div className="security-clearance-badge">
+                    <FingerprintOutlined /> <span>ROOT PRIVILEGES</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column Section: Actions & System Log metrics */}
+              <div className="omni-panel-actions">
+                <div className="panel-section-title">SECURITY GATEWAY</div>
+
+                <div className="omni-action-grid">
+                  <div className="omni-grid-card">
+                    <TerminalOutlined className="card-icon" />
+                    <h4>Workspace Keys</h4>
+                    <p>
+                      Review active session cookies and local storage tokens.
+                    </p>
+                  </div>
+                  <div className="omni-grid-card">
+                    <ShieldMoonOutlined className="card-icon" />
+                    <h4>Encryption Status</h4>
+                    <p>
+                      End-to-end transport layer tunneling is verified active.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="omni-footer-actions">
+                  <button className="omni-logout-trigger-btn" onClick={logout}>
+                    <LogoutOutlined />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </AuthContext.Provider>
   );
 };

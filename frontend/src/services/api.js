@@ -32,9 +32,12 @@ apiClient.interceptors.response.use(
 );
 
 export const authAPI = {
-  async signup(username, email, password) {
-    return apiClient.post("/auth/signup", { username, email, password });
-  },
+  signup: (formData) =>
+    apiClient.post("/auth/signup", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
 
   async login(email, password, is_admin = false) {
     const response = await apiClient.post("/auth/login", {
@@ -69,4 +72,17 @@ export const adminAPI = {
 
   addUser: (data) => apiClient.post("/users", data),
   addVendor: (data) => apiClient.post("/vendor", data),
+};
+
+export const dashboardAPI = {
+  getEvents: () => apiClient.get("/events/user"),
+  getTemplates: () => apiClient.get("/events/templates"),
+};
+
+export const getAssetUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+  return `${BASE_URL}/${cleanPath}`;
 };
