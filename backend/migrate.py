@@ -8,13 +8,11 @@ load_dotenv()
 
 DB_NAME = "erdb0"
 
-# Build connection string from environment parameters or fallback to local defaults
 DB_URL = os.getenv(
     "DATABASE_URL", f"postgresql://postgres:postgres@localhost:5432/{DB_NAME}"
 )
 
-# 🚀 Check if seeding is explicitly permitted by the ambient context environment
-SHOULD_SEED = os.getenv("SEED_DATA", "false").lower() in ("true", "1")
+SHOULD_SEED = os.getenv("DEBUG_SEED_DATA", "false").lower() in ("true", "1")
 
 MIGRATION_SQL = """
 -- Enable UUID extension for high-performance non-sequential keys
@@ -80,7 +78,6 @@ CREATE TABLE IF NOT EXISTS sessions (
     user_id UUID,
     session_token VARCHAR(255) UNIQUE NOT NULL,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    is_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -223,29 +220,25 @@ WHERE NOT EXISTS (
 
 
 def run_migrations():
-    print("🚀 Initiating Workspace Database Migration Engine...")
+    print("⚙️🌱🚀")
     try:
         with psycopg.connect(DB_URL) as conn:
             with conn.cursor() as cur:
-                print("Connecting to PostgreSQL context instance...")
+                print("⚙️🟡")
 
-                # Execute structural table models
                 cur.execute(MIGRATION_SQL)
-                print("✅ Core DDL structural layout compiled cleanly!")
+                print("⚙️🟢")
 
-                # Check environment flags before triggering transactional seeds
                 if SHOULD_SEED:
-                    print("🌱 Injecting mock seed entities into repository matrix...")
+                    print("🌱🟡")
                     cur.execute(SEED_SQL)
-                    print("✅ Data seeding sequence completed successfully!")
+                    print("🌱🟢")
                 else:
-                    print(
-                        "⏩ Seeding skipped (SEED_DATA environment flag is absent or false)."
-                    )
+                    print("🌱🔵")
 
     except Exception as e:
         print(
-            f"❌ Migration Aborted: Pipeline execution bottleneck: {str(e)}",
+            f"🔴: {str(e)}",
             file=sys.stderr,
         )
         sys.exit(1)

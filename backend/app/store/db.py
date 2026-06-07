@@ -213,20 +213,30 @@ class DatabaseStore:
         # Explicitly wrap the dict components in psycopg's Json adapter
         self._execute_mutation(query, (title, Json(data), Json(flow), event_id))
 
-    def create_session(
-        self, user_id: str, session_token: str, expires_at: str, is_admin: bool
-    ) -> None:
+    def create_session(self, user_id: str, session_token: str, expires_at: str) -> None:
         """Onboard a brand new vendor instance into live storage."""
         query = """
-            INSERT INTO sessions (user_id, session_token, expires_at, is_admin)
-            VALUES (%s, %s, %s, %s);
+            INSERT INTO sessions (user_id, session_token, expires_at)
+            VALUES (%s, %s, %s);
         """
-        self._execute_mutation(query, (user_id, session_token, expires_at, is_admin))
+        self._execute_mutation(query, (user_id, session_token, expires_at))
 
     def delete_session_by_token(self, session_token: str) -> None:
         """Purge an active session token row completely from storage upon logout."""
         query = "DELETE FROM sessions WHERE session_token = %s;"
         self._execute_mutation(query, (session_token,))
+
+    def delete_expired_sessions(self) -> int:
+        """Purge an active session token row completely from storage upon logout."""
+        query = """
+        WITH targeted_deletions AS (
+            DELETE FROM sessions
+            WHERE expires_at < CURRENT_TIMESTAMP
+            RETURNING id
+        )
+        SELECT COUNT(*) AS deleted_count FROM targeted_deletions;
+        """
+        return self._execute_query(query, ())
 
 
 db = DatabaseStore()

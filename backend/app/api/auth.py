@@ -39,7 +39,7 @@ def _auth_payload(row: dict[str, Any], is_admin=False) -> dict[str, Any]:
     user = _format_user(row)
 
     # Create the immutable cryptographic identity token
-    token = create_access_token(subject=user["id"])
+    token = create_access_token(subject=user["id"], extra={"is_admin": is_admin})
 
     return {
         "access_token": token,
@@ -97,7 +97,6 @@ def login(body: LoginRequest):
         user_id=payload["user"]["id"],
         session_token=payload["access_token"],
         expires_at=expiry_horizon,
-        is_admin=True if body.is_admin else False,
     )
 
     return success(data=payload, message="Login successful")
