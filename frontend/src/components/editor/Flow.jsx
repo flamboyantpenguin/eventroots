@@ -50,11 +50,9 @@ export function Flow() {
     saveEvent,
   } = useEventContext();
 
-  const eventData = formData.data || {};
-  const flow = eventData.flow || {};
+  const flow = formData.flow || {};
 
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [customVendorNames, setCustomVendorNames] = useState({});
 
   const [debouncedSave, cancelPendingSaves] = useDebounce((id, data) => {
     saveEvent(id, data);
@@ -126,25 +124,6 @@ export function Flow() {
     };
 
     handleFlowUpdate(updatedFlow, false);
-  };
-
-  // 5. Mixed Node Creation: appends a raw text item locally into the flow dictionary array (Fires immediately)
-  const handleCreateAndLinkCustomVendor = async (categoryId) => {
-    const rawName = customVendorNames[categoryId];
-    if (!rawName || !rawName.trim()) return;
-
-    const cleanName = rawName.trim();
-    const currentLinked = flow[categoryId] || [];
-
-    if (currentLinked.includes(cleanName)) return;
-
-    const updatedFlow = {
-      ...flow,
-      [categoryId]: [...currentLinked, cleanName],
-    };
-
-    setCustomVendorNames((prev) => ({ ...prev, [categoryId]: "" }));
-    handleFlowUpdate(updatedFlow, true);
   };
 
   const activeCategoryIds = Object.keys(flow);

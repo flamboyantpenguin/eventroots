@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useEventContext } from "/src/hooks/event/useEventContext";
 import { Panel, Group, Separator } from "react-resizable-panels";
+import Logo from "/src/assets/favicon.svg";
 import { Chat } from "/src/components/editor/Chat";
 import {
   ChatOutlined,
@@ -13,6 +14,7 @@ import { Overview } from "../../components/editor/Overview";
 import { Flow } from "../../components/editor/Flow";
 import styles from "./Desktop.module.css"; // 🛠️ Correctly binding styles object
 import { useAuth } from "../../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const Desktop = () => {
   const { user, openProfile } = useAuth();
@@ -23,6 +25,8 @@ const Desktop = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [transientTitle, setTransientTitle] = useState("");
+
+  const navigate = useNavigate();
 
   const handleStartEditing = () => {
     setTransientTitle(formData.title || "");
@@ -48,6 +52,9 @@ const Desktop = () => {
     <div className={styles.layoutViewport}>
       <div className={styles.navbar}>
         <div className={styles.navActions}>
+          <div className={styles.logo} onClick={() => navigate("/dash")}>
+            <img src={Logo} alt="Go back home"></img>
+          </div>
           {/* Dynamic Title */}
           {isEditing ? (
             <div

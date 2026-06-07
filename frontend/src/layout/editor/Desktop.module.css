@@ -6,6 +6,19 @@
     background-color: var(--md-sys-color-surface);
 }
 
+.logo {
+    padding: 6px;
+    border-radius: 10px;
+}
+
+.logo img {
+    width: 60px;
+}
+
+.logo:hover {
+    background-color: var(--md-sys-color-surface);
+}
+
 .navbar {
     display: flex;
     justify-content: space-between; /* Pushes title left, buttons right */

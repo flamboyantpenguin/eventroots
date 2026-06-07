@@ -107,6 +107,14 @@ export const editorAPI = {
     const response = await apiClient.get("/vendor");
     return response;
   },
+  async think(eventId, messageText) {
+    const response = await apiClient.post("/think/", {
+      event_id: eventId,
+      message: messageText,
+    });
+
+    return response;
+  },
 };
 
 export const getAssetUrl = (path) => {

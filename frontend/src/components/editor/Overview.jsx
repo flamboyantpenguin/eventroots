@@ -33,7 +33,6 @@ export function Overview() {
 
   const staticKeys = [
     "type",
-    "theme",
     "budget",
     "guest_count",
     "progress_percentage",
@@ -53,7 +52,6 @@ export function Overview() {
 
   const dynamicExtras = Object.entries(eventData).reduce(
     (acc, [key, value]) => {
-      // Clean display constraint: Only list real values (skip backend null placeholders if any slip through)
       if (!staticKeys.includes(key) && value !== null) {
         acc[key] = value;
       }
@@ -71,7 +69,7 @@ export function Overview() {
     debouncedSave(formData.id, payload);
   };
 
-  // Structural Addition: Fires immediately
+  console.log(formData);
   const handleAdd = async (e) => {
     e.preventDefault();
     const cleanKey = newKey.trim();
@@ -199,18 +197,13 @@ export function Overview() {
 
             <div className="m3FieldGroup">
               <label className="m3Label">Currency</label>
-              <select
-                className="m3Select"
+              <input
+                className="m3Input"
                 value={eventData.currency || "INR"}
                 onChange={(e) =>
                   handleUpdate("data", "currency", e.target.value)
                 }
-              >
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="INR">INR (₹)</option>
-              </select>
+              ></input>
             </div>
           </div>
 
