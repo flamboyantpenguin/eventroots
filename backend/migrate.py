@@ -152,7 +152,6 @@ CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(session_token);
 CREATE INDEX IF NOT EXISTS idx_events_data_gin ON events USING gin (data);
 CREATE INDEX IF NOT EXISTS idx_events_flow_gin ON events USING gin (flow);
 """
-
 SEED_SQL = """
 -- SEED MASTER ADMINISTRATIVE PRIVILEGES
 INSERT INTO admin (email, hashed_password) VALUES
@@ -196,28 +195,6 @@ INSERT INTO vendors (name, category_id, location, data) VALUES
 )
 ON CONFLICT (name) DO NOTHING;
 
--- SEED WORKSPACE CANVAS EVENTS
-INSERT INTO events (user_id, title, banner_url, data, flow)
-SELECT
-    (SELECT id FROM users WHERE email = 'john.smith@gmail.com' LIMIT 1),
-    'Smith & Taylor Grand Wedding',
-    'https://images.unsplash.com/photo-1519741497674-611481863552',
-    '{"guest_count": 150, "budget": 35000, "status": "planning"}'::jsonb,
-    '{"timeline": ["4:00 PM Ceremony", "5:30 PM Cocktail Hour", "7:00 PM Reception Grand Entry"]}'::jsonb
-WHERE NOT EXISTS (
-    SELECT 1 FROM events WHERE title = 'Smith & Taylor Grand Wedding'
-);
-
-INSERT INTO events (user_id, title, banner_url, data, flow)
-SELECT
-    (SELECT id FROM users WHERE email = 'sarah.wilson@gmail.com' LIMIT 1),
-    'Corporate Product Launch Canvas',
-    'https://images.unsplash.com/photo-1511578314322-379afb476865',
-    '{"guest_count": 80, "budget": 12000, "status": "confirmed"}'::jsonb,
-    '{"timeline": ["9:00 AM Keynote", "11:00 AM Live Demos", "1:00 PM Networking Lunch"]}'::jsonb
-WHERE NOT EXISTS (
-    SELECT 1 FROM events WHERE title = 'Corporate Product Launch Canvas'
-);
 
 -- 1. CONFERENCE TEMPLATE
 INSERT INTO event_templates (title, banner_url, data, flow)
@@ -230,15 +207,15 @@ SELECT
         "budget": 12000,
         "guest_count": 300,
         "progress_percentage": 0,
-        "status": "Planning"
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
     }'::jsonb,
-    '{
-        "sequence": [
-            { "order": 1, "name": "Keynote Speech", "duration": "1.5 Hours" },
-            { "order": 2, "name": "Panel Discussions", "duration": "3 Hours" },
-            { "order": 3, "name": "Networking Mixer", "duration": "2 Hours" }
-        ]
-    }'::jsonb
+    '{}'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Tech Summit & Networking Conference');
 
 -- 2. CONCERT TEMPLATE
@@ -252,15 +229,15 @@ SELECT
         "budget": 25000,
         "guest_count": 500,
         "progress_percentage": 0,
-        "status": "Planning"
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
     }'::jsonb,
-    '{
-        "sequence": [
-            { "order": 1, "name": "Doors Open & DJ Set", "duration": "1 Hour" },
-            { "order": 2, "name": "Opening Act", "duration": "45 Minutes" },
-            { "order": 3, "name": "Headliner Performance", "duration": "2 Hours" }
-        ]
-    }'::jsonb
+    '{}'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Live Music & Indie Rock Concert');
 
 -- 3. WEDDING TEMPLATE
@@ -274,15 +251,15 @@ SELECT
         "budget": 35000,
         "guest_count": 150,
         "progress_percentage": 0,
-        "status": "Planning"
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
     }'::jsonb,
-    '{
-        "sequence": [
-            { "order": 1, "name": "Ceremony", "duration": "1 Hour" },
-            { "order": 2, "name": "Cocktail Hour", "duration": "1.5 Hours" },
-            { "order": 3, "name": "Reception", "duration": "4 Hours" }
-        ]
-    }'::jsonb
+    '{}'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Rustic Romantic Grand Wedding');
 
 -- 4. FUNERAL TEMPLATE
@@ -296,15 +273,15 @@ SELECT
         "budget": 8000,
         "guest_count": 80,
         "progress_percentage": 0,
-        "status": "Planning"
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
     }'::jsonb,
-    '{
-        "sequence": [
-            { "order": 1, "name": "Family Visitation", "duration": "1 Hour" },
-            { "order": 2, "name": "Memorial Service", "duration": "1.5 Hours" },
-            { "order": 3, "name": "Reception Luncheon", "duration": "2 Hours" }
-        ]
-    }'::jsonb
+    '{}'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Memorial & Celebration of Life');
 
 -- 5. ANNIVERSARY TEMPLATE
@@ -318,15 +295,15 @@ SELECT
         "budget": 15000,
         "guest_count": 100,
         "progress_percentage": 0,
-        "status": "Planning"
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
     }'::jsonb,
-    '{
-        "sequence": [
-            { "order": 1, "name": "Welcome Drinks", "duration": "45 Minutes" },
-            { "order": 2, "name": "Banquet Dinner & Toast", "duration": "2.5 Hours" },
-            { "order": 3, "name": "Dance Floor Open", "duration": "2 Hours" }
-        ]
-    }'::jsonb
+    '{}'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Silver Milestone Anniversary Gala');
 
 -- 6. BIRTHDAY TEMPLATE
@@ -340,15 +317,15 @@ SELECT
         "budget": 3000,
         "guest_count": 50,
         "progress_percentage": 0,
-        "status": "Planning"
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
     }'::jsonb,
-    '{
-        "sequence": [
-            { "order": 1, "name": "Guest Arrival & Icebreakers", "duration": "1 Hour" },
-            { "order": 2, "name": "Dinner & Cake Cutting", "duration": "1.5 Hours" },
-            { "order": 3, "name": "Party Games & Music", "duration": "3 Hours" }
-        ]
-    }'::jsonb
+    '{}'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Milestone Birthday Bash');
 
 -- 7. LAN PARTY TEMPLATE
@@ -362,15 +339,15 @@ SELECT
         "budget": 2000,
         "guest_count": 24,
         "progress_percentage": 0,
-        "status": "Planning"
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
     }'::jsonb,
-    '{
-        "sequence": [
-            { "order": 1, "name": "Rig Setup & Network Check", "duration": "1.5 Hours" },
-            { "order": 2, "name": "Tournament Group Stage", "duration": "4 Hours" },
-            { "order": 3, "name": "Grand Finals & Pizza Run", "duration": "3 Hours" }
-        ]
-    }'::jsonb
+    '{}'::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Competitive Esports & Gaming LAN');
 """
 
