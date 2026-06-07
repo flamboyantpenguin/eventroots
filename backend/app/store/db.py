@@ -42,20 +42,20 @@ class DatabaseStore:
     @property
     def users(self) -> List[Dict[str, Any]]:
         """Fetch all client users dynamically from the database."""
-        query = "SELECT id, username, email, is_active, last_online FROM users ORDER BY id ASC;"
+        query = "SELECT id, username, email, pfp, is_active, last_online FROM users ORDER BY id ASC;"
         return self._execute_query(query)
 
     def get_user_by_id(self, user_id: UUID) -> Optional[Dict[str, Any]]:
         """Fetch a single user profile from the database by their unique UUID."""
-        query = "SELECT id, username, email, is_active, last_online FROM users WHERE id = %s;"
+        query = "SELECT id, username, email, pfp, is_active, last_online FROM users WHERE id = %s;"
 
         return self._execute_query(query, (user_id,), fetch_all=False)
 
-    def get_admin_by_id(self, user_id: UUID) -> Optional[Dict[str, Any]]:
-        """Fetch a single user profile from the database by their unique UUID."""
-        query = "SELECT id, email FROM admin WHERE id = %s;"
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Fetch a single user profile from the database by their email"""
+        query = "SELECT id, username, email, pfp, is_active, last_online FROM users WHERE email = %s;"
 
-        return self._execute_query(query, (user_id,), fetch_all=False)
+        return self._execute_query(query, (email,), fetch_all=False)
 
     def get_user_password_by_email(self, email: str) -> str | None:
         """Fetch a single user's hashed password string by their email address."""
@@ -67,6 +67,18 @@ class DatabaseStore:
 
         return str(result["hashed_password"])
 
+    def get_admin_by_id(self, user_id: UUID) -> Optional[Dict[str, Any]]:
+        """Fetch a single user profile from the database by their unique UUID."""
+        query = "SELECT id, email FROM admin WHERE id = %s;"
+
+        return self._execute_query(query, (user_id,), fetch_all=False)
+
+    def get_admin_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Fetch a single admin profile from the database by their email"""
+        query = "SELECT id, email, pfp FROM admin WHERE email = %s;"
+
+        return self._execute_query(query, (email,), fetch_all=False)
+
     def get_admin_password_by_email(self, email: str) -> str | None:
         """Fetch a single admin's hashed password string by their email address."""
         query = "SELECT hashed_password FROM admin WHERE email = %s;"
@@ -76,18 +88,6 @@ class DatabaseStore:
             return None
 
         return str(result["hashed_password"])
-
-    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        """Fetch a single user profile from the database by their email"""
-        query = "SELECT id, username, email, is_active, last_online FROM users WHERE email = %s;"
-
-        return self._execute_query(query, (email,), fetch_all=False)
-
-    def get_admin_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        """Fetch a single admin profile from the database by their email"""
-        query = "SELECT id, email FROM admin WHERE email = %s;"
-
-        return self._execute_query(query, (email,), fetch_all=False)
 
     def set_user_to_be_deleted_by_id(self, user_id: UUID) -> Optional[Dict[str, Any]]:
         """Set a user to be deleted by setting the status to inactive"""
@@ -140,6 +140,18 @@ class DatabaseStore:
 
         return self._execute_query(query, (event_id,), fetch_all=False)
 
+    def get_template_by_id(self, template_id: UUID) -> Optional[Dict[str, Any]]:
+        """Fetch an event data from the database by id"""
+        query = "SELECT id, title, banner_url, data, flow FROM event_templates WHERE id = %s;"
+
+        return self._execute_query(query, (template_id,), fetch_all=False)
+
+    def get_event_by_user_id(self, user_id: UUID) -> Optional[Dict[str, Any]]:
+        """Fetch an event data from the database by id"""
+        query = "SELECT id, user_id, title, banner_url, data, flow FROM events WHERE user_id = %s;"
+
+        return self._execute_query(query, (user_id,), fetch_all=False)
+
     def update_event_state(
         self, event_id: Any, title: str, data: dict, flow: dict
     ) -> None:
@@ -174,19 +186,21 @@ class DatabaseStore:
         username: str,
         email: str,
         hashed_password: str,
+        pfp: str | None = None,
     ) -> None:
+        pfp = pfp if pfp is not None else "/static/uploads/pfp/default.svg"
         """Onboard a brand new vendor instance into live storage."""
         query = """
-            INSERT INTO users (username, email, hashed_password)
-            VALUES (%s, %s, %s);
+            INSERT INTO users (username, email, hashed_password, pfp)
+            VALUES (%s, %s, %s, %s);
         """
-        self._execute_mutation(query, (username, email, hashed_password))
+        self._execute_mutation(query, (username, email, hashed_password, pfp))
 
     def create_event(
         self,
         title: str,
         banner_url: str | None,
-        user_id: str,
+        user_id: UUID,
         data: dict,  # 💡 Change from str to dict
         flow: dict | None,  # 💡 Change from str to dict
     ):

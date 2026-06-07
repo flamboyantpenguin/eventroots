@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     hashed_password VARCHAR(255) NOT NULL,
     username VARCHAR(50),
+    pfp VARCHAR(2048),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -87,6 +88,7 @@ CREATE TABLE IF NOT EXISTS admin (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     hashed_password VARCHAR(255) NOT NULL,
+    pfp VARCHAR(2048),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -216,6 +218,160 @@ SELECT
 WHERE NOT EXISTS (
     SELECT 1 FROM events WHERE title = 'Corporate Product Launch Canvas'
 );
+
+-- 1. CONFERENCE TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Tech Summit & Networking Conference',
+    '/static/uploads/templates/conference.avif',
+    '{
+        "type": "Conference",
+        "theme": "Modern Corporate",
+        "budget": 12000,
+        "guest_count": 300,
+        "progress_percentage": 0,
+        "status": "Planning"
+    }'::jsonb,
+    '{
+        "sequence": [
+            { "order": 1, "name": "Keynote Speech", "duration": "1.5 Hours" },
+            { "order": 2, "name": "Panel Discussions", "duration": "3 Hours" },
+            { "order": 3, "name": "Networking Mixer", "duration": "2 Hours" }
+        ]
+    }'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Tech Summit & Networking Conference');
+
+-- 2. CONCERT TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Live Music & Indie Rock Concert',
+    '/static/uploads/templates/concert.avif',
+    '{
+        "type": "Concert",
+        "theme": "Neon Retro",
+        "budget": 25000,
+        "guest_count": 500,
+        "progress_percentage": 0,
+        "status": "Planning"
+    }'::jsonb,
+    '{
+        "sequence": [
+            { "order": 1, "name": "Doors Open & DJ Set", "duration": "1 Hour" },
+            { "order": 2, "name": "Opening Act", "duration": "45 Minutes" },
+            { "order": 3, "name": "Headliner Performance", "duration": "2 Hours" }
+        ]
+    }'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Live Music & Indie Rock Concert');
+
+-- 3. WEDDING TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Rustic Romantic Grand Wedding',
+    '/static/uploads/templates/wedding.avif',
+    '{
+        "type": "Wedding",
+        "theme": "Rustic Romantic",
+        "budget": 35000,
+        "guest_count": 150,
+        "progress_percentage": 0,
+        "status": "Planning"
+    }'::jsonb,
+    '{
+        "sequence": [
+            { "order": 1, "name": "Ceremony", "duration": "1 Hour" },
+            { "order": 2, "name": "Cocktail Hour", "duration": "1.5 Hours" },
+            { "order": 3, "name": "Reception", "duration": "4 Hours" }
+        ]
+    }'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Rustic Romantic Grand Wedding');
+
+-- 4. FUNERAL TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Memorial & Celebration of Life',
+    '/static/uploads/templates/funeral.avif',
+    '{
+        "type": "Funeral",
+        "theme": "Serene Traditional",
+        "budget": 8000,
+        "guest_count": 80,
+        "progress_percentage": 0,
+        "status": "Planning"
+    }'::jsonb,
+    '{
+        "sequence": [
+            { "order": 1, "name": "Family Visitation", "duration": "1 Hour" },
+            { "order": 2, "name": "Memorial Service", "duration": "1.5 Hours" },
+            { "order": 3, "name": "Reception Luncheon", "duration": "2 Hours" }
+        ]
+    }'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Memorial & Celebration of Life');
+
+-- 5. ANNIVERSARY TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Silver Milestone Anniversary Gala',
+    '/static/uploads/templates/anniversary.avif',
+    '{
+        "type": "Anniversary",
+        "theme": "Silver & Elegant White",
+        "budget": 15000,
+        "guest_count": 100,
+        "progress_percentage": 0,
+        "status": "Planning"
+    }'::jsonb,
+    '{
+        "sequence": [
+            { "order": 1, "name": "Welcome Drinks", "duration": "45 Minutes" },
+            { "order": 2, "name": "Banquet Dinner & Toast", "duration": "2.5 Hours" },
+            { "order": 3, "name": "Dance Floor Open", "duration": "2 Hours" }
+        ]
+    }'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Silver Milestone Anniversary Gala');
+
+-- 6. BIRTHDAY TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Milestone Birthday Bash',
+    '/static/uploads/templates/birthday.avif',
+    '{
+        "type": "Birthday",
+        "theme": "Vibrant Casual",
+        "budget": 3000,
+        "guest_count": 50,
+        "progress_percentage": 0,
+        "status": "Planning"
+    }'::jsonb,
+    '{
+        "sequence": [
+            { "order": 1, "name": "Guest Arrival & Icebreakers", "duration": "1 Hour" },
+            { "order": 2, "name": "Dinner & Cake Cutting", "duration": "1.5 Hours" },
+            { "order": 3, "name": "Party Games & Music", "duration": "3 Hours" }
+        ]
+    }'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Milestone Birthday Bash');
+
+-- 7. LAN PARTY TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Competitive Esports & Gaming LAN',
+    '/static/uploads/templates/lanparty.avif',
+    '{
+        "type": "LAN Party",
+        "theme": "Cyberpunk RGB",
+        "budget": 2000,
+        "guest_count": 24,
+        "progress_percentage": 0,
+        "status": "Planning"
+    }'::jsonb,
+    '{
+        "sequence": [
+            { "order": 1, "name": "Rig Setup & Network Check", "duration": "1.5 Hours" },
+            { "order": 2, "name": "Tournament Group Stage", "duration": "4 Hours" },
+            { "order": 3, "name": "Grand Finals & Pizza Run", "duration": "3 Hours" }
+        ]
+    }'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Competitive Esports & Gaming LAN');
 """
 
 

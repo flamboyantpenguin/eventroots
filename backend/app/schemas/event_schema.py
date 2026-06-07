@@ -1,9 +1,18 @@
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from typing_extensions import Optional
 
 EventStatus = Literal["Upcoming", "Completed", "Planning"]
+
+
+class EventCreateFromTemplate(BaseModel):
+    title: Optional[str] = None
+
+
+class EventCreateEmpty(BaseModel):
+    title: str
 
 
 class TemplateResponse(BaseModel):
@@ -29,10 +38,8 @@ class EventCreate(BaseModel):
 
 
 class EventUpdate(BaseModel):
-    title: str | None = None
-    status: EventStatus | None = None
-    progress: str | None = None
-    image: str | None = None
+    id: str
+    update_fields: dict
 
 
 class EventDelete(BaseModel):

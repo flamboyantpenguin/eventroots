@@ -1,26 +1,47 @@
 from uuid import UUID
 
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from fastapi.param_functions import Depends
+from fastapi.security import OAuth2PasswordBearer
+from starlette import status
+from starlette.exceptions import HTTPException
 
-from app.schemas.event_schema import EventCreate, EventDelete, EventResponse
+from app.api.auth import get_current_user_claims
+from app.schemas.event_schema import (
+    EventCreate,
+    EventCreateEmpty,
+    EventCreateFromTemplate,
+    EventDelete,
+    EventUpdate,
+)
 from app.store.db import db
 from app.utils.response import error
 
 router = APIRouter(prefix="/events", tags=["events"])
 
 
-class EventUpdate(BaseModel):
-    title: str | None = None
-    banner_url: str | None = None
-    data: dict | None = None
-    flow: dict | None = None
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 @router.get("/templates")
 def get_templates():
     return {"status": "success", "templates": db.templates}
+
+
+@router.get("/user")
+def get_event_by_user(
+    current_user: dict = Depends(get_current_user_claims),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="User context missing")
+
+    user_id = current_user["user_id"]
+    row = db.get_event_by_user_id(UUID(user_id))
+
+    if row is None:
+        return {"status": "success", "events": []}
+
+    return {"status": "success", "events": row}
 
 
 @router.get("/{event_id}")
@@ -43,26 +64,77 @@ def get_event(event_id: UUID):
     }
 
 
-@router.post("/")
-def create_event(body: EventCreate):
+@router.post("/{template_id}", status_code=status.HTTP_201_CREATED)
+def create_event_by_template(
+    template_id: UUID,
+    body: EventCreateFromTemplate,
+    current_user: dict = Depends(get_current_user_claims),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="User context missing")
+    if not isinstance(current_user, dict) or "user_id" not in current_user:
+        return current_user
+
+    user_id = UUID(current_user["user_id"])
+
+    template = db.get_template_by_id(template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+
     id = db.create_event(
-        body.title,
-        body.banner_url,
-        body.user_id,
-        body.data,
-        body.flow,
+        title=body.title or template["title"],
+        banner_url=template["banner_url"],
+        user_id=user_id,
+        data=template["data"],
+        flow=template["flow"],
     )
-    return {"status": "success", "message": "Event created", "id": id}
+
+    return {"status": "success", "message": "Event generated from template", "id": id}
+
+
+@router.post("/", status_code=status.HTTP_201_CREATED)
+def create_empty_event(
+    body: EventCreateEmpty,
+    current_user: dict = Depends(get_current_user_claims),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="User context missing")
+
+    if not isinstance(current_user, dict) or "user_id" not in current_user:
+        return current_user
+
+    user_id = UUID(current_user["user_id"])
+
+    default_data = {
+        "type": "Custom",
+        "theme": "Default Minimal",
+        "budget": 0,
+        "guest_count": 0,
+        "progress_percentage": 0,
+        "status": "Planning",
+    }
+
+    default_flow = {"sequence": []}
+
+    id = db.create_event(
+        title=body.title,
+        banner_url="/static/uploads/templates/default.avif",  # Default graphic fallback
+        user_id=user_id,
+        data=default_data,
+        flow=default_flow,
+    )
+
+    return {"status": "success", "message": "Empty event initialized", "id": id}
 
 
 @router.patch("/{event_id}")
-def patch_event(self, event_id: str, update_fields: dict) -> dict | None:
+def patch_event(body: EventUpdate) -> dict | None:
     """Dynamically update specific fields of an event and return the updated row."""
     updates = []
     params = []
 
     # 💡 Build query components using your explicit ::jsonb casting schema style
-    for key, value in update_fields.items():
+    for key, value in body.update_fields.items():
         if value is not None:
             if key in ("data", "flow"):
                 updates.append(f"{key} = %s::jsonb")
@@ -75,8 +147,7 @@ def patch_event(self, event_id: str, update_fields: dict) -> dict | None:
     if not updates:
         return None
 
-    # Add the lookup parameter for the WHERE clause
-    params.append(event_id)
+    params.append(body.id)
 
     query = f"""
             UPDATE events
@@ -85,8 +156,7 @@ def patch_event(self, event_id: str, update_fields: dict) -> dict | None:
             RETURNING id, title, banner_url, data, flow;
         """
 
-    # Execute query using your dictionary row factory engine
-    return self._execute_query(query, tuple(params), fetch_all=False)
+    return db._execute_query(query, tuple(params), fetch_all=False)
 
 
 @router.delete("/{event_id}")

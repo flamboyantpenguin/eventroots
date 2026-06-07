@@ -2,3 +2,5 @@
 __pycache__
 *.pyc
 .venv
+static/uploads/banners
+static/uploads/pfp

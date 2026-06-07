@@ -3,6 +3,7 @@ from os import getenv
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api import auth, category, events, health, think, users, vendor
 from app.config import settings
@@ -35,6 +36,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.mount(
+    settings.API_PREFIX + "/static", StaticFiles(directory="static"), name="static"
 )
 
 app.include_router(health.router, prefix=settings.API_PREFIX)

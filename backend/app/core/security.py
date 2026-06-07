@@ -4,6 +4,7 @@ from typing import Any
 
 import bcrypt
 from jose import JWTError, jwt
+from typing_extensions import Dict
 
 SECRET_KEY = os.getenv("JWT_SECRET", "eventroots-dev-secret-change-in-production")
 ALGORITHM = "HS256"
@@ -28,10 +29,21 @@ def create_access_token(subject: str, extra: dict[str, Any] | None = None) -> st
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def decode_access_token(token: str) -> str | None:
-    """Decode token securely and return the raw string subject (user_id)."""
+def decode_access_token(token: str) -> Dict[str, Any] | None:
+    """
+    Decode token securely and return a dictionary containing the user's
+    identity metadata (user_id and is_admin claim status).
+    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return str(payload.get("sub"))
+
+        user_id = payload.get("sub")
+        is_admin = payload.get("is_admin", False)
+
+        if not user_id:
+            return None
+
+        return {"user_id": str(user_id), "is_admin": bool(is_admin)}
+
     except (JWTError, AttributeError):
         return None
