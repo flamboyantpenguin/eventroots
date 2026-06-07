@@ -77,6 +77,12 @@ export const adminAPI = {
 export const dashboardAPI = {
   getEvents: () => apiClient.get("/events/user"),
   getTemplates: () => apiClient.get("/events/templates"),
+  createEventFromTemplate: async (templateId) => {
+    const response = await apiClient.post("/events/from-template", {
+      template_id: templateId,
+    });
+    return response.data;
+  },
 };
 
 export const getAssetUrl = (path) => {

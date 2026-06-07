@@ -146,11 +146,11 @@ class DatabaseStore:
 
         return self._execute_query(query, (template_id,), fetch_all=False)
 
-    def get_event_by_user_id(self, user_id: UUID) -> Optional[Dict[str, Any]]:
+    def get_event_by_user_id(self, user_id: UUID) -> List[Dict[str, Any]]:
         """Fetch an event data from the database by id"""
         query = "SELECT id, user_id, title, banner_url, data, flow FROM events WHERE user_id = %s;"
 
-        return self._execute_query(query, (user_id,), fetch_all=False)
+        return self._execute_query(query, (user_id,))
 
     def update_event_state(
         self, event_id: Any, title: str, data: dict, flow: dict

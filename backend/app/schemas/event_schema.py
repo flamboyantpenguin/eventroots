@@ -2,12 +2,14 @@ from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel
+from pydantic.fields import Field
 from typing_extensions import Optional
 
 EventStatus = Literal["Upcoming", "Completed", "Planning"]
 
 
 class EventCreateFromTemplate(BaseModel):
+    template_id: UUID = Field(..., alias="template_id")
     title: Optional[str] = None
 
 

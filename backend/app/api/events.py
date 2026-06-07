@@ -8,7 +8,6 @@ from starlette.exceptions import HTTPException
 
 from app.api.auth import get_current_user_claims
 from app.schemas.event_schema import (
-    EventCreate,
     EventCreateEmpty,
     EventCreateFromTemplate,
     EventDelete,
@@ -64,9 +63,8 @@ def get_event(event_id: UUID):
     }
 
 
-@router.post("/{template_id}", status_code=status.HTTP_201_CREATED)
+@router.post("/from-template", status_code=status.HTTP_201_CREATED)
 def create_event_by_template(
-    template_id: UUID,
     body: EventCreateFromTemplate,
     current_user: dict = Depends(get_current_user_claims),
 ):
@@ -77,11 +75,11 @@ def create_event_by_template(
 
     user_id = UUID(current_user["user_id"])
 
-    template = db.get_template_by_id(template_id)
+    template = db.get_template_by_id(body.template_id)
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
 
-    id = db.create_event(
+    new_event_id = db.create_event(
         title=body.title or template["title"],
         banner_url=template["banner_url"],
         user_id=user_id,
@@ -89,7 +87,9 @@ def create_event_by_template(
         flow=template["flow"],
     )
 
-    return {"status": "success", "message": "Event generated from template", "id": id}
+    new_event_record = db.get_event_by_id(UUID(new_event_id))
+
+    return new_event_record
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)

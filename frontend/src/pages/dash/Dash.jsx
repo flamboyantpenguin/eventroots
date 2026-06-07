@@ -4,41 +4,65 @@ import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import { useAuth } from "../../hooks/useAuth";
 import { useDashboardData } from "../../hooks/dash/useDashData";
 import { useError } from "/src/hooks/misc/useErrorContext";
+import { useLoading } from "/src/hooks/useLoadingContext";
+
 import { useEffect } from "react";
 
 export default function Dash() {
   const { user, openProfile } = useAuth();
-  const { events, templates, error } = useDashboardData();
+  const { events, templates, refreshDashboard, createEventFromTemplate } =
+    useDashboardData();
 
   const { triggerError } = useError();
+  const { startLoading, stopLoading } = useLoading();
 
   useEffect(() => {
-    if (error) {
-      let errorTitle = "Workspace Sync Error";
-      let errorDesc =
-        error.message ||
-        "Unable to establish a secure link to your active database cluster.";
+    async function initializeWorkspace() {
+      try {
+        await refreshDashboard();
+      } catch (err) {
+        let errorTitle = "Workspace Sync Error";
+        let errorDesc =
+          err.message ||
+          "Unable to establish a secure link to your active database cluster.";
 
-      const backendDetail = error.response?.data?.detail;
+        const backendDetail = err.response?.data?.detail;
 
-      if (backendDetail) {
-        if (typeof backendDetail === "string") {
-          errorTitle = backendDetail;
-        } else if (Array.isArray(backendDetail)) {
-          errorTitle = "Data Validation Failure";
-          errorDesc = backendDetail
-            .map((err) => `${err.loc.join(".")}: ${err.msg}`)
-            .join(" | ");
-        } else if (typeof backendDetail === "object") {
-          errorTitle = backendDetail.title || "Malformed Response Payload";
-          errorDesc =
-            backendDetail.description || JSON.stringify(backendDetail);
+        if (backendDetail) {
+          if (typeof backendDetail === "string") {
+            errorTitle = backendDetail;
+          } else if (Array.isArray(backendDetail)) {
+            errorTitle = "Data Validation Failure";
+            errorDesc = backendDetail
+              .map((e) => `${e.loc.join(".")}: ${e.msg}`)
+              .join(" | ");
+          } else if (typeof backendDetail === "object") {
+            errorTitle = backendDetail.title || "Malformed Response Payload";
+            errorDesc =
+              backendDetail.description || JSON.stringify(backendDetail);
+          }
         }
-      }
 
-      triggerError(errorTitle, errorDesc);
+        triggerError(errorTitle, errorDesc);
+      }
     }
-  }, [error, triggerError]);
+
+    initializeWorkspace();
+  }, [refreshDashboard, triggerError]);
+
+  const handleTemplateSelect = async (templateId, templateTitle) => {
+    startLoading(
+      "Instantiating Blueprint",
+      `Cloning database architecture sequences for the "${templateTitle}" node layout...`,
+    );
+    try {
+      await createEventFromTemplate(templateId);
+    } catch (err) {
+      console.error("Template structural clone exception caught locally:", err);
+    } finally {
+      stopLoading();
+    }
+  };
 
   return (
     <>
@@ -69,8 +93,21 @@ export default function Dash() {
 
             <div className="template-scroll">
               {templates.map((item, index) => (
-                <div className="template-card" key={index}>
-                  <img src={item.banner_url} alt={item.title} />
+                <div
+                  className="template-card"
+                  key={index}
+                  onClick={() => handleTemplateSelect(item.id, item.title)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <img
+                    src={item.banner_url}
+                    alt={item.title}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src =
+                        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100%' height='100%' fill='%236750A4'/></svg>";
+                    }}
+                  />
                   <div className="template-content">
                     <h3>{item.title}</h3>
                     <p>{item.desc}</p>
@@ -98,18 +135,20 @@ export default function Dash() {
                 <img src={event.image} alt={event.title} />
 
                 <div className="event-content">
-                  <span className={`badge ${event.status.toLowerCase()}`}>
-                    {event.status}
-                  </span>
+                  {event.data?.status && (
+                    <span
+                      className={`badge ${event.data?.status.toLowerCase()}`}
+                    >
+                      {event.data?.status}
+                    </span>
+                  )}
 
                   <h3>{event.title}</h3>
-
-                  <p>{event.progress} Planned</p>
 
                   <div className="progress-bar">
                     <div
                       className="progress-fill"
-                      style={{ width: event.progress }}
+                      style={{ width: event.data?.progress_percentage }}
                     ></div>
                   </div>
                 </div>
