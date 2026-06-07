@@ -1,4 +1,4 @@
-#root {
+.layoutViewport {
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -88,22 +88,20 @@
     overflow: hidden;
     background-color: var(--md-sys-color-surface-container-lowest);
     color: var(--md-sys-color-on-surface);
-    font-family: sans-serif;
 }
 
-.resize-handle {
-    width: 8px; /* Slightly wider drag footprint target for modern mouse pointer targets */
-    background-color: transparent; /* Seamless when idling */
+/* Change this line inside your Desktop.module.css */
+.resizeHandle {
+    width: 8px;
+    background-color: transparent;
     cursor: col-resize;
-    margin: 0 4px; /* Pulls drag surface space out without widening the visual separator */
+    margin: 0 4px;
     border-radius: 100px;
     transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* Lights up muted slate blue when hovered or actively being dragged */
-.resize-handle:hover,
-.resize-handle[data-separator][data-focus-visible],
-.resize-handle:active {
+.resizeHandle:hover,
+.resizeHandle:active {
     background-color: var(--md-sys-color-outline-variant);
 }
 
@@ -153,9 +151,21 @@
     background-color: transparent;
 }
 
-.stBtn:hover {
-    color: var(--md-sys-color-on-secondary-container);
-    background-color: var(--md-sys-color-secondary-container);
+.longBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: 10px;
+    height: 40px;
+    width: 80px;
+    padding: 0;
+    gap: 5px;
+}
+
+.scnBtn {
+    color: rgba(var(--md-sys-color-tertiary), 0.38);
+    border-color: rgba(var(--md-sys-color-on-tertiary), 0.12);
 }
 
 /* Inverse styling fix: Material spec maps container colors inverse to text states */

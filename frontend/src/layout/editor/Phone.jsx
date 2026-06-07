@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import "./Phone.css";
+import "./Phone.module.css";
 import { Chat } from "../../components/editor/Chat";
 import { Flow } from "../../components/editor/Flow";
 import { Overview } from "../../components/editor/Overview";

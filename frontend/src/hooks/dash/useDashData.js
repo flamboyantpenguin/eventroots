@@ -56,10 +56,21 @@ export function useDashboardData() {
 
       return eventId;
     } catch (err) {
-      console.error(
-        "Failed to construct event instantiation node payload:",
-        err,
-      );
+      console.error("Failed to construct event based on template", err);
+      setError(err);
+      throw err;
+    }
+  }, []);
+
+  const createEmptyEvent = useCallback(async () => {
+    setError(null);
+    try {
+      const result = await dashboardAPI.createEvent();
+      const eventId = result.id;
+
+      return eventId;
+    } catch (err) {
+      console.error("Failed to construct event", err);
       setError(err);
       throw err;
     }
@@ -70,6 +81,7 @@ export function useDashboardData() {
     templates,
     loading,
     error,
+    createEmptyEvent,
     createEventFromTemplate,
     refreshDashboard: fetchDashboardContent,
   };

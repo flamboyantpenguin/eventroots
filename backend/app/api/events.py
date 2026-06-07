@@ -95,7 +95,7 @@ def create_event_by_template(
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_empty_event(
-    body: EventCreateEmpty,
+    body: EventCreateEmpty = EventCreateEmpty(),
     current_user: dict = Depends(get_current_user_claims),
 ):
     if not current_user:
@@ -106,26 +106,19 @@ def create_empty_event(
 
     user_id = UUID(current_user["user_id"])
 
-    default_data = {
-        "type": "Custom",
-        "theme": "Default Minimal",
-        "budget": 0,
-        "guest_count": 0,
-        "progress_percentage": 0,
-        "status": "Planning",
-    }
-
-    default_flow = {"sequence": []}
-
     id = db.create_event(
-        title=body.title,
-        banner_url="/static/uploads/templates/default.avif",  # Default graphic fallback
+        title=body.title if body.title is not None else "",
+        banner_url="/static/uploads/templates/default.avif",
         user_id=user_id,
-        data=default_data,
-        flow=default_flow,
+        data=dict(),
+        flow=dict(),
     )
 
-    return {"status": "success", "message": "Empty event initialized", "id": id}
+    return {
+        "status": "success",
+        "message": "Empty event initialized",
+        "data": {"id": id},
+    }
 
 
 @router.patch("/{event_id}")

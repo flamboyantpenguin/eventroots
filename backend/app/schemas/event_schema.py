@@ -14,7 +14,7 @@ class EventCreateFromTemplate(BaseModel):
 
 
 class EventCreateEmpty(BaseModel):
-    title: str
+    title: str | None = None
 
 
 class TemplateResponse(BaseModel):

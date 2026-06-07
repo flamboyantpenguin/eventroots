@@ -3,13 +3,14 @@ import { useEventContext } from "/src/hooks/event/useEventContext";
 import { Panel, Group, Separator } from "react-resizable-panels";
 import { Chat } from "/src/components/editor/Chat";
 import {
+  ChatOutlined,
   CheckOutlined,
   DeleteForeverOutlined,
   EditOutlined,
 } from "@mui/icons-material";
 import { Overview } from "../../components/editor/Overview";
 import { Flow } from "../../components/editor/Flow";
-import "./Desktop.css";
+import styles from "./Desktop.module.css"; // 🛠️ Correctly binding styles object
 import { useAuth } from "../../hooks/useAuth";
 
 const Desktop = () => {
@@ -21,7 +22,6 @@ const Desktop = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [transientTitle, setTransientTitle] = useState("");
 
-  // 2. Open edit mode and seed the current title value
   const handleStartEditing = () => {
     setTransientTitle(formData.title || "");
     setIsEditing(true);
@@ -33,7 +33,6 @@ const Desktop = () => {
 
     if (!cleanTitle || cleanTitle === formData.title) return;
 
-    // Direct, synchronous updates to your context and backend pipeline
     updateFormData("title", null, cleanTitle);
     saveEvent(formData.id, { title: cleanTitle });
   };
@@ -44,18 +43,18 @@ const Desktop = () => {
   };
 
   return (
-    <>
-      <div className="navbar">
-        <div className="navActions">
-          {/* Dynamic Title from our loaded context */}
+    <div className={styles.layoutViewport}>
+      <div className={styles.navbar}>
+        <div className={styles.navActions}>
+          {/* Dynamic Title */}
           {isEditing ? (
             <div
-              className="titleEditWrapper"
+              className={styles.titleEditWrapper}
               style={{ display: "flex", alignItems: "center", gap: "8px" }}
             >
               <input
                 type="text"
-                className="m3Input titleInput"
+                className="m3Input titleInput" // Keep global styles naked if they don't live in Desktop.module.css
                 value={transientTitle}
                 onChange={(e) => setTransientTitle(e.target.value)}
                 onBlur={handleSaveTitle}
@@ -67,40 +66,64 @@ const Desktop = () => {
                   padding: "4px 8px",
                 }}
               />
-              <button className="actionsBtn stBtn" onClick={handleSaveTitle}>
+              <button
+                className={`${styles.actionsBtn} ${styles.stBtn}`}
+                onClick={handleSaveTitle}
+              >
                 <CheckOutlined />
               </button>
             </div>
           ) : (
             <>
-              {/* Read directly from context here—no local state synchronization needed! */}
-              <h1 className="title" onDoubleClick={handleStartEditing}>
+              <h1 className={styles.title} onDoubleClick={handleStartEditing}>
                 {formData.title || "Untitled Workspace"}
               </h1>
-              <button className="actionsBtn stBtn" onClick={handleStartEditing}>
+              <button
+                className={`${styles.actionsBtn} ${styles.stBtn}`}
+                onClick={handleStartEditing}
+              >
                 <EditOutlined />
               </button>
             </>
           )}
-          <button className="actionsBtn deleteBtn">
+          <button className={`${styles.actionsBtn} ${styles.deleteBtn}`}>
             <DeleteForeverOutlined />
           </button>
+
+          {/* Dynamic state modifiers combined smoothly using Template Literals */}
+          <button
+            className={`${styles.actionsBtn} ${styles.longBtn} ${isChatCollapsed ? styles.scnBtn : ""}`}
+            onClick={() => setIsChatCollapsed(!isChatCollapsed)}
+          >
+            <ChatOutlined />
+            Chat
+          </button>
         </div>
-        <div className="navActions">
-          <button className="profileBtn" onClick={openProfile}>
-            <img src={user.pfp} alt="Profile" className="profileAvatar" />
+
+        <div className={styles.navActions}>
+          <button className={styles.profileBtn} onClick={openProfile}>
+            <img
+              src={user.pfp}
+              alt="Profile"
+              className={styles.profileAvatar}
+            />
           </button>
         </div>
       </div>
-      <div className="container">
+
+      <div className={styles.container}>
         <Group orientation="horizontal">
           {/* PANEL 1: Left Menu */}
           {!isFlowCollapsed && (
             <>
-              <Panel defaultSize="33%" className="leftPanel" minSize="10%">
+              <Panel
+                defaultSize="33%"
+                className={styles.leftPanel}
+                minSize="10%"
+              >
                 <Flow onCollapse={() => setIsFlowCollapsed(true)} />
               </Panel>
-              <Separator className="resize-handle" />
+              <Separator className={styles.resizeHandle} />
             </>
           )}
 
@@ -110,17 +133,17 @@ const Desktop = () => {
               <Panel defaultSize="23%" minSize="10%">
                 <Chat onCollapse={() => setIsChatCollapsed(true)} />
               </Panel>
-              <Separator className="resize-handle" />
+              <Separator className={styles.resizeHandle} />
             </>
           )}
 
           {/* PANEL 3: Right Context Panel */}
-          <Panel defaultSize="43%" minSize="10%" className="rightPanel">
+          <Panel defaultSize="43%" minSize="10%" className={styles.rightPanel}>
             <Overview />
           </Panel>
         </Group>
       </div>
-    </>
+    </div>
   );
 };
 

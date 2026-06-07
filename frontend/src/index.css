@@ -29,9 +29,6 @@
     }
 }
 
-#root {
-    padding: 20px;
-}
 .loading-screen {
     display: flex;
     align-items: center;
@@ -106,6 +103,10 @@
     100% {
         transform: rotate(360deg);
     }
+}
+
+body {
+    height: 100vh;
 }
 
 /* --- Core Structural Anchors --- */
