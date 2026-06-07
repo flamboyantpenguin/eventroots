@@ -128,16 +128,51 @@ def patch_event(
     current_user: dict = Depends(get_current_user_claims),
 ):
     user_id = UUID(current_user["user_id"])
-    print("--- RAW BODY DICT ---", body.model_dump())
-    print("--- EXCLUDE UNSET DICT ---", body.model_dump(exclude_unset=True))
 
-    # 1. Get the dict, exclude unset fields
-    updates = body.dict(exclude_unset=True)
+    updates = body.model_dump(exclude_unset=True)
 
-    # 2. Remove 'id' if present, because we don't want to update the primary key
     updates.pop("id", None)
 
-    # 3. Perform the update
+    if "flow" in updates and updates["flow"]:
+        incoming_flow = updates["flow"]
+
+        try:
+            incoming_category_ids = {
+                UUID(cat_id_str) for cat_id_str in incoming_flow.keys()
+            }
+
+            incoming_vendor_ids = set()
+            for vendor_list in incoming_flow.values():
+                if vendor_list is not None:
+                    for v_id_str in vendor_list:
+                        incoming_vendor_ids.add(UUID(v_id_str))
+
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Malformed layout framework payload: All Category keys and Vendor array values must be valid UUID strings.",
+            )
+
+        db_categories = db.categories
+        db_vendors = db.vendors
+
+        valid_category_ids = {UUID(str(cat["id"])) for cat in db_categories}
+        valid_vendor_ids = {UUID(str(vendor["id"])) for vendor in db_vendors}
+
+        invalid_categories = incoming_category_ids - valid_category_ids
+        if invalid_categories:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid category tracking constraint target identifiers: {[str(i) for i in invalid_categories]}. Target missing from system templates.",
+            )
+
+        invalid_vendors = incoming_vendor_ids - valid_vendor_ids
+        if invalid_vendors:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid vendor tracking constraint target identifiers: {[str(i) for i in invalid_vendors]}. Target missing from system templates.",
+            )
+
     updated_event = db.update_event(
         event_id=event_id,
         user_id=user_id,

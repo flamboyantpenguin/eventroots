@@ -108,7 +108,7 @@ class DatabaseStore:
             SELECT
                 v.id,
                 v.name,
-                c.name AS category,
+                v.category_id,
                 v.location,
                 v.data
             FROM vendors v

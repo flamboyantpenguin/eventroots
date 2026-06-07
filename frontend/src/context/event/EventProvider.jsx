@@ -23,13 +23,15 @@ const INITIAL_STATE = {
     notes: "",
   },
 
-  flow: {
-    sequence: [],
-  },
+  flow: {},
 };
 
 export const EventProvider = ({ children }) => {
   const [formData, setFormData] = useState(INITIAL_STATE);
+
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [availableVendors, setAvailableVendors] = useState([]);
+
   const [contextLoading, setContextLoading] = useState(false);
   const [contextError, setContextError] = useState(null);
 
@@ -42,8 +44,19 @@ export const EventProvider = ({ children }) => {
     setContextError(null);
 
     try {
-      const response = await editorAPI.getEventById(eventId);
-      const eventData = response.event || response;
+      const [eventResponse, categoriesResponse, vendorsResponse] =
+        await Promise.all([
+          editorAPI.getEventById(eventId),
+          editorAPI.getCategories(),
+          editorAPI.getVendors(),
+        ]);
+      const eventData = eventResponse.event || eventResponse;
+      const categoriesData =
+        categoriesResponse.categories || categoriesResponse || [];
+      const vendorsData = vendorsResponse.vendors || vendorsResponse || [];
+
+      setAvailableCategories(categoriesData);
+      setAvailableVendors(vendorsData);
 
       const targetBanner = eventData.banner_url || eventData.image || "";
       const hydratedRecord = {
@@ -180,6 +193,8 @@ export const EventProvider = ({ children }) => {
   const contextValue = useMemo(
     () => ({
       formData,
+      availableCategories,
+      availableVendors,
       contextLoading,
       contextError,
       resetForm,
@@ -190,6 +205,8 @@ export const EventProvider = ({ children }) => {
     }),
     [
       formData,
+      availableCategories,
+      availableVendors,
       contextLoading,
       contextError,
       resetForm,

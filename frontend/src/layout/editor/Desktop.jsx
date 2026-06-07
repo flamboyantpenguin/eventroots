@@ -7,6 +7,7 @@ import {
   CheckOutlined,
   DeleteForeverOutlined,
   EditOutlined,
+  SaveOutlined,
 } from "@mui/icons-material";
 import { Overview } from "../../components/editor/Overview";
 import { Flow } from "../../components/editor/Flow";
@@ -15,7 +16,8 @@ import { useAuth } from "../../hooks/useAuth";
 
 const Desktop = () => {
   const { user, openProfile } = useAuth();
-  const { formData, saveEvent, updateFormData } = useEventContext();
+  const { formData, saveEvent, updateFormData, contextLoading } =
+    useEventContext();
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
   const [isFlowCollapsed, setIsFlowCollapsed] = useState(false);
 
@@ -101,6 +103,12 @@ const Desktop = () => {
         </div>
 
         <div className={styles.navActions}>
+          {contextLoading && (
+            <div className={`${styles.actionsBtn} ${styles.longBtn}`}>
+              <SaveOutlined />
+              Saving...
+            </div>
+          )}
           <button className={styles.profileBtn} onClick={openProfile}>
             <img
               src={user.pfp}

@@ -158,8 +158,8 @@
     border: 1px solid var(--md-sys-color-outline);
     border-radius: 10px;
     height: 40px;
-    width: 80px;
-    padding: 0;
+    width: fit-content;
+    padding: 6px;
     gap: 5px;
 }
 

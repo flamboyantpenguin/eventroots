@@ -99,6 +99,14 @@ export const editorAPI = {
     const response = await apiClient.patch(`/events/${eventId}`, updates);
     return response;
   },
+  getCategories: async () => {
+    const response = await apiClient.get("/categories");
+    return response;
+  },
+  getVendors: async () => {
+    const response = await apiClient.get("/vendor");
+    return response;
+  },
 };
 
 export const getAssetUrl = (path) => {

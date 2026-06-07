@@ -1,7 +1,7 @@
 [
   {
     "label": "Run app",
-    "command": "uvicorn app.main:app --reload",
+    "command": "python run.py",
     //"args": [],
     // Env overrides for the command, will be appended to the terminal's environment from the settings.
     "env": { "foo": "bar" },
