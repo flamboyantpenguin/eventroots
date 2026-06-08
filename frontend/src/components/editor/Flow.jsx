@@ -1,129 +1,278 @@
-import { useEventContext } from "/src/hooks/useEventContext";
+import React, { useState, useRef, useCallback } from "react";
+import { useEventContext } from "/src/hooks/event/useEventContext";
+import styles from "./Flow.module.css";
 import {
-  CameraAltOutlined,
-  VideocamOutlined,
-  DeleteForeverOutlined,
-  BusinessOutlined,
+  AddCircleOutlineOutlined,
   AudiotrackOutlined,
+  BusinessOutlined,
   CakeOutlined,
+  CameraAltOutlined,
+  DeleteForeverOutlined,
+  VideocamOutlined,
+  CloseOutlined,
 } from "@mui/icons-material";
-import "./Flow.css";
 
-// Dynamic Icon Mapping Directory
 const CATEGORY_ICONS = {
-  photography: <CameraAltOutlined className="categoryIcon" />,
-  videography: <VideocamOutlined className="categoryIcon" />,
-  entertainment: <AudiotrackOutlined className="categoryIcon" />,
-  catering: <CakeOutlined className="categoryIcon" />,
+  photography: <CameraAltOutlined className={styles.flowCategoryIcon} />,
+  videography: <VideocamOutlined className={styles.flowCategoryIcon} />,
+  entertainment: <AudiotrackOutlined className={styles.flowCategoryIcon} />,
+  catering: <CakeOutlined className={styles.flowCategoryIcon} />,
 };
 
-// High-fidelity local dummy values to fill the frame instantly if global state is uninitialized
-const DUMMY_VENDORS = {
-  Photography: {
-    "v-1": { name: "Pixel Perfect Studios" },
-    "v-2": { name: "Lumiere Wedding Captures" },
-  },
-  Videography: {
-    "v-3": { name: "CineFrame Media Works" },
-    "v-4": { name: "Velvet Motion Films" },
-  },
-  Catering: {
-    "v-5": { name: "Epicurean Elite Banquet Arts" },
-  },
-  Entertainment: {
-    "v-6": { name: "The Symphony Acoustic Crew" },
-  },
+// Reusing the identical debounce layout engine from your Overview file
+const useDebounce = (callback, delay) => {
+  const timeoutRef = useRef(null);
+
+  const debouncedCallback = useCallback(
+    (...args) => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => callback(...args), delay);
+    },
+    [callback, delay],
+  );
+
+  const cancel = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
+
+  return [debouncedCallback, cancel];
 };
 
 export function Flow() {
-  const { formData, updateFormData } = useEventContext();
+  const {
+    formData,
+    updateFormData,
+    availableCategories,
+    availableVendors,
+    saveEvent,
+  } = useEventContext();
 
-  // Pluck actual state, fall back completely to our mock dictionary if empty
-  const rawVendors = formData.vendors || {};
-  const hasRealData = Object.keys(rawVendors).length > 0;
-  const vendorsMatrix = hasRealData ? rawVendors : DUMMY_VENDORS;
+  const flow = formData.flow || {};
 
-  const handleDeleteVendor = (categoryKey, vendorId) => {
-    // Clone category group to avoid direct state mutation
-    const updatedCategory = { ...vendorsMatrix[categoryKey] };
-    delete updatedCategory[vendorId];
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
 
-    // Push the updated sub-dictionary back up to the provider state stream
-    updateFormData("vendors", categoryKey, updatedCategory);
+  const [debouncedSave, cancelPendingSaves] = useDebounce((id, data) => {
+    saveEvent(id, data);
+  }, 1000);
+
+  const getCategoryName = (id) =>
+    availableCategories.find((c) => c.id === id)?.name || "Unknown Step";
+
+  const getVendorName = (idOrName) =>
+    availableVendors.find((v) => v.id === idOrName)?.name || idOrName;
+
+  const handleFlowUpdate = (updatedFlow, isImmediate = false) => {
+    updateFormData("data", "flow", updatedFlow);
+    const payload = { data: { flow: updatedFlow } };
+
+    if (isImmediate) {
+      saveEvent(formData.id, payload);
+    } else {
+      debouncedSave(formData.id, payload);
+    }
   };
 
-  const categories = Object.keys(vendorsMatrix);
+  // 1. Structural Addition: Adds an empty category array structure (Fires immediately)
+  const handleAddCategoryStep = async (e) => {
+    e.preventDefault();
+    if (!selectedCategoryId || flow[selectedCategoryId]) return;
+
+    const updatedFlow = {
+      ...flow,
+      [selectedCategoryId]: [],
+    };
+
+    setSelectedCategoryId("");
+    handleFlowUpdate(updatedFlow, true);
+  };
+
+  // 2. Structural Deletion: Purges the layout block completely (Fires immediately)
+  const handleDeleteCategoryStep = async (categoryId) => {
+    cancelPendingSaves();
+
+    const updatedFlow = { ...flow };
+    delete updatedFlow[categoryId];
+
+    handleFlowUpdate(updatedFlow, true);
+  };
+
+  // 3. Relational Association: appends a vendor link or text into a category sequence (Debounced)
+  const handleLinkVendorNode = (categoryId, vendorIdOrName) => {
+    if (!vendorIdOrName) return;
+
+    const currentLinked = flow[categoryId] || [];
+    if (currentLinked.includes(vendorIdOrName)) return;
+
+    const updatedFlow = {
+      ...flow,
+      [categoryId]: [...currentLinked, vendorIdOrName],
+    };
+
+    handleFlowUpdate(updatedFlow, false);
+  };
+
+  // 4. Relational Disconnection: removes an item from a category array path (Debounced)
+  const handleUnlinkVendorNode = (categoryId, targetVendorIdOrName) => {
+    const updatedFlow = {
+      ...flow,
+      [categoryId]: (flow[categoryId] || []).filter(
+        (item) => item !== targetVendorIdOrName,
+      ),
+    };
+
+    handleFlowUpdate(updatedFlow, false);
+  };
+
+  const activeCategoryIds = Object.keys(flow);
+  const remainingSelectableCategories = availableCategories.filter(
+    (cat) => !flow[cat.id],
+  );
 
   return (
-    <div className="vendorSelectorContainer">
-      {/* Header Info Band */}
-      <div className="selectorHeader">
-        <div className="headerMetaGroup">
-          <span className="selectorTitle">Flow</span>
-          {!hasRealData && <span className="sandboxBadge">Demo</span>}
+    <div className={styles.flowPanelContainer}>
+      {/* Header Info Banner */}
+      <div className={styles.flowSelectorHeader}>
+        <div className={styles.flowHeaderMetaGroup}>
+          <span className={styles.flowSelectorTitle}>Event Flow</span>
+          {activeCategoryIds.length === 0 && (
+            <span className={styles.flowSandboxBadge}>Unassigned</span>
+          )}
         </div>
-        <span className="selectorCountBadge">
-          {categories.reduce(
-            (acc, cat) => acc + Object.keys(vendorsMatrix[cat] || {}).length,
+        <span className={styles.flowSelectorCountBadge}>
+          {activeCategoryIds.reduce(
+            (acc, catId) => acc + (flow[catId]?.length || 0),
             0,
           )}{" "}
-          Active
+          Active Links
         </span>
       </div>
 
-      {/* Main List Stream */}
-      <div className="selectorBody">
-        {categories.length === 0 ? (
-          <div className="emptyVendorsWrapper">
-            <BusinessOutlined className="emptyVendorsIcon" />
-            <p className="emptyVendorsText">
-              No vendors assigned to this event catalog.
+      {/* Category Target Form Injector */}
+      {remainingSelectableCategories.length > 0 ? (
+        <form
+          onSubmit={handleAddCategoryStep}
+          className={styles.flowCategoryActionForm}
+        >
+          <select
+            value={selectedCategoryId}
+            onChange={(e) => setSelectedCategoryId(e.target.value)}
+            className={styles.flowM3Dropdown}
+          >
+            <option value="">-- Append Section Block --</option>
+            {remainingSelectableCategories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className={styles.flowAddButton}
+            disabled={!selectedCategoryId}
+          >
+            <AddCircleOutlineOutlined style={{ fontSize: 18 }} />
+            <span>Add Block</span>
+          </button>
+        </form>
+      ) : (
+        <div className={styles.flowExhaustedNotice}>
+          All category blocks mapped into current workspace timeline.
+        </div>
+      )}
+
+      {/* Main Flow Grid Panels */}
+      <div className={styles.flowSelectorBody}>
+        {activeCategoryIds.length === 0 ? (
+          <div className={styles.flowEmptyWrapper}>
+            <BusinessOutlined className={styles.flowEmptyIcon} />
+            <p className={styles.flowEmptyText}>
+              No configuration workflows mapped to this pipeline yet.
             </p>
           </div>
         ) : (
-          categories.map((categoryKey) => {
-            const vendorGroup = vendorsMatrix[categoryKey] || {};
-            const vendorEntries = Object.entries(vendorGroup);
+          activeCategoryIds.map((catId) => {
+            const assignedItems = flow[catId] || [];
+            const categoryName = getCategoryName(catId);
 
-            // Skip rendering the partition entirely if it has been cleared out
-            if (vendorEntries.length === 0) return null;
+            const selectableVendorsForCategory = availableVendors.filter(
+              (v) => v.category_id === catId && !assignedItems.includes(v.id),
+            );
 
             return (
-              /* 💎 THE NEW WRAPPER DIV: Keeps one entire category cluster self-contained */
-              <div key={categoryKey} className="categoryWrapperCard">
-                {/* Category Identity Title Pin */}
-                <div className="categoryGroupHeader">
-                  {CATEGORY_ICONS[categoryKey.toLowerCase()] || (
-                    <BusinessOutlined className="categoryIcon" />
-                  )}
-                  <span className="categoryGroupLabel">{categoryKey}</span>
+              <div key={catId} className={styles.flowCategoryWrapperCard}>
+                {/* Header Action Block */}
+                <div className={styles.flowCategoryGroupHeader}>
+                  <div className={styles.flowCategoryTitleGroup}>
+                    {CATEGORY_ICONS[categoryName.toLowerCase()] || (
+                      <BusinessOutlined className={styles.flowCategoryIcon} />
+                    )}
+                    <span className={styles.flowCategoryGroupLabel}>
+                      {categoryName}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={styles.flowCategoryDeleteBtn}
+                    onClick={() => handleDeleteCategoryStep(catId)}
+                    title={`Remove ${categoryName}`}
+                  >
+                    <CloseOutlined style={{ fontSize: 16 }} />
+                  </button>
                 </div>
 
-                {/* Sub-list of Vendor Cards */}
-                <div className="vendorRowsStack">
-                  {vendorEntries.map(([vendorId, vendorDetails]) => {
-                    const vendorName =
-                      typeof vendorDetails === "object"
-                        ? vendorDetails.name
-                        : vendorDetails;
+                {/* Sub-Rows Render Stack */}
+                <div className={styles.flowVendorRowsStack}>
+                  {assignedItems.map((itemIdentifier) => {
+                    const displayName = getVendorName(itemIdentifier);
 
                     return (
-                      <div key={vendorId} className="vendorItemRow">
-                        <span className="vendorItemName">{vendorName}</span>
-
+                      <div
+                        key={itemIdentifier}
+                        className={styles.flowVendorItemRow}
+                      >
+                        <span className={styles.flowVendorItemName}>
+                          {displayName}
+                        </span>
                         <button
                           type="button"
-                          className="vendorDeleteBtn"
+                          className={styles.flowVendorDeleteBtn}
                           onClick={() =>
-                            handleDeleteVendor(categoryKey, vendorId)
+                            handleUnlinkVendorNode(catId, itemIdentifier)
                           }
-                          title={`Unlink ${vendorName}`}
+                          title={`Unlink ${displayName}`}
                         >
                           <DeleteForeverOutlined style={{ fontSize: 18 }} />
                         </button>
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Insertion Inputs Matrix Footer */}
+                <div className={styles.flowVendorAssignmentZone}>
+                  <select
+                    value=""
+                    onChange={(e) =>
+                      handleLinkVendorNode(catId, e.target.value)
+                    }
+                    className={styles.flowM3InlineSelector}
+                    disabled={selectableVendorsForCategory.length === 0}
+                  >
+                    <option value="" disabled>
+                      {selectableVendorsForCategory.length === 0
+                        ? "All options assigned"
+                        : `-- Link ${categoryName} Option --`}
+                    </option>
+                    {selectableVendorsForCategory.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             );

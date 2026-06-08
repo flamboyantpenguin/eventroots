@@ -1,31 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useEventContext } from "/src/hooks/event/useEventContext";
 import {
   ChatBubbleOutlineOutlined,
   CloseOutlined,
   DeleteForeverOutlined,
 } from "@mui/icons-material";
-import "./Chat.css"; // Pure CSS styles below
+import styles from "./Chat.module.css";
 
 const SUGGESTIONS = [
-  "Update Guest List Details",
-  "Add a new item to the timeline",
-  "Rearrange the evening itinerary",
+  "Change event type to Wedding and set budget to 500000",
+  "Add a catering step block to my event flow",
+  "Set start date to tomorrow at 10 AM",
 ];
 
-const MOCK_BOT_REPLIES = {
-  "Update Guest List Details":
-    "Opening the Guest Ledger... \n\nI found **142 confirmed attendees**. Would you like me to filter them by *Dietary Restrictions* or *Seating Chart clusters*?",
-  "Add a new item to the timeline":
-    "Let's update the itinerary. What time should we slot the new event? \n\nStandard placement for the *Cake Cutting ceremony* is usually right at **08:30 PM**, right before the dance floor opens.",
-  "Rearrange the evening itinerary":
-    "Understood. Fetching the evening grid...\n\nI can swap the *First Dance* and the *Toast Speeches*. Doing this gives the catering team an extra **15 minutes** to prep the main courses.",
-  DEFAULT:
-    "I’m processing that request against Saranya's Wedding data nodes right now. \n\nEverything looks perfectly aligned! Let me know if you want to push these updates live to the layout canvas.",
-};
-
 export function Chat({ onCollapse }) {
+  // Pulling state and the unified API layer wrapper from our context abstraction
+  const { formData, sendWorkspaceMessage } = useEventContext();
+
   const [input, setInput] = useState("");
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
@@ -33,53 +26,53 @@ export function Chat({ onCollapse }) {
   const [messages, setMessages] = useState([]);
   const [isStreaming, setIsStreaming] = useState(false);
 
-  const simulateAISender = (userText) => {
+  const handleSendMessage = async (text) => {
+    if (!text.trim() || isStreaming) return;
+
+    // 1. Append human bubble immediately
+    const userMessage = {
+      id: `user-${Date.now()}`,
+      role: "human",
+      content: text,
+    };
+    setMessages((prev) => [...prev, userMessage]);
     setIsStreaming(true);
 
-    // Pick a tailored response from our mock bank, or fallback to default
-    const fullResponseText =
-      MOCK_BOT_REPLIES[userText] || MOCK_BOT_REPLIES["DEFAULT"];
-    const words = fullResponseText.split(" ");
-    let currentWordIndex = 0;
+    try {
+      /**
+       * 2. Rely purely on context delegation.
+       * Your useEventContext / api.js layer takes care of:
+       * - Target URL resolution (/api/think/)
+       * - Auth headers (Bearer tokens)
+       * - JSON stringifying & structure mapping
+       * - State syncing (e.g., running updateWholeFormData internally)
+       */
+      const aiReplyContent = await sendWorkspaceMessage(
+        formData.id,
+        text.trim(),
+      );
 
-    const botMessageId = Date.now();
-
-    // Create an empty placeholder bubble for the assistant
-    setMessages((prev) => [
-      ...prev,
-      { id: botMessageId, role: "assistant", content: "" },
-    ]);
-
-    // Text streaming interval loop
-    const streamer = setInterval(() => {
-      if (currentWordIndex < words.length) {
-        const partialContent = words.slice(0, currentWordIndex + 1).join(" ");
-
-        // Update the target message content dynamically
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === botMessageId ? { ...m, content: partialContent } : m,
-          ),
-        );
-
-        currentWordIndex++;
-      } else {
-        // Stream completed cleanly
-        clearInterval(streamer);
-        setIsStreaming(false);
-      }
-    }, 80); // Adjusting speed of incoming words
-  };
-
-  const handleSendMessage = async (text) => {
-    // Instantly append user chat bubble
-    const userMessage = { id: Date.now(), role: "human", content: text };
-    setMessages((prev) => [...prev, userMessage]);
-
-    // Small delay to simulate server network round-trip before stream begins
-    setTimeout(() => {
-      simulateAISender(text);
-    }, 600);
+      // 3. Append clean AI response string
+      const assistantMessage = {
+        id: `ai-${Date.now()}`,
+        role: "assistant",
+        content: aiReplyContent || "Changes processed successfully.",
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Generative layer interface error:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          role: "assistant",
+          content:
+            "⚠️ *System pipeline bottleneck encountered. Please check your query matrix parameters.*",
+        },
+      ]);
+    } finally {
+      setIsStreaming(false);
+    }
   };
 
   const handleClearChat = () => {
@@ -101,22 +94,23 @@ export function Chat({ onCollapse }) {
     const t = input.trim();
     if (!t || isStreaming) return;
     setInput("");
-    if (handleSendMessage) await handleSendMessage(t);
+    await handleSendMessage(t);
   };
 
   return (
-    <div className="chatWrapper">
+    <div className={styles.chatWrapper}>
       {/* Header */}
-      <div className="chatHeader">
-        <div className="headerTitle">
+      <div className={styles.chatHeader}>
+        <div className={styles.headerTitle}>
           <ChatBubbleOutlineOutlined fontSize="large" />
-          <span>Chat</span>
+          <span>Workspace Assistant</span>
         </div>
-        <div className="headerActions">
-          {messages.length > 0 && handleClearChat && (
+        <div className={styles.headerActions}>
+          {messages.length > 0 && (
             <button
               onClick={handleClearChat}
-              className="actionBtn deleteBtn"
+              className={`${styles.actionBtn} ${styles.deleteBtn}`}
+              disabled={isStreaming}
               title="Clear Chat"
             >
               <DeleteForeverOutlined style={{ fontSize: 20 }} />
@@ -125,7 +119,7 @@ export function Chat({ onCollapse }) {
           {onCollapse && (
             <button
               onClick={onCollapse}
-              className="actionBtn secButton"
+              className={`${styles.actionBtn} ${styles.secButton}`}
               title="Collapse Panel"
             >
               <CloseOutlined style={{ fontSize: 20 }} />
@@ -135,19 +129,19 @@ export function Chat({ onCollapse }) {
       </div>
 
       {/* Messages Feed */}
-      <div className="messagesFeed">
+      <div className={styles.messagesFeed}>
         {messages.length === 0 ? (
           <EmptyState onSelectSuggestion={handleSendMessage} />
         ) : (
-          messages.map((m) => <Bubble key={m.id || m.timestamp} msg={m} />)
+          messages.map((m) => <Bubble key={m.id} msg={m} />)
         )}
         {isStreaming && <TypingDots />}
         <div ref={bottomRef} />
       </div>
 
       {/* Input Composer */}
-      <div className="composerArea">
-        <div className="inputContainer">
+      <div className={styles.composerArea}>
+        <div className={styles.inputContainer}>
           <textarea
             ref={textareaRef}
             value={input}
@@ -158,20 +152,22 @@ export function Chat({ onCollapse }) {
                 submit();
               }
             }}
-            placeholder="Type a message..."
+            placeholder="Ask the AI to change layout variables..."
             disabled={isStreaming}
             rows={1}
-            className="chatTextarea"
+            className={styles.chatTextarea}
           />
           <button
             onClick={submit}
             disabled={!input.trim() || isStreaming}
-            className="sendBtn"
+            className={styles.sendBtn}
           >
             ↑
           </button>
         </div>
-        <p className="composerHint">Enter to send · Shift+Enter for new line</p>
+        <p className={styles.composerHint}>
+          Enter to send · Shift+Enter for newline
+        </p>
       </div>
     </div>
   );
@@ -179,15 +175,17 @@ export function Chat({ onCollapse }) {
 
 function EmptyState({ onSelectSuggestion }) {
   return (
-    <div className="emptyState">
-      <div className="emptyIcon">✨</div>
-      <p className="emptyText">What would you like to update or check?</p>
-      <div className="suggestionsList">
+    <div className={styles.emptyState}>
+      <div className={styles.emptyIcon}>✨</div>
+      <p className={styles.emptyText}>
+        Modify values or append workflow categories via conversation.
+      </p>
+      <div className={styles.suggestionsList}>
         {SUGGESTIONS.map((s, i) => (
           <button
             key={i}
             onClick={() => onSelectSuggestion && onSelectSuggestion(s)}
-            className="suggestionBtn"
+            className={styles.suggestionBtn}
           >
             {s}
           </button>
@@ -201,18 +199,24 @@ function Bubble({ msg }) {
   const isUser = msg.role === "human" || msg.role === "user";
 
   return (
-    <div className={`bubbleRow ${isUser ? "rowUser" : "rowAssistant"}`}>
-      <div className={`msgBubble ${isUser ? "bubbleUser" : "bubbleAssistant"}`}>
-        <div className="bubbleContent">
+    <div
+      className={`${styles.bubbleRow} ${isUser ? styles.rowUser : styles.rowAssistant}`}
+    >
+      <div
+        className={`${styles.msgBubble} ${isUser ? styles.bubbleUser : styles.bubbleAssistant}`}
+      >
+        <div className={styles.bubbleContent}>
           {isUser ? (
-            <p className="plainText">{msg.content}</p>
+            <p className={styles.plainText}>{msg.content}</p>
           ) : (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {msg.content}
-            </ReactMarkdown>
+            <div className={styles.markdownRenderZone}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {msg.content}
+              </ReactMarkdown>
+            </div>
           )}
         </div>
-        <div className="bubbleTime">
+        <div className={styles.bubbleTime}>
           {new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -225,12 +229,14 @@ function Bubble({ msg }) {
 
 function TypingDots() {
   return (
-    <div className="bubbleRow rowAssistant">
-      <div className="msgBubble bubbleAssistant typingIndicator">
+    <div className={`${styles.bubbleRow} ${styles.rowAssistant}`}>
+      <div
+        className={`${styles.msgBubble} ${styles.bubbleAssistant} ${styles.typingIndicator}`}
+      >
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className="dot"
+            className={styles.dot}
             style={{ animationDelay: `${i * 0.15}s` }}
           />
         ))}

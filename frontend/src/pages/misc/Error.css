@@ -1,0 +1,154 @@
+/* src/pages/SystemError.css */
+
+.error-page-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100vw;
+    background-color: var(--md-sys-color-background);
+    color: var(--md-sys-color-on-background);
+    box-sizing: border-box;
+    padding: 24px;
+    transition: background-color 300ms ease;
+}
+
+/* ⚠️ If it is a 500 error, shift background context subtly to match server severity tokens */
+.error-page-wrapper.m3-error-500 {
+    background-color: var(--md-sys-color-surface, #e7e0ec);
+}
+
+.error-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+    padding: 40px 32px;
+    background-color: var(--md-sys-color-surface-container);
+    border-radius: var(--md-sys-shape-corner-extra-large, 28px);
+    box-shadow: var(--md-sys-elevation-1, 0px 1px 3px 1px rgba(0, 0, 0, 0.15));
+}
+
+.error-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 24px;
+    border-radius: var(--md-sys-shape-corner-full, 50%);
+    background-color: var(--md-sys-color-error-container, #f9dedc);
+    color: var(--md-sys-color-on-error-container, #410e0b);
+}
+
+/* 500 Icon specific mapping modification to intense alert tokens */
+.m3-error-500 .error-icon-container {
+    background-color: var(--md-sys-color-error, #b3261e);
+    color: var(--md-sys-color-on-primary, #ffffff);
+}
+
+.m3-icon-large {
+    font-size: 40px !important;
+}
+
+.m3-display-large {
+    font-size: 64px;
+    font-weight: 500;
+    line-height: 72px;
+    letter-spacing: -0.5px;
+    margin: 0;
+    color: var(--md-sys-color-error, #b3261e);
+}
+
+.m3-headline-medium {
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 36px;
+    margin: 16px 0 0 0;
+}
+
+.m3-body-large {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    letter-spacing: 0.5px;
+    margin: 16px 0 32px 0;
+}
+
+.text-secondary {
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.button-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    width: 100%;
+}
+
+/* M3 Filled Button Variant */
+.m3-btn-filled {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 24px 0 16px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: var(--md-sys-color-primary, #6750a4);
+    color: var(--md-sys-color-on-primary, #ffffff);
+    border-radius: var(--md-sys-shape-corner-full, 100px);
+    transition: background-color 200ms ease;
+}
+
+.m3-btn-filled:hover {
+    background-color: var(--md-sys-color-on-tertiary);
+    color: var(--md-sys-color-tertiary);
+}
+
+/* M3 Tonal Button Variant */
+.m3-btn-tonal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 24px 0 16px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: var(--md-sys-color-secondary-container, #e8def8);
+    color: var(--md-sys-color-on-secondary-container, #1d192b);
+    border-radius: var(--md-sys-shape-corner-full, 100px);
+    transition: background-color 200ms ease;
+}
+
+.m3-btn-tonal:hover {
+    background-color: var(--md-sys-color-secondary-container-hover, #dccef3);
+}
+
+.m3-btn-icon {
+    font-size: 18px !important;
+}
+
+/* Micro Interaction Animations */
+.animate-surface {
+    animation: m3-fade-in-up 400ms cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes m3-fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

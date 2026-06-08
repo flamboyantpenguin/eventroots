@@ -1,131 +1,249 @@
-import "./Dash.css";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 
-const templates = [
-  {
-    title: "Wedding",
-    image: "https://images.unsplash.com/photo-1519741497674-611481863552",
-    desc: "Plan your dream wedding",
-  },
-  {
-    title: "House Warming",
-    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
-    desc: "Make your new house a home",
-  },
-  {
-    title: "Funeral",
-    image: "https://images.unsplash.com/photo-1516589091380-5d8e87df6999",
-    desc: "Respectful farewell planning",
-  },
-  {
-    title: "Birthday",
-    image: "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3",
-    desc: "Celebrate special moments",
-  },
-  {
-    title: "Concert",
-    image: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a",
-    desc: "Plan a music event",
-  },
-];
+import { useAuth } from "../../hooks/useAuth";
+import { useDashboardData } from "../../hooks/dash/useDashData";
+import { useError } from "/src/hooks/misc/useErrorContext";
+import { useLoading } from "/src/hooks/useLoadingContext";
+import { useEventContext } from "/src/hooks/event/useEventContext";
 
-const events = [
-  {
-    title: "Arun & Diya Wedding",
-    status: "Upcoming",
-    progress: "60%",
-    image: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc",
-  },
-  {
-    title: "Our House Warming",
-    status: "Completed",
-    progress: "100%",
-    image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994",
-  },
-  {
-    title: "Live in Kochi Concert",
-    status: "Planning",
-    progress: "30%",
-    image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f",
-  },
-  {
-    title: "Ayesha's Birthday",
-    status: "Planning",
-    progress: "20%",
-    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d",
-  },
-];
+import styles from "./Dash.module.css";
 
 export default function Dash() {
-  return (
-    <div className="dash-container">
-      {/* Header */}
-      <header className="dash-header">
-        <div className="logo">EventRoots</div>
+  const { user, openProfile } = useAuth();
+  const {
+    events,
+    templates,
+    refreshDashboard,
+    createEmptyEvent,
+    createEventFromTemplate,
+  } = useDashboardData();
 
-        <div className="header-actions">
-          <button className="icon-btn">
+  const { triggerError } = useError();
+  const { startLoading, stopLoading } = useLoading();
+  const { loadEvent } = useEventContext();
+
+  const navigate = useNavigate();
+
+  // DRAG-TO-SCROLL ARCHITECTURE
+  const scrollRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [dragDistance, setDragDistance] = useState(0);
+
+  useEffect(() => {
+    async function initializeWorkspace() {
+      try {
+        await refreshDashboard();
+      } catch (err) {
+        let errorTitle = "Workspace Sync Error";
+        let errorDesc =
+          err.message ||
+          "Unable to establish a secure link to your active database cluster.";
+
+        const backendDetail = err.response?.data?.detail;
+        if (backendDetail) {
+          if (typeof backendDetail === "string") {
+            errorTitle = backendDetail;
+          } else if (Array.isArray(backendDetail)) {
+            errorTitle = "Data Validation Failure";
+            errorDesc = backendDetail
+              .map((e) => `${e.loc.join(".")}: ${e.msg}`)
+              .join(" | ");
+          } else if (typeof backendDetail === "object") {
+            errorTitle = backendDetail.title || "Malformed Response Payload";
+            errorDesc =
+              backendDetail.description || JSON.stringify(backendDetail);
+          }
+        }
+        triggerError(errorTitle, errorDesc);
+      }
+    }
+    initializeWorkspace();
+  }, [refreshDashboard, triggerError]);
+
+  const handleTemplateSelect = async (templateId, templateTitle) => {
+    startLoading("Loading", `Creating an event based on "${templateTitle}"`);
+    try {
+      const newEventId = await createEventFromTemplate(templateId);
+      await loadEvent(newEventId);
+      navigate(`/editor?id=${newEventId}`);
+    } catch (err) {
+      triggerError(
+        "Event Creation Failed",
+        `Unable to create event from template: ${err}`,
+      );
+    } finally {
+      stopLoading();
+    }
+  };
+
+  const handleCreateEventSelect = async () => {
+    startLoading("Loading", "Creating an empty event");
+    try {
+      const newEventId = await createEmptyEvent();
+      await loadEvent(newEventId);
+      navigate(`/editor?id=${newEventId}`);
+    } catch (err) {
+      triggerError(
+        "Event Creation Failed",
+        `Unable to create empty event: ${err}`,
+      );
+    } finally {
+      stopLoading();
+    }
+  };
+
+  const handleEventSelect = async (eventId) => {
+    startLoading("Loading", "Loading event");
+    try {
+      await loadEvent(eventId);
+      navigate(`/editor?id=${eventId}`);
+    } catch (err) {
+      triggerError(
+        "Loading Event Failed",
+        `Unable to load created event: ${err}`,
+      );
+    } finally {
+      stopLoading();
+    }
+  };
+
+  // INTERACTION CAPTURE ROUTERS
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+    setDragDistance(0); // Reset distance tracker on touch start
+  };
+
+  const handleMouseLeaveOrUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const currentWalk = x - startX;
+
+    // Accumulate total dragging distance variance
+    setDragDistance((prev) => prev + Math.abs(currentWalk));
+
+    // Smooth standard sensitivity tracking multipliers
+    scrollRef.current.scrollLeft = scrollLeft - currentWalk * 1.5;
+  };
+
+  const handleWheelTranslation = (e) => {
+    if (e.deltaY !== 0) {
+      scrollRef.current.scrollLeft += e.deltaY * 1.2;
+    }
+  };
+
+  return (
+    <div className={styles.dashContainer}>
+      {/* Header */}
+      <header className={styles.dashHeader}>
+        <div className={styles.logo}>EventRoots</div>
+
+        <div className={styles.headerActions}>
+          <button className={styles.iconBtn}>
             <NotificationsNoneIcon fontSize="large" />
           </button>
 
-          <div className="profile">
-            <img src="https://i.pravatar.cc/100" alt="profile" />
+          <div className={styles.profile} onClick={openProfile}>
+            <img src={user?.pfp} alt="profile" />
           </div>
         </div>
       </header>
 
-      <div className="header-welcome">
-        <h2>Welcome back, Riya! 👋</h2>
+      <div className={styles.headerWelcome}>
+        <h2>Welcome back, {user?.username}! 👋</h2>
       </div>
 
       {/* Event Templates */}
-      <section className="section-card">
-        <h2>Event Templates</h2>
+      {templates && (
+        <section className={styles.sectionCard}>
+          <h2>Event Templates</h2>
 
-        <div className="template-scroll">
-          {templates.map((item, index) => (
-            <div className="template-card" key={index}>
-              <img src={item.image} alt={item.title} />
-              <div className="template-content">
-                <h3>{item.title}</h3>
-                <p>{item.desc}</p>
+          <div
+            ref={scrollRef}
+            className={`${styles.templateScroll} ${isDragging ? styles.draggingActive : ""}`}
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeaveOrUp}
+            onMouseUp={handleMouseLeaveOrUp}
+            onMouseMove={handleMouseMove}
+            onWheel={handleWheelTranslation}
+            style={{ cursor: isDragging ? "grabbing" : "grab" }}
+          >
+            {templates.map((item) => (
+              <div
+                className={styles.templateCard}
+                key={item.id}
+                onClick={() => {
+                  if (dragDistance < 5) {
+                    handleTemplateSelect(item.id, item.title);
+                  }
+                }}
+              >
+                <img
+                  src={item.banner_url}
+                  alt={item.title}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src =
+                      "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100%' height='100%' fill='%236750A4'/></svg>";
+                  }}
+                />
+                <div className={styles.templateContent}>
+                  <h3>{item.title}</h3>
+                  <p>{item.desc}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Your Events */}
-      <section className="section-card">
+      <section className={styles.sectionCard}>
         <h2>Your Events</h2>
 
-        <div className="events-grid">
-          <div className="create-card">
-            <div className="plus">
+        <div className={styles.eventsGrid}>
+          <div className={styles.createCard} onClick={handleCreateEventSelect}>
+            <div className={styles.plus}>
               <AddIcon fontSize="large" />
             </div>
             <h3>Create New Event</h3>
           </div>
 
-          {events.map((event, index) => (
-            <div className="event-card" key={index}>
+          {events?.map((event, index) => (
+            <div
+              className={styles.eventCard}
+              key={event.id || index}
+              onClick={() => handleEventSelect(event.id)}
+            >
               <img src={event.image} alt={event.title} />
 
-              <div className="event-content">
-                <span className={`badge ${event.status.toLowerCase()}`}>
-                  {event.status}
-                </span>
+              <div className={styles.eventContent}>
+                {event.data?.status && (
+                  <span
+                    className={`${styles.badge} ${styles[event.data.status.toLowerCase()] || ""}`}
+                  >
+                    {event.data.status}
+                  </span>
+                )}
 
                 <h3>{event.title}</h3>
 
-                <p>{event.progress} Planned</p>
-
-                <div className="progress-bar">
+                <div className={styles.progressBar}>
                   <div
-                    className="progress-fill"
-                    style={{ width: event.progress }}
-                  ></div>
+                    className={styles.progressFill}
+                    style={{ width: event.data?.progress_percentage }}
+                  />
                 </div>
               </div>
             </div>

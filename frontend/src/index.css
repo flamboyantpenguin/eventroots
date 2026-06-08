@@ -29,22 +29,325 @@
     }
 }
 
-#root {
-    padding: 20px;
+.loading-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100vw;
+    /* 💡 Fixed typo from 'vat' to 'var' to enable the native design token */
+    background-color: var(--md-sys-color-background);
+    margin: 0;
+    padding: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
 }
 
-code,
-input,
-.counter {
-    font-family: var(--mono);
-    display: inline-flex;
-    border-radius: 4px;
-    color: var(--text-h);
+.loading-card {
+    text-align: center;
+    /* 🚀 Using surface container high for floating UI elements with elegant translucency */
+    background: var(--md-sys-color-surface-container-high);
+    padding: 2.5rem 3.5rem;
+
+    /* Material 3 specifications suggest a shape-corner-large or extra-large for dialogs/cards */
+    border-radius: var(--md-sys-shape-corner-large, 16px);
+
+    /* Using outline-variant token for subtle borders */
+    border: 1px solid var(--md-sys-color-outline-variant);
+
+    /* Mapping standard Material elevation levels (Elevation 3 or 4) */
+    box-shadow: var(--md-sys-elevation-3, 0px 4px 8px rgba(0, 0, 0, 0.15));
+    backdrop-filter: blur(12px);
+    max-width: 400px;
+    width: 90%;
 }
 
-code {
-    font-size: 15px;
-    line-height: 135%;
-    padding: 4px 8px;
-    background: var(--code-bg);
+/* Crisp, animated spinning tracking indicator ring */
+.spinner {
+    width: 48px;
+    height: 48px;
+    /* Muted background track using the surface-variant line profile */
+    border: 4px solid var(--md-sys-color-surface-variant);
+    /* 🚀 Primary brand color acts as the rolling leading edge accent */
+    border-left-color: var(--md-sys-color-primary);
+    border-radius: 50%;
+    margin: 0 auto 1.5rem auto;
+    animation: spin 1s linear infinite;
+}
+
+/* Typography styles matching our calm theme */
+.loading-card h2 {
+    /* Title Large / Headline Small semantic type tracking tokens */
+    color: var(--md-sys-color-on-surface);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.025em;
+}
+
+.loading-card p {
+    /* Body Medium / Variant copy tracking token for secondary descriptions */
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.925rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Smooth rotational keyframe timeline configuration */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+body {
+    height: 100vh;
+}
+
+/* --- Core Structural Anchors --- */
+.custom-m3-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: var(--md-sys-color-surface);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.interactive-avatar-node {
+    width: 44px;
+    height: 44px;
+    border-radius: 16px; /* Sleek square-circle standard in modern M3 profiles */
+    cursor: pointer;
+    object-fit: cover;
+    transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.interactive-avatar-node:hover {
+    border-radius: 50%;
+    transform: rotate(5deg) scale(1.05);
+}
+
+/* --- 🔮 The Omni Overlay Pipeline Layer --- */
+.omni-portal-envelope {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Advanced full screen frosted displacement backdrop filter */
+.omni-backdrop-shroud {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(12, 10, 16, 0.4);
+    backdrop-filter: blur(20px) saturate(160%); /* Extra intense cinematic blur and color pop */
+    animation: omniFadeIn 0.3s ease forwards;
+}
+
+/* Centered Unique Dashboard Interface Board */
+.omni-command-board {
+    position: relative;
+    z-index: 1001;
+    width: 820px;
+    height: 500px;
+    max-width: 90%;
+    background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 40px; /* High fidelity curved canvas edge */
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.25);
+    display: flex;
+    overflow: hidden;
+
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+    animation: omniPopUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Close Control Button */
+.omni-close-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: var(--md-sys-color-surface-container-high);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--md-sys-color-on-surface);
+    transition: transform 0.2s ease;
+}
+
+.omni-close-btn:hover {
+    transform: rotate(90deg);
+}
+
+/* Left Profile Pane */
+.omni-panel-identity {
+    flex: 0 0 40%;
+    background-color: var(--md-sys-color-surface-container-low, #f3edf7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+}
+
+.omni-avatar-frame {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1.5rem;
+}
+
+.omni-avatar-frame img {
+    width: 100%;
+    height: 100%;
+    border-radius: 32px;
+    object-fit: cover;
+}
+
+.identity-status-pulse {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 16px;
+    height: 16px;
+    background-color: #4caf50;
+    border: 3px solid var(--md-sys-color-surface-container-low);
+    border-radius: 50%;
+}
+
+.user-token-string {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--md-sys-color-outline);
+    margin-top: 0.25rem;
+}
+
+.security-clearance-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--md-sys-color-on-surface);
+    color: var(--md-sys-color-surface);
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* Right System Pane */
+.omni-panel-actions {
+    flex: 1;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--md-sys-color-primary);
+    letter-spacing: 2px;
+    margin-bottom: 1.5rem;
+}
+
+.omni-action-grid {
+    display: flex;
+    gap: 1.5rem;
+    flex-grow: 1;
+}
+
+.omni-grid-card {
+    flex: 1;
+    background: var(--md-sys-color-surface-container-high);
+    border-radius: 24px;
+    padding: 1.5rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.omni-grid-card:hover {
+    border-color: var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container-highest);
+    transform: translateY(-2px);
+}
+
+.card-icon {
+    color: var(--md-sys-color-primary);
+    font-size: 2rem !important;
+    margin-bottom: 0.75rem;
+}
+
+.omni-grid-card h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--md-sys-color-on-surface);
+}
+
+.omni-grid-card p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 1.4;
+}
+
+/* Custom Destroy / Session Execution Action Button */
+.omni-footer-actions {
+    margin-top: 2rem;
+}
+
+.omni-logout-trigger-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+    border: 1px solid transparent;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.omni-logout-trigger-btn:hover {
+    background-color: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
+    box-shadow: 0 4px 12px rgba(179, 38, 30, 0.2);
+}
+
+/* Motion Sequences */
+@keyframes omniFadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes omniPopUp {
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
 }

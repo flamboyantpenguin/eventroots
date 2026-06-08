@@ -1,0 +1,710 @@
+import { useState } from "react";
+import { usePanelDir } from "../../hooks/admin/usePanelDir";
+import {
+  ChevronLeftOutlined,
+  ChevronRightOutlined,
+  CloseOutlined,
+  DeleteOutlineOutlined,
+  EditOutlined,
+  FilterListOutlined,
+  LogoutOutlined,
+  SaveOutlined,
+  StorefrontOutlined,
+  SwapVertOutlined,
+} from "@mui/icons-material";
+import { useEffect } from "react";
+import { useAuth } from "../../hooks/useAuth";
+
+const unique = (arr, key) => [...new Set(arr.map((x) => x[key]))];
+const sortArr = (arr, key) => {
+  const [field, dir] = key.split("-");
+  return [...arr].sort((a, b) => {
+    const c = (a[field] || "").localeCompare(b[field] || "");
+    return dir === "asc" ? c : -c;
+  });
+};
+
+function Pagination({ total, page, size, onChange, onSize }) {
+  const pages = Math.max(1, Math.ceil(total / size));
+  const nums = [];
+  if (pages <= 7) {
+    for (let i = 1; i <= pages; i++) nums.push(i);
+  } else {
+    nums.push(1);
+    if (page > 3) nums.push("...");
+    for (let i = Math.max(2, page - 1); i <= Math.min(pages - 1, page + 1); i++)
+      nums.push(i);
+    if (page < pages - 2) nums.push("...");
+    nums.push(pages);
+  }
+  const start = total === 0 ? 0 : (page - 1) * size + 1;
+  return (
+    <div className="pagination-bar">
+      <span className="pg-info">
+        {total === 0
+          ? "No results"
+          : `${start}–${Math.min(page * size, total)} of ${total}`}
+      </span>
+      <div className="pg-controls">
+        <button
+          className="pg-btn"
+          onClick={() => onChange(page - 1)}
+          disabled={page === 1}
+        >
+          <ChevronLeftOutlined sx={{ fontSize: 16 }} />
+        </button>
+        {nums.map((n, i) =>
+          n === "..." ? (
+            <span key={i} className="pg-dot">
+              …
+            </span>
+          ) : (
+            <button
+              key={n}
+              className={`pg-btn${n === page ? " active" : ""}`}
+              onClick={() => onChange(n)}
+            >
+              {n}
+            </button>
+          ),
+        )}
+        <button
+          className="pg-btn"
+          onClick={() => onChange(page + 1)}
+          disabled={page === pages}
+        >
+          <ChevronRightOutlined sx={{ fontSize: 16 }} />
+        </button>
+      </div>
+      <div className="pg-size">
+        <label>Rows</label>
+        <select value={size} onChange={(e) => onSize(Number(e.target.value))}>
+          {[10, 50, 100].map((n) => (
+            <option key={n}>{n}</option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function Modal({ title, onClose, onSave, saveLabel, danger, children }) {
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-head">
+          <h2>{title}</h2>
+          <button className="close-btn" onClick={onClose}>
+            <CloseOutlined fontSize="small" />
+          </button>
+        </div>
+        <div className="modal-body">{children}</div>
+        <div className="modal-foot">
+          <button className="btn-cancel" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className={danger ? "btn-delete" : "btn-save"}
+            onClick={onSave}
+          >
+            {saveLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  name,
+  value,
+  onChange,
+  placeholder,
+  error,
+  select,
+  options,
+}) {
+  return (
+    <div className="field">
+      <label>{label}</label>
+      {select ? (
+        <select name={name} value={value || ""} onChange={onChange}>
+          {options.map(([v, t]) => (
+            <option key={v} value={v}>
+              {t}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          name={name}
+          value={value || ""}
+          onChange={onChange}
+          placeholder={placeholder}
+        />
+      )}
+      {error && <span className="err">{error}</span>}
+    </div>
+  );
+}
+
+const Panel = () => {
+  const {
+    users,
+    vendors,
+    isUsersLoading,
+    usersError,
+    loadUsers,
+    loadVendors,
+    saveItem,
+  } = usePanelDir();
+
+  const [tab, setTab] = useState("users");
+
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      window.location.href = "/admin";
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === "users" && users.length === 0) {
+      loadUsers();
+    } else if (tab === "vendors" && vendors.length === 0) {
+      loadVendors();
+    }
+  }, [tab, loadUsers, loadVendors, users.length, vendors.length]);
+
+  const [uSearch, setUSearch] = useState("");
+  const [uStatus, setUStatus] = useState("all");
+  const [uEvent, setUEvent] = useState("all");
+  const [uSort, setUSort] = useState("name-asc");
+  const [showUF, setShowUF] = useState(false);
+  const [vSearch, setVSearch] = useState("");
+  const [vCat, setVCat] = useState("all");
+  const [vLoc, setVLoc] = useState("all");
+  const [vSort, setVSort] = useState("name-asc");
+  const [showVF, setShowVF] = useState(false);
+
+  const [uPage, setUPage] = useState(1);
+  const [uSize, setUSize] = useState(10);
+  const [vPage, setVPage] = useState(1);
+  const [vSize, setVSize] = useState(10);
+
+  const [edit, setEdit] = useState(null);
+  const [add, setAdd] = useState(null);
+  const [del, setDel] = useState(null);
+  const [form, setForm] = useState({});
+  const [errors, setErrors] = useState({});
+  const onForm = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "contact") {
+      setForm((prev) => ({
+        ...prev,
+        data: { ...prev.data, contact_email: value },
+      }));
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+    setErrors({ ...errors, [name]: "" });
+  };
+
+  const filteredUsers = sortArr(
+    (users || []).filter((u) => {
+      const q = uSearch.toLowerCase();
+      return (
+        (u.name?.toLowerCase().includes(q) ||
+          u.email?.toLowerCase().includes(q)) &&
+        (uStatus === "all" || u.status === uStatus) &&
+        (uEvent === "all" || u.event === uEvent)
+      );
+    }),
+    uSort,
+  );
+
+  const filteredVendors = sortArr(
+    (vendors || []).filter((v) => {
+      const q = vSearch.toLowerCase();
+      return (
+        (v.name?.toLowerCase().includes(q) ||
+          v.location?.toLowerCase().includes(q)) &&
+        (vCat === "all" || v.category === vCat) &&
+        (vLoc === "all" || v.location === vLoc)
+      );
+    }),
+    vSort,
+  );
+
+  const uRows = filteredUsers.slice((uPage - 1) * uSize, uPage * uSize);
+  const vRows = filteredVendors.slice((vPage - 1) * vSize, vPage * vSize);
+
+  const saveEdit = () => {};
+
+  const saveAdd = async () => {
+    if (!form.name) {
+      setErrors({ name: "Name is required" });
+      return;
+    }
+
+    try {
+      await saveItem(add, form);
+      setAdd(null); // Close modal only on success
+    } catch (err) {
+      console.error("Component - Submission failed:", err);
+    }
+  };
+
+  const confirmDel = () => {};
+
+  const openEdit = (type, item) => {
+    setEdit({ type, item });
+    setForm({
+      ...item,
+      data: item.data || { contact_email: "" },
+    });
+    setErrors({});
+  };
+
+  const openAdd = (type) => {
+    setAdd(type);
+    setForm(
+      type === "user" ? { status: "active" } : { data: { contact_email: "" } }, // Initialize with empty nested object
+    );
+    setErrors({});
+  };
+
+  const vendorFields = (
+    <>
+      <Field
+        label="Name"
+        name="name"
+        value={form.name}
+        onChange={onForm}
+        placeholder="Vendor name"
+        error={errors.name}
+      />
+      <Field
+        label="Category"
+        name="category"
+        value={form.category}
+        onChange={onForm}
+        placeholder="e.g. Catering"
+        error={errors.category}
+      />
+      <Field
+        label="Location"
+        name="location"
+        value={form.location}
+        onChange={onForm}
+        placeholder="City"
+        error={errors.location}
+      />
+      <Field
+        label="Contact"
+        name="contact"
+        value={form.data?.contact_email || ""}
+        onChange={onForm}
+        placeholder="email"
+        error={errors.contact}
+      />
+    </>
+  );
+  return (
+    <>
+      <div className="admin">
+        <aside className="sidebar">
+          <h2>EventRoots</h2>
+          <ul>
+            {[
+              ["users", "Manage Users"],
+              ["vendors", "Manage Vendors"],
+            ].map(([key, label]) => (
+              <li
+                key={key}
+                className={tab === key ? "active" : ""}
+                onClick={() => setTab(key)}
+              >
+                {label}
+              </li>
+            ))}
+          </ul>
+          <div className="logout" onClick={handleLogout}>
+            <LogoutOutlined fontSize="small" /> Logout
+          </div>
+        </aside>
+
+        <main className="main">
+          {tab === "users" && (
+            <>
+              <div className="topbar">
+                <h1>Manage Users</h1>
+                <div className="controls">
+                  <input
+                    className="search"
+                    placeholder="Search users…"
+                    value={uSearch}
+                    onChange={(e) => {
+                      setUSearch(e.target.value);
+                      setUPage(1);
+                    }}
+                  />
+                  <button
+                    className={`filter-btn${showUF ? " on" : ""}`}
+                    onClick={() => setShowUF(!showUF)}
+                  >
+                    <FilterListOutlined fontSize="small" /> Filter
+                  </button>
+                  <div className="sort-wrap">
+                    <SwapVertOutlined fontSize="small" />
+                    <select
+                      value={uSort}
+                      onChange={(e) => {
+                        setUSort(e.target.value);
+                        setUPage(1);
+                      }}
+                    >
+                      <option value="name-asc">Name A–Z</option>
+                      <option value="name-desc">Name Z–A</option>
+                      <option value="event-asc">Event A–Z</option>
+                      <option value="event-desc">Event Z–A</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {showUF && (
+                <div className="filter-bar">
+                  <div className="fg">
+                    <label>Status</label>
+                    <select
+                      value={uStatus}
+                      onChange={(e) => {
+                        setUStatus(e.target.value);
+                        setUPage(1);
+                      }}
+                    >
+                      <option value="all">All</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                  <div className="fg">
+                    <label>Event</label>
+                    <select
+                      value={uEvent}
+                      onChange={(e) => {
+                        setUEvent(e.target.value);
+                        setUPage(1);
+                      }}
+                    >
+                      <option value="all">All</option>
+                      {unique(users, "event").map((e) => (
+                        <option key={e}>{e}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    className="clear-btn"
+                    onClick={() => {
+                      setUStatus("all");
+                      setUEvent("all");
+                      setUPage(1);
+                    }}
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+
+              <div className="table-wrap">
+                <div className="tscroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Last Online</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {uRows.length ? (
+                        uRows.map((u) => (
+                          <tr key={u.id}>
+                            <td>{u.username}</td>
+                            <td>{u.email}</td>
+                            <td>{u.last_online}</td>
+                            <td>
+                              <span
+                                className={`badge ${u.is_active ? "active" : "inactive"}`}
+                              >
+                                {u.is_active ? "Active" : "Inactive"}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="actions">
+                                <button
+                                  className="ic edit"
+                                  onClick={() => openEdit("user", u)}
+                                >
+                                  <EditOutlined sx={{ fontSize: 16 }} />
+                                </button>
+                                <button
+                                  className="ic del"
+                                  onClick={() =>
+                                    setDel({ type: "user", id: u.id })
+                                  }
+                                >
+                                  <DeleteOutlineOutlined
+                                    sx={{ fontSize: 16 }}
+                                  />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" className="empty">
+                            No users found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="tfoot">
+                  <Pagination
+                    total={filteredUsers.length}
+                    page={uPage}
+                    size={uSize}
+                    onChange={(p) => setUPage(p)}
+                    onSize={(s) => {
+                      setUSize(s);
+                      setUPage(1);
+                    }}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === "vendors" && (
+            <>
+              <div className="topbar">
+                <h1>Manage Vendors</h1>
+                <div className="controls">
+                  <input
+                    className="search"
+                    placeholder="Search vendors…"
+                    value={vSearch}
+                    onChange={(e) => {
+                      setVSearch(e.target.value);
+                      setVPage(1);
+                    }}
+                  />
+                  <button
+                    className={`filter-btn${showVF ? " on" : ""}`}
+                    onClick={() => setShowVF(!showVF)}
+                  >
+                    <FilterListOutlined fontSize="small" /> Filter
+                  </button>
+                  <div className="sort-wrap">
+                    <SwapVertOutlined fontSize="small" />
+                    <select
+                      value={vSort}
+                      onChange={(e) => {
+                        setVSort(e.target.value);
+                        setVPage(1);
+                      }}
+                    >
+                      <option value="name-asc">Name A–Z</option>
+                      <option value="name-desc">Name Z–A</option>
+                      <option value="category-asc">Category A–Z</option>
+                      <option value="category-desc">Category Z–A</option>
+                      <option value="location-asc">Location A–Z</option>
+                      <option value="location-desc">Location Z–A</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {showVF && (
+                <div className="filter-bar">
+                  <div className="fg">
+                    <label>Category</label>
+                    <select
+                      value={vCat}
+                      onChange={(e) => {
+                        setVCat(e.target.value);
+                        setVPage(1);
+                      }}
+                    >
+                      <option value="all">All</option>
+                      {unique(vendors, "category").map((c) => (
+                        <option key={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="fg">
+                    <label>Location</label>
+                    <select
+                      value={vLoc}
+                      onChange={(e) => {
+                        setVLoc(e.target.value);
+                        setVPage(1);
+                      }}
+                    >
+                      <option value="all">All</option>
+                      {unique(vendors, "location").map((l) => (
+                        <option key={l}>{l}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    className="clear-btn"
+                    onClick={() => {
+                      setVCat("all");
+                      setVLoc("all");
+                      setVPage(1);
+                    }}
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
+
+              <div className="table-wrap">
+                <div className="tscroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Vendor</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Contact</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vRows.length ? (
+                        vRows.map((v) => (
+                          <tr key={v.id}>
+                            <td>{v.name}</td>
+                            <td>{v.category}</td>
+                            <td>{v.location}</td>
+                            <td>{v.data?.contact_email}</td>
+                            <td>
+                              <div className="actions">
+                                <button
+                                  className="ic edit"
+                                  onClick={() => openEdit("vendor", v)}
+                                >
+                                  <EditOutlined sx={{ fontSize: 16 }} />
+                                </button>
+                                <button
+                                  className="ic del"
+                                  onClick={() =>
+                                    setDel({ type: "vendor", id: v.id })
+                                  }
+                                >
+                                  <DeleteOutlineOutlined
+                                    sx={{ fontSize: 16 }}
+                                  />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" className="empty">
+                            No vendors found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="tfoot">
+                  <Pagination
+                    total={filteredVendors.length}
+                    page={vPage}
+                    size={vSize}
+                    onChange={(p) => setVPage(p)}
+                    onSize={(s) => {
+                      setVSize(s);
+                      setVPage(1);
+                    }}
+                  />
+                </div>
+              </div>
+              <button className="fab" onClick={() => openAdd("vendor")}>
+                <StorefrontOutlined sx={{ fontSize: 18 }} /> Add Vendor
+              </button>
+            </>
+          )}
+        </main>
+
+        {edit && (
+          <Modal
+            title={`Edit ${edit.type === "user" ? "User" : "Vendor"}`}
+            onClose={() => setEdit(null)}
+            onSave={saveEdit}
+            saveLabel={
+              <>
+                <SaveOutlined sx={{ fontSize: 14 }} /> Save
+              </>
+            }
+          >
+            {edit.type === "user" ? userFields : vendorFields}
+          </Modal>
+        )}
+
+        {add && (
+          <Modal
+            title={`Add ${add === "user" ? "User" : "Vendor"}`}
+            onClose={() => setAdd(null)}
+            onSave={saveAdd}
+            saveLabel={
+              <>
+                <SaveOutlined sx={{ fontSize: 14 }} /> Add
+              </>
+            }
+          >
+            {add === "user" ? userFields : vendorFields}
+          </Modal>
+        )}
+
+        {del && (
+          <Modal
+            title="Confirm Delete"
+            onClose={() => setDel(null)}
+            onSave={confirmDel}
+            saveLabel={
+              <>
+                <DeleteOutlineOutlined sx={{ fontSize: 14 }} /> Delete
+              </>
+            }
+            danger
+          >
+            <p className="del-msg">
+              Are you sure you want to delete this {del.type}? This cannot be
+              undone.
+            </p>
+          </Modal>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default Panel;

@@ -1,0 +1,314 @@
+.flowPanelContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background-color: var(--md-sys-color-surface, #ffffff);
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+}
+
+.flowSelectorHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background-color: var(--md-sys-color-surface-container, #f5f5f5);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+    flex-shrink: 0;
+}
+
+.flowHeaderMetaGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flowSelectorTitle {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.flowSandboxBadge {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background-color: var(--md-sys-color-tertiary-container, #eddffd);
+    color: var(--md-sys-color-on-tertiary-container, #21005d);
+    border: 1px dashed var(--md-sys-color-tertiary, #6750a4);
+}
+
+.flowSelectorCountBadge {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 8px;
+    background-color: var(--md-sys-color-primary-container, #e8def8);
+    color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.flowCategoryActionForm {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    background-color: var(--md-sys-color-surface, #fafafa);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #eeeeee);
+    flex-shrink: 0;
+}
+
+.flowM3Dropdown {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--md-sys-color-outline, #79747e);
+    background: var(--md-sys-color-surface-container-low, #fff);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    outline: none;
+    cursor: pointer;
+}
+
+.flowAddButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    background: var(--md-sys-color-primary, #6750a4);
+    color: var(--md-sys-color-on-primary, #ffffff);
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.flowAddButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.flowExhaustedNotice {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    text-align: center;
+    background-color: var(--md-sys-color-surface-container-low, #f5f5f5);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+}
+
+.flowSelectorBody {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    background-color: var(--md-sys-color-surface, #ffffff);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.flowEmptyWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    min-height: 160px;
+    opacity: 0.7;
+}
+
+.flowEmptyIcon {
+    font-size: 1.5rem !important;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.flowEmptyText {
+    font-size: 0.875rem;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    text-align: center;
+    font-style: italic;
+}
+
+.flowCategoryWrapperCard {
+    background-color: var(--md-sys-color-surface-container-low, #fafafa);
+    border: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.flowCategoryGroupHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 4px;
+}
+
+.flowCategoryIcon {
+    color: var(--md-sys-color-primary, #6750a4);
+    font-size: 1.25rem !important;
+}
+
+.flowCategoryGroupLabel {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.flowVendorRowsStack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-left: 4px;
+}
+
+.flowVendorItemRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--md-sys-color-surface-container-low, #ffffff);
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.flowVendorItemRow:hover {
+    border-color: var(--md-sys-color-outline, #79747e);
+    background-color: var(--md-sys-color-surface-container-high, #eaeaea);
+}
+
+.flowVendorItemName {
+    font-size: 0.9375rem;
+    font-weight: 400;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.flowVendorDeleteBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    padding: 6px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.flowVendorDeleteBtn:hover {
+    color: var(--md-sys-color-error, #ba1a1a);
+    background-color: var(--md-sys-color-error-container, #ffdad6);
+}
+
+.flowVendorAssignmentZone {
+    margin-top: 2px;
+}
+
+.flowM3InlineSelector {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--md-sys-color-outline-variant, #c4c6d0);
+    background: var(--md-sys-color-surface, #fff);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    outline: none;
+    cursor: pointer;
+}
+
+.flowCategoryGroupHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Ensures the close badge floats perfectly right */
+    width: 100%;
+    padding: 2px 4px;
+}
+
+.flowCategoryTitleGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flowCategoryDeleteBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    padding: 4px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.flowCategoryDeleteBtn:hover {
+    color: var(--md-sys-color-error, #ba1a1a);
+    background-color: var(--md-sys-color-error-container, #ffdad6);
+}
+
+.flowVendorAssignmentZone {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.flowCustomVendorInlineRow {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.flowM3InlineInput {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--md-sys-color-outline-variant, #c4c6d0);
+    background: var(--md-sys-color-surface, #fff);
+    font-size: 0.8rem;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    outline: none;
+}
+
+.flowM3InlineInput:focus {
+    border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.flowInlineAddBtn {
+    padding: 0 12px;
+    background: var(--md-sys-color-secondary-container, #e8def8);
+    color: var(--md-sys-color-on-secondary-container, #1d192b);
+    border: 1px solid var(--md-sys-color-outline-variant, #c4c6d0);
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.flowInlineAddBtn:hover:not(:disabled) {
+    background: var(--md-sys-color-primary, #6750a4);
+    color: #fff;
+}
+
+.flowInlineAddBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

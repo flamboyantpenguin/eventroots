@@ -1,24 +1,24 @@
-.dash-container {
-    padding: 24px;
+.dashContainer {
+    padding: 30px;
     min-height: 100vh;
     background: var(--md-sys-color-background);
     color: var(--md-sys-color-on-background);
     font-family: var(--main);
+    box-sizing: border-box;
 }
 
 /* HEADER */
-
-.dash-header {
+.dashHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
 }
 
-.header-welcome {
+.headerWelcome {
     display: flex;
     font-family: var(--heading);
-    font-size: 3rem;
+    font-size: 2rem;
     width: 100%;
     padding: 20px;
     justify-content: center;
@@ -31,13 +31,13 @@
     color: var(--md-sys-color-primary);
 }
 
-.header-actions {
+.headerActions {
     display: flex;
     align-items: center;
     gap: 16px;
 }
 
-.icon-btn {
+.iconBtn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -50,7 +50,7 @@
     transition: all 0.15s linear;
 }
 
-.icon-btn:hover {
+.iconBtn:hover {
     color: var(--md-sys-color-primary);
     border: 2px solid var(--md-sys-color-primary);
     background-color: var(--md-sys-color-on-primary);
@@ -67,73 +67,82 @@
     width: 42px;
     height: 42px;
     border-radius: 50%;
+    object-fit: cover;
 }
 
-/* SECTION */
-
-.section-card {
+/* SECTION STRUCTURES */
+.sectionCard {
     background: var(--md-sys-color-surface-container);
     border-radius: 20px;
     padding: 24px;
     margin-bottom: 24px;
 }
 
-.section-card h2 {
-    font-size: 2.4rem;
+.sectionCard h2 {
+    font-size: 1.4rem;
     font-family: var(--heading);
     margin-bottom: 20px;
 }
 
-/* EVENT TEMPLATES */
-
-.template-scroll {
+/* SCROLL LIST SCENARIOS */
+.templateScroll {
     display: flex;
     gap: 18px;
     overflow-x: auto;
     scrollbar-width: none;
+    will-change: scroll-position;
+    user-select: none;
+    padding-bottom: 4px;
 }
 
-.template-scroll::-webkit-scrollbar {
+.templateScroll::-webkit-scrollbar {
     display: none;
 }
 
-.template-card {
+.templateCard {
     min-width: 280px;
     background: var(--md-sys-color-surface-container-high);
     border-radius: 18px;
     overflow: hidden;
     flex-shrink: 0;
+    transition: transform 0.2s ease;
 }
 
-.template-card img {
+/* Dynamic modifiers for active drag tracking state */
+.draggingActive .templateCard {
+    cursor: grabbing;
+}
+
+.templateCard img {
     width: 100%;
     height: 180px;
     object-fit: cover;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
-.template-content {
+.templateContent {
     padding: 16px;
 }
 
-.template-content h3 {
+.templateContent h3 {
     margin-bottom: 8px;
     font-size: 2rem;
 }
 
-.template-content p {
+.templateContent p {
     color: var(--md-sys-color-on-surface-variant);
-    font-size: 1.5rem;
+    font-size: 1rem;
 }
 
-/* EVENTS GRID */
-
-.events-grid {
+/* CONTAINER TILES */
+.eventsGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 20px;
 }
 
-.create-card {
+.createCard {
     min-height: 280px;
     border: 2px dashed var(--md-sys-color-outline);
     border-radius: 18px;
@@ -142,7 +151,12 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    font-size: 1.5rem;
+    font-size: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.createCard:hover {
+    background-color: var(--md-sys-color-surface-container-highest);
 }
 
 .plus {
@@ -158,32 +172,34 @@
     margin-bottom: 12px;
 }
 
-.event-card {
+.eventCard {
     background: var(--md-sys-color-surface-container-high);
     border-radius: 18px;
     overflow: hidden;
 }
 
-.event-card img {
+.eventCard img {
     width: 100%;
     height: 180px;
     object-fit: cover;
 }
 
-.event-content {
+.eventContent {
     padding: 16px;
     font-size: 1.3rem;
 }
 
-.event-content h3 {
+.eventContent h3 {
     margin: 10px 0;
-    font-size: 2rem;
+    font-size: 1.5rem;
 }
 
+/* BADGES & RUNTIME METRICS */
 .badge {
     padding: 6px 12px;
     border-radius: 999px;
     font-size: 1.2rem;
+    display: inline-block;
 }
 
 .upcoming {
@@ -201,14 +217,15 @@
     color: var(--md-sys-color-on-primary-container);
 }
 
-.progress-bar {
+.progressBar {
     height: 8px;
     background: var(--md-sys-color-surface-variant);
     border-radius: 999px;
     margin-top: 12px;
+    overflow: hidden;
 }
 
-.progress-fill {
+.progressFill {
     height: 100%;
     border-radius: 999px;
     background: var(--md-sys-color-primary);

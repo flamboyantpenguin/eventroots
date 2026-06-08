@@ -11,9 +11,7 @@ class ThinkRequest(BaseModel):
     )
     message: str = Field(
         description="The natural language command or message from the user workspace interface.",
-        examples=[
-            "Can you change the description text and clear out the current flow canvas?"
-        ],
+        examples=["Can you change the event type to wedding and add photography step?"],
     )
 
 
@@ -23,58 +21,70 @@ class ThinkResponse(BaseModel):
     )
     updated_state: Optional[Dict[str, Any]] = Field(
         default=None,
-        description="The complete, updated JSON representation of the event.",
+        description="The complete, updated JSON representation of the event entity row.",
     )
 
 
-class EventDescStructure(BaseModel):
-    budget: Optional[int] = Field(
-        default=None, description="The total event financial threshold limit."
+class EventDataStructure(BaseModel):
+    type: Optional[str] = Field(
+        default="", description="Event type descriptor (e.g. birthday, wedding)."
     )
     theme: Optional[str] = Field(
-        default=None, description="The aesthetic layout style profile."
+        default="", description="The aesthetic visual design profile style."
+    )
+    budget: Optional[int] = Field(
+        default=0, description="Total financial allocation value."
+    )
+    guest_count: Optional[int] = Field(
+        default=0, description="Total absolute guest headcount."
+    )
+    # 💡 Added to track progress metrics matching frontend UI
+    progress_percentage: Optional[int] = Field(
+        default=0, description="The execution progress bar scale from 0 to 100."
+    )
+    # 💡 Added to capture tracking status lifecycle states
+    status: Optional[str] = Field(
+        default="Planning",
+        description="Current lifecycle stage tracking token (e.g., Planning, Active).",
+    )
+    startDateTime: Optional[str] = Field(
+        default="", description="ISO local timestamp layout for start tracking."
+    )
+    endDateTime: Optional[str] = Field(
+        default="", description="ISO local timestamp layout for end tracking."
+    )
+    venueName: Optional[str] = Field(
+        default="", description="Descriptive venue facility name."
+    )
+    venueAddress: Optional[str] = Field(
+        default="", description="Physical location address mapping."
+    )
+    currency: Optional[str] = Field(
+        default="INR", description="Currency designator string token (USD, INR)."
     )
     notes: Optional[str] = Field(
-        default=None, description="Additional contextual metadata instructions."
+        default="", description="Logistical descriptions and text data."
     )
 
-
-# 💡 Universal key-value block to represent dynamic JSON properties without using Dict
-class KeyValueStructure(BaseModel):
-    key: str = Field(description="The property attribute name tag.")
-    value: str = Field(
-        description="The value string associated with the attribute property."
-    )
-
-
-class FlowNodeStructure(BaseModel):
-    id: str = Field(description="Unique node element ID key indicator.")
-    type: str = Field(
-        description="The functional UI component variant mapping classification."
-    )
-    # 💡 Completely clean representation that avoids the forbidden additionalProperties flag
-    data: Optional[List[KeyValueStructure]] = Field(
-        default=None, description="Dynamic parameters assigned to this specific node."
-    )
-
-
-class EventFlowStructure(BaseModel):
-    nodes: Optional[List[FlowNodeStructure]] = Field(
-        default=None, description="Active array collection of canvas viewport nodes."
-    )
+    model_config = {"extra": "allow"}
 
 
 class ThinkStructure(BaseModel):
-    content: str = Field(description="Conversational text response to the user.")
+    content: str = Field(
+        description="Conversational calm text response to the user explaining structural modifications."
+    )
     update_detected: bool = Field(
-        description="Set to true if the user asked to change, add, or delete something in the event layout."
+        description="Set to true if the user explicitly asked to alter, append, or purge workspace elements."
     )
     new_title: Optional[str] = Field(
-        default=None, description="Updated event title text if changed."
+        default=None, description="Updated master event title text string if modified."
     )
-    new_data: Optional[EventDescStructure] = Field(
-        default=None, description="Complete updated 'desc' dataset object."
+    new_data: Optional[EventDataStructure] = Field(
+        default=None,
+        description="The full updated dictionary payload for the event parameters object.",
     )
-    new_flow: Optional[EventFlowStructure] = Field(
-        default=None, description="Complete updated 'flow' canvas blueprint object."
+    # 💡 Perfectly matches your UI Flow.jsx: Dictionary mapping Category IDs -> List of Vendor IDs
+    new_flow: Optional[Dict[str, List[str]]] = Field(
+        default=None,
+        description="The full updated workflow layout tracking category allocations. Example: {'photography': ['vendor-uuid']}",
     )

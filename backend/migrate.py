@@ -8,10 +8,11 @@ load_dotenv()
 
 DB_NAME = "erdb0"
 
-# Build connection string from environment parameters or fallback to local defaults
 DB_URL = os.getenv(
     "DATABASE_URL", f"postgresql://postgres:postgres@localhost:5432/{DB_NAME}"
 )
+
+SHOULD_SEED = os.getenv("DEBUG_SEED_DATA", "false").lower() in ("true", "1")
 
 MIGRATION_SQL = """
 -- Enable UUID extension for high-performance non-sequential keys
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     hashed_password VARCHAR(255) NOT NULL,
     username VARCHAR(50),
+    pfp VARCHAR(2048),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -55,7 +57,7 @@ CREATE TABLE IF NOT EXISTS event_templates (
 -- CATEGORY REPOSITORY
 CREATE TABLE IF NOT EXISTS category (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -63,8 +65,8 @@ CREATE TABLE IF NOT EXISTS category (
 -- VENDORS REPOSITORY
 CREATE TABLE IF NOT EXISTS vendors (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    category_id UUID NOT NULL REFERENCES category(id) ON DELETE CASCADE, -- 💡 Fixed type mismatch and column naming
+    name VARCHAR(255) UNIQUE NOT NULL,
+    category_id UUID NOT NULL REFERENCES category(id) ON DELETE CASCADE,
     location VARCHAR(255) NOT NULL,
     data JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -74,10 +76,9 @@ CREATE TABLE IF NOT EXISTS vendors (
 -- SESSIONS REPOSITORY (Auth Token State)
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    session_token VARCHAR(255) UNIQUE NOT NULL, -- 💡 Replaced hashed_password with a true unique session token string
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL, -- 💡 Added expiration handling for secure sessions
-    is_admin BOOLEAN DEFAULT FALSE,
+    user_id UUID,
+    session_token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -85,8 +86,9 @@ CREATE TABLE IF NOT EXISTS sessions (
 -- ADMIN REPOSITORY
 CREATE TABLE IF NOT EXISTS admin (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    hashed_password VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
+    hashed_password VARCHAR(255) NOT NULL,
+    pfp VARCHAR(2048),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -95,10 +97,8 @@ CREATE TABLE IF NOT EXISTS admin (
 CREATE OR REPLACE FUNCTION protect_created_at_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- If someone tries to overwrite created_at on insertion, reset it to server time
     IF TG_OP = 'INSERT' THEN
         NEW.created_at := CURRENT_TIMESTAMP;
-    -- If someone updates a row, lock down created_at so it stays matching the original record date
     ELSIF TG_OP = 'UPDATE' THEN
         NEW.created_at := OLD.created_at;
     END IF;
@@ -106,16 +106,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- 💡 FIXED: Drop existing triggers before creation instead of invalid 'CREATE OR REPLACE'
+DROP TRIGGER IF EXISTS shield_events_created_at ON events;
 CREATE TRIGGER shield_events_created_at
     BEFORE INSERT OR UPDATE ON events
     FOR EACH ROW
     EXECUTE FUNCTION protect_created_at_timestamp();
 
+DROP TRIGGER IF EXISTS shield_vendors_created_at ON vendors;
 CREATE TRIGGER shield_vendors_created_at
     BEFORE INSERT OR UPDATE ON vendors
     FOR EACH ROW
     EXECUTE FUNCTION protect_created_at_timestamp();
 
+DROP TRIGGER IF EXISTS shield_users_created_at ON users;
 CREATE TRIGGER shield_users_created_at
     BEFORE INSERT OR UPDATE ON users
     FOR EACH ROW
@@ -129,11 +133,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_events_modtime ON events;
 CREATE TRIGGER update_events_modtime
     BEFORE UPDATE ON events
     FOR EACH ROW
     EXECUTE FUNCTION update_modified_timestamp_column();
 
+DROP TRIGGER IF EXISTS update_vendors_modtime ON vendors;
 CREATE TRIGGER update_vendors_modtime
     BEFORE UPDATE ON vendors
     FOR EACH ROW
@@ -146,16 +152,22 @@ CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(session_token);
 CREATE INDEX IF NOT EXISTS idx_events_data_gin ON events USING gin (data);
 CREATE INDEX IF NOT EXISTS idx_events_flow_gin ON events USING gin (flow);
 """
-
 SEED_SQL = """
+-- SEED MASTER ADMINISTRATIVE PRIVILEGES
+INSERT INTO admin (email, hashed_password) VALUES
+('admin@eventroots.org', '$2b$12$RGZN0jIYdjY5YVgnDokt.uvzbFVJji7Wi9qZI0hJo3iXvysNspZse')
+ON CONFLICT (email) DO NOTHING;
+
+-- SEED CATEGORY REPOSITORY
 INSERT INTO category (name) VALUES
 ('Photography'),
 ('Videography'),
 ('Catering'),
 ('Floral & Decor'),
 ('Sound & Lighting')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (name) DO NOTHING;
 
+-- SEED VENDORS REPOSITORY
 INSERT INTO vendors (name, category_id, location, data) VALUES
 (
     'Pixel Perfect Studios',
@@ -168,9 +180,7 @@ INSERT INTO vendors (name, category_id, location, data) VALUES
     (SELECT id FROM category WHERE name = 'Photography' LIMIT 1),
     'Brooklyn, NY',
     '{"rating": 4.7, "contact_email": "info@lumierecaptures.com", "price_tier": "$$", "features": ["Fine Art Style", "Engagement Session Included"]}'::jsonb
-);
-
-INSERT INTO vendors (name, category_id, location, data) VALUES
+),
 (
     'CineFrame Media Works',
     (SELECT id FROM category WHERE name = 'Videography' LIMIT 1),
@@ -178,52 +188,190 @@ INSERT INTO vendors (name, category_id, location, data) VALUES
     '{"rating": 4.8, "contact_email": "bookings@cineframe.media", "price_tier": "$$$$", "features": ["4K Cinematic Film", "Same-Day Edit Teaser"]}'::jsonb
 ),
 (
-    'Velvet Motion Films',
-    (SELECT id FROM category WHERE name = 'Videography' LIMIT 1),
-    'Austin, TX',
-    '{"rating": 4.6, "contact_email": "velvetmotionfilms@gmail.com", "price_tier": "$$", "features": ["Documentary Style", "Raw Footage Delivery"]}'::jsonb
-);
-
-INSERT INTO vendors (name, category_id, location, data) VALUES
-(
     'Artisanal Bites Catering',
     (SELECT id FROM category WHERE name = 'Catering' LIMIT 1),
     'Manhattan, NY',
-    '{"rating": 5.0, "contact_email": "events@artisanalbites.com", "price_tier": "$$$", "cuisines": ["Modern American", "French Fusion"], "dietary_options": ["Vegan", "Gluten-Free"]}'::jsonb
-);
+    '{"rating": 5.0, "contact_email": "events@artisanalbites.com", "price_tier": "$$$", "cuisines": ["Modern American", "French Fusion"]}'::jsonb
+)
+ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO vendors (name, category_id, location, data) VALUES
-(
-    'Blossom & Vine Floral Design',
-    (SELECT id FROM category WHERE name = 'Floral & Decor' LIMIT 1),
-    'Seattle, WA',
-    '{"rating": 4.8, "contact_email": "design@blossomvine.com", "price_tier": "$$", "specialties": ["Boho Chic", "Minimalist Installations"]}'::jsonb
-);
 
-INSERT INTO vendors (name, category_id, location, data) VALUES
-(
-    'Aura Sonic Productions',
-    (SELECT id FROM category WHERE name = 'Sound & Lighting' LIMIT 1),
-    'Miami, FL',
-    '{"rating": 4.9, "contact_email": "support@aurasonicevents.com", "price_tier": "$$$", "equipment": ["L-Acoustics Sound Array", "Intelligent Moving Head Lights"]}'::jsonb
-);
+-- 1. CONFERENCE TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Tech Summit & Networking Conference',
+    '/static/uploads/templates/conference.avif',
+    '{
+        "type": "Conference",
+        "theme": "Modern Corporate",
+        "budget": 12000,
+        "guest_count": 300,
+        "progress_percentage": 0,
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
+    }'::jsonb,
+    '{}'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Tech Summit & Networking Conference');
+
+-- 2. CONCERT TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Live Music & Indie Rock Concert',
+    '/static/uploads/templates/concert.avif',
+    '{
+        "type": "Concert",
+        "theme": "Neon Retro",
+        "budget": 25000,
+        "guest_count": 500,
+        "progress_percentage": 0,
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
+    }'::jsonb,
+    '{}'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Live Music & Indie Rock Concert');
+
+-- 3. WEDDING TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Rustic Romantic Grand Wedding',
+    '/static/uploads/templates/wedding.avif',
+    '{
+        "type": "Wedding",
+        "theme": "Rustic Romantic",
+        "budget": 35000,
+        "guest_count": 150,
+        "progress_percentage": 0,
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
+    }'::jsonb,
+    '{}'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Rustic Romantic Grand Wedding');
+
+-- 4. FUNERAL TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Memorial & Celebration of Life',
+    '/static/uploads/templates/funeral.avif',
+    '{
+        "type": "Funeral",
+        "theme": "Serene Traditional",
+        "budget": 8000,
+        "guest_count": 80,
+        "progress_percentage": 0,
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
+    }'::jsonb,
+    '{}'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Memorial & Celebration of Life');
+
+-- 5. ANNIVERSARY TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Silver Milestone Anniversary Gala',
+    '/static/uploads/templates/anniversary.avif',
+    '{
+        "type": "Anniversary",
+        "theme": "Silver & Elegant White",
+        "budget": 15000,
+        "guest_count": 100,
+        "progress_percentage": 0,
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
+    }'::jsonb,
+    '{}'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Silver Milestone Anniversary Gala');
+
+-- 6. BIRTHDAY TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Milestone Birthday Bash',
+    '/static/uploads/templates/birthday.avif',
+    '{
+        "type": "Birthday",
+        "theme": "Vibrant Casual",
+        "budget": 3000,
+        "guest_count": 50,
+        "progress_percentage": 0,
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
+    }'::jsonb,
+    '{}'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Milestone Birthday Bash');
+
+-- 7. LAN PARTY TEMPLATE
+INSERT INTO event_templates (title, banner_url, data, flow)
+SELECT
+    'Competitive Esports & Gaming LAN',
+    '/static/uploads/templates/lanparty.avif',
+    '{
+        "type": "LAN Party",
+        "theme": "Cyberpunk RGB",
+        "budget": 2000,
+        "guest_count": 24,
+        "progress_percentage": 0,
+        "status": "Planning",
+        "startDateTime": "",
+        "endDateTime": "",
+        "venueName": "",
+        "venueAddress": "",
+        "currency": "INR",
+        "notes": ""
+    }'::jsonb,
+    '{}'::jsonb
+WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Competitive Esports & Gaming LAN');
 """
 
 
 def run_migrations():
-    print("🚀 Initiating Workspace Database Migration Engine...")
+    print("⚙️🌱🚀")
     try:
-        # Establish synchronous transaction pipeline context to Postgres
         with psycopg.connect(DB_URL) as conn:
             with conn.cursor() as cur:
-                print("Connecting to PostgreSQL context instance...")
+                print("⚙️🟡")
+
                 cur.execute(MIGRATION_SQL)
-                cur.execute(SEED_SQL)
-                print("✅ Tables, Indices, and Extensions compiled successfully!")
+                print("⚙️🟢")
+
+                if SHOULD_SEED:
+                    print("🌱🟡")
+                    cur.execute(SEED_SQL)
+                    print("🌱🟢")
+                else:
+                    print("🌱🔵")
 
     except Exception as e:
         print(
-            f"❌ Migration Aborted: Pipeline execution bottleneck: {str(e)}",
+            f"🔴: {str(e)}",
             file=sys.stderr,
         )
         sys.exit(1)

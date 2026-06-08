@@ -1,9 +1,20 @@
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from pydantic.fields import Field
+from typing_extensions import Optional
 
 EventStatus = Literal["Upcoming", "Completed", "Planning"]
+
+
+class EventCreateFromTemplate(BaseModel):
+    template_id: UUID = Field(..., alias="template_id")
+    title: Optional[str] = None
+
+
+class EventCreateEmpty(BaseModel):
+    title: str | None = None
 
 
 class TemplateResponse(BaseModel):
@@ -29,10 +40,14 @@ class EventCreate(BaseModel):
 
 
 class EventUpdate(BaseModel):
+    id: Optional[str] = None  # Included because your payload has it
     title: str | None = None
-    status: EventStatus | None = None
-    progress: str | None = None
-    image: str | None = None
+    banner_url: str | None = None
+    data: dict | None = None
+    flow: dict | None = None
+
+    class Config:
+        extra = "forbid"
 
 
 class EventDelete(BaseModel):

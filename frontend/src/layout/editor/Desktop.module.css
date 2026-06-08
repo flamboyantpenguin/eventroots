@@ -1,0 +1,205 @@
+.layoutViewport {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100vh;
+    background-color: var(--md-sys-color-surface);
+}
+
+.logo {
+    padding: 6px;
+    border-radius: 10px;
+}
+
+.logo img {
+    width: 60px;
+}
+
+.logo:hover {
+    background-color: var(--md-sys-color-surface);
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between; /* Pushes title left, buttons right */
+    align-items: center; /* Vertically centers everything */
+    border-bottom: 1px solid var(--md-sys-color-outline-variant); /* Replaced heavy 2px surface-tint border with an elegant divider line */
+    padding: 12px 16px; /* Material 3 standard structural header padding */
+    background-color: var(--md-sys-color-surface-container);
+}
+
+.title {
+    font-family: var(--heading), sans-serif;
+    font-size: 2rem; /* M3 Headline Small: commands clean hierarchy without consuming massive screen space */
+    font-weight: 400;
+    color: var(--md-sys-color-on-surface);
+    margin: 0;
+}
+
+/* Group container for the buttons */
+.navActions {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Standardize tight action button tracking grids */
+}
+
+/* Base button styles */
+.navBtn {
+    padding: 8px 16px;
+    border-radius: 100px; /* Standard pill shape for M3 structural layout buttons */
+    font-size: 0.875rem; /* M3 Label Large */
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.actionsBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--md-sys-color-outline); /* Cleaned up 2px outline */
+    border-radius: 100px; /* Shifted to standard circle target */
+    height: 40px;
+    width: 40px;
+    padding: 0;
+    background-color: transparent;
+    color: var(--md-sys-color-primary);
+    transition: background-color 0.15s ease;
+}
+
+.actionsBtn:hover {
+    background-color: var(--md-sys-color-surface-container-high);
+}
+
+.profileBtn {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 100px;
+}
+
+.profileAvatar {
+    border: 1px solid var(--md-sys-color-outline-variant); /* 1px crisp separation */
+    border-radius: 100px; /* Fully circular target mask */
+    width: 50px; /* Balanced down slightly to sit clean next to a 40px target action wrapper */
+    height: 50px;
+    object-fit: cover;
+}
+
+/* The wrapper just needs to span the screen */
+.container {
+    flex: 1;
+    display: flex;
+    padding: 12px; /* Paces outer window edge away from screen frame boundaries */
+    gap: 0; /* Handled cleanly by structural handles */
+    width: 100vw;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--md-sys-color-surface-container-lowest);
+    color: var(--md-sys-color-on-surface);
+}
+
+/* Change this line inside your Desktop.module.css */
+.resizeHandle {
+    width: 8px;
+    background-color: transparent;
+    cursor: col-resize;
+    margin: 0 4px;
+    border-radius: 100px;
+    transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.resizeHandle:hover,
+.resizeHandle:active {
+    background-color: var(--md-sys-color-outline-variant);
+}
+
+/* Ensure individual panels take up vertical space internally */
+.leftPanel,
+.centerPanel,
+.rightPanel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background-color: var(--md-sys-color-surface);
+    overflow: hidden;
+    font-family: sans-serif;
+    border-radius: 24px; /* Aligned to our comprehensive 24px panel curve standard */
+    border: 1px solid var(--md-sys-color-outline-variant); /* Cleaned heavy 2px outline lines */
+}
+
+.centerPanel {
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.panelHeader {
+    padding: 12px 16px;
+    font-size: 0.875rem; /* M3 Title Small */
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.navLinks,
+.panelContent {
+    padding: 16px;
+}
+
+.placeholderText {
+    opacity: 0.7;
+    font-size: 0.875rem; /* M3 Body Small */
+    line-height: 1.5;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Standard Secondary Functional Buttons styling */
+.stBtn {
+    color: var(--md-sys-color-secondary);
+    background-color: transparent;
+}
+
+.longBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--md-sys-color-outline);
+    border-radius: 10px;
+    height: 40px;
+    width: fit-content;
+    padding: 6px;
+    gap: 5px;
+}
+
+.scnBtn {
+    color: rgba(var(--md-sys-color-tertiary), 0.38);
+    border-color: rgba(var(--md-sys-color-on-tertiary), 0.12);
+}
+
+/* Inverse styling fix: Material spec maps container colors inverse to text states */
+.deleteBtn {
+    border: none;
+    color: var(--md-sys-color-error);
+    background-color: var(--md-sys-color-error-container);
+}
+
+.deleteBtn:hover {
+    background-color: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
+}
+
+.secButton {
+    color: var(--md-sys-color-on-secondary);
+    background-color: var(--md-sys-color-secondary);
+}
+
+.secButton:hover {
+    background-color: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-secondary);
+    box-shadow: 0 0 0 1px var(--md-sys-color-outline);
+}

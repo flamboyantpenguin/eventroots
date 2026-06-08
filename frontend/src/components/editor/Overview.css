@@ -6,8 +6,8 @@
     background-color: var(--md-sys-color-surface);
     overflow: hidden;
     font-family: sans-serif;
-    border-radius: 20px; /* Aligns with your 20px chat border radius */
-    border: 2px solid var(--md-sys-color-outline-variant);
+    border-radius: 24px; /* Matches updated 24px M3 chat component chassis */
+    border: 1px solid var(--md-sys-color-outline-variant);
 }
 
 /* Material Header Surface Variant Block Layout */
@@ -15,8 +15,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
-    background-color: var(--md-sys-color-surface-dim);
+    padding: 12px 16px;
+    background-color: var(--md-sys-color-surface-container);
     border-bottom: 1px solid var(--md-sys-color-outline-variant);
     flex-shrink: 0;
 }
@@ -24,26 +24,26 @@
 .headerLeading {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .inspectorIcon {
     color: var(--md-sys-color-primary);
-    font-size: x-large !important;
+    font-size: 1.25rem; /* Replaced x-large override with precise structural scale */
 }
 
 .inspectorTitle {
-    font-size: 2rem;
-    font-weight: 600;
-    color: var(--md-sys-color-on-surface-variant);
-    letter-spacing: 0.03em;
+    font-size: 1.125rem; /* M3 Title Large: crisp, premium, legible */
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+    letter-spacing: 0;
 }
 
 .headerBadge {
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.6875rem; /* M3 Label Small */
+    font-weight: 600;
     padding: 2px 8px;
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: var(--md-sys-color-primary-container);
     color: var(--md-sys-color-on-primary-container);
 }
@@ -65,7 +65,7 @@
 }
 
 .emptyInspectorText {
-    font-size: 1.5rem;
+    font-size: 0.875rem; /* M3 Body Small */
     color: var(--md-sys-color-on-surface-variant);
     opacity: 0.7;
     text-align: center;
@@ -83,8 +83,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background-color: var(--md-sys-color-surface-container);
-    padding: 8px 12px;
+    background-color: var(--md-sys-color-surface-container-low);
+    padding: 6px 12px;
     border-radius: 12px; /* Smooth M3 container curves */
     border: 1px solid var(--md-sys-color-outline-variant);
     transition:
@@ -94,16 +94,16 @@
 
 .kvRow:hover {
     border-color: var(--md-sys-color-outline);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--md-sys-elevation-level1);
 }
 
 /* Monospace Left Identifiers label sizing blocks */
 .keyLabel {
     flex: 0 0 35%;
-    font-size: 0.815rem;
+    font-size: 0.75rem; /* M3 Body Small monospace variant */
     font-family: monospace;
     font-weight: 600;
-    color: var(--md-sys-color-on-surface);
+    color: var(--md-sys-color-on-surface-variant);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -112,19 +112,18 @@
 /* Fluid Native Input Area Box Fields */
 .valueInput {
     flex: 1;
-    font-size: 0.875rem;
-    padding: 8px 12px;
+    font-size: 0.875rem; /* M3 Body Medium */
+    padding: 6px 12px;
     border: 1px solid var(--md-sys-color-outline);
     border-radius: 8px;
     outline: none;
-    background-color: var(--md-sys-color-surface-container-low);
+    background-color: var(--md-sys-color-surface-container-lowest);
     color: var(--md-sys-color-on-surface);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .valueInput:focus {
     border-color: var(--md-sys-color-primary);
-    background-color: var(--md-sys-color-surface);
     box-shadow: 0 0 0 1px var(--md-sys-color-primary);
 }
 
@@ -139,7 +138,7 @@
     padding: 6px;
     border-radius: 100px; /* Perfect circular hover targets */
     cursor: pointer;
-    transition: all 0.15s linear;
+    transition: all 0.15s ease;
 }
 
 .rowDeleteBtn:hover {
@@ -149,9 +148,9 @@
 
 /* Bottom Composer Form Controls Box Block Anchoring */
 .inspectorFooter {
-    padding: 14px;
+    padding: 12px 16px;
     border-top: 1px solid var(--md-sys-color-outline-variant);
-    background-color: var(--md-sys-color-surface-dim);
+    background-color: var(--md-sys-color-surface-container);
     flex-shrink: 0;
 }
 
@@ -162,10 +161,10 @@
 }
 
 .footerInput {
-    font-size: 1.2rem;
-    padding: 10px 14px;
+    font-size: 0.875rem; /* Balanced footer inline tracking */
+    padding: 8px 12px;
     border: 1px solid var(--md-sys-color-outline);
-    border-radius: 12px; /* Elegant M3 input caps */
+    border-radius: 8px; /* Standardize inner field component border radii */
     outline: none;
     background-color: var(--md-sys-color-surface-container-lowest);
     color: var(--md-sys-color-on-surface);
@@ -174,7 +173,6 @@
 
 .footerInput:focus {
     border-color: var(--md-sys-color-primary);
-    background-color: var(--md-sys-color-surface);
 }
 
 .keyInput {
@@ -195,61 +193,62 @@
     border: none;
     color: var(--md-sys-color-primary);
     cursor: pointer;
-    padding: 6px;
+    padding: 8px;
     border-radius: 100px;
     transition:
-        transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.15s cubic-bezier(0.2, 0, 0, 1),
         color 0.15s ease;
 }
 
 .addRowBtn:hover:not(:disabled) {
-    color: var(--md-sys-color-primary-inverse);
+    color: var(--md-sys-color-primary);
     background-color: var(--md-sys-color-primary-container);
-    transform: scale(1.08);
+    transform: scale(1.05);
 }
 
 .addRowBtn:disabled {
     color: var(--md-sys-color-on-surface);
-    opacity: 0.38; /* Exact material design disability standard spec coefficient */
+    opacity: 0.38;
     cursor: not-allowed;
 }
 
 /* Core Structural Layout Additions */
 .formSection {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .dynamicSection {
     margin-top: 16px;
     border-top: 1px dashed var(--md-sys-color-outline-variant);
-    padding-top: 20px;
+    padding-top: 16px;
 }
 
 /* Section Dividers Typography Labels */
 .sectionDivider {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
+    gap: 6px;
+    font-size: 0.875rem; /* M3 Title Small alternative */
+    font-weight: 500;
+    letter-spacing: 0.01em;
     color: var(--md-sys-color-primary);
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .sectionIcon {
-    font-size: large !important;
+    font-size: 1.125rem !important;
 }
 
 /* Material Form Grid Structural Matrix Setup */
 .m3FormGrid {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
 }
 
 .m3RowFields {
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     width: 100%;
 }
@@ -266,26 +265,26 @@
 }
 
 .m3Label {
-    font-size: 1.4rem !important;
-    font-weight: 600;
+    font-size: 0.875rem !important; /* M3 Label Large: clean, sharp metadata layout label */
+    font-weight: 500;
     color: var(--md-sys-color-on-surface-variant);
-    padding-left: 4px;
-    font: var(--heading);
+    padding-left: 2px;
+    font-family: var(--heading), sans-serif;
 }
 
 /* Material 3 Input Field Normalizations */
 .m3Input,
 .m3Select,
 .m3Textarea {
-    font-size: 1.5rem;
-    padding: 10px 12px;
+    font-size: 0.9375rem; /* M3 Body Medium: beautiful for general reading/writing loops */
+    padding: 8px 12px;
     border: 1px solid var(--md-sys-color-outline);
     border-radius: 8px;
     outline: none;
     background-color: var(--md-sys-color-surface-container-low);
     color: var(--md-sys-color-on-surface);
-    font-family: var(--main);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--main), sans-serif;
+    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .m3Input:focus,
@@ -299,22 +298,71 @@
 /* Date-Picker field inner icons alignments layout override */
 .datePickerInput {
     font-family: monospace;
-    font-size: 1.5rem;
+    font-size: 0.9375rem;
     cursor: pointer;
 }
 
 .m3Select {
     cursor: pointer;
     appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234b5563'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2349454F'%3e%3csvg scope='currentColor'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e%3c/svg%3e"); /* Updated fill hex token to match M3 on-surface-variant variant bases */
     background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 18px;
-    padding-right: 32px;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 36px;
 }
 
 .m3Textarea {
     resize: vertical;
-    min-height: 60px;
+    min-height: 72px;
     line-height: 1.4;
+}
+
+.flowFields {
+    overflow-wrap: break-word;
+}
+
+.bannerPreviewWrapper {
+    width: 100%;
+    height: 140px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border, #333);
+    position: relative;
+}
+
+.bannerScrimOverlay {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.1),
+        rgba(0, 0, 0, 0.5)
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(1px);
+}
+
+.bannerUploadBtn {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(18, 18, 18, 0.75) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+    padding: 8px 16px !important;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bannerUploadBtn:hover {
+    background: rgba(30, 30, 30, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    transform: translateY(-1px);
 }

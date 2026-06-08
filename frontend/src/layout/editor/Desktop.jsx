@@ -1,75 +1,164 @@
 import { useState } from "react";
+import { useEventContext } from "/src/hooks/event/useEventContext";
 import { Panel, Group, Separator } from "react-resizable-panels";
+import Logo from "/src/assets/favicon.svg";
 import { Chat } from "/src/components/editor/Chat";
-
-import { DeleteForeverOutlined, EditOutlined } from "@mui/icons-material";
-
-import "./Desktop.css";
+import {
+  ChatOutlined,
+  CheckOutlined,
+  DeleteForeverOutlined,
+  EditOutlined,
+  SaveOutlined,
+} from "@mui/icons-material";
 import { Overview } from "../../components/editor/Overview";
-import { EventProvider } from "../../context/EventProvider";
 import { Flow } from "../../components/editor/Flow";
+import styles from "./Desktop.module.css"; // 🛠️ Correctly binding styles object
+import { useAuth } from "../../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const Desktop = () => {
+  const { user, openProfile } = useAuth();
+  const { formData, saveEvent, updateFormData, contextLoading } =
+    useEventContext();
   const [isChatCollapsed, setIsChatCollapsed] = useState(false);
   const [isFlowCollapsed, setIsFlowCollapsed] = useState(false);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [transientTitle, setTransientTitle] = useState("");
+
+  const navigate = useNavigate();
+
+  const handleStartEditing = () => {
+    setTransientTitle(formData.title || "");
+    setIsEditing(true);
+  };
+
+  const handleSaveTitle = () => {
+    setIsEditing(false);
+    const cleanTitle = transientTitle.trim();
+
+    if (!cleanTitle || cleanTitle === formData.title) return;
+
+    updateFormData("title", null, cleanTitle);
+    saveEvent(formData.id, { title: cleanTitle });
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleSaveTitle();
+    if (e.key === "Escape") setIsEditing(false);
+  };
+
   return (
-    <>
-      <EventProvider>
-        <div className="navbar">
-          <div className="navActions">
-            <h1 className="title">Saranya's Wedding</h1>
-            <button className="actionsBtn stBtn">
-              <EditOutlined />
-            </button>
-            <button className="actionsBtn deleteBtn">
-              <DeleteForeverOutlined />
-            </button>
+    <div className={styles.layoutViewport}>
+      <div className={styles.navbar}>
+        <div className={styles.navActions}>
+          <div className={styles.logo} onClick={() => navigate("/dash")}>
+            <img src={Logo} alt="Go back home"></img>
           </div>
-          <div className="navActions">
-            <button className="profileBtn">
-              <img
-                src="https://i.pravatar.cc/100"
-                alt="Pr"
-                className="profileAvatar"
+          {/* Dynamic Title */}
+          {isEditing ? (
+            <div
+              className={styles.titleEditWrapper}
+              style={{ display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <input
+                type="text"
+                className="m3Input titleInput" // Keep global styles naked if they don't live in Desktop.module.css
+                value={transientTitle}
+                onChange={(e) => setTransientTitle(e.target.value)}
+                onBlur={handleSaveTitle}
+                onKeyDown={handleKeyDown}
+                autoFocus
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: "bold",
+                  padding: "4px 8px",
+                }}
               />
-            </button>
-          </div>
+              <button
+                className={`${styles.actionsBtn} ${styles.stBtn}`}
+                onClick={handleSaveTitle}
+              >
+                <CheckOutlined />
+              </button>
+            </div>
+          ) : (
+            <>
+              <h1 className={styles.title} onDoubleClick={handleStartEditing}>
+                {formData.title || "Untitled Workspace"}
+              </h1>
+              <button
+                className={`${styles.actionsBtn} ${styles.stBtn}`}
+                onClick={handleStartEditing}
+              >
+                <EditOutlined />
+              </button>
+            </>
+          )}
+          <button className={`${styles.actionsBtn} ${styles.deleteBtn}`}>
+            <DeleteForeverOutlined />
+          </button>
+
+          {/* Dynamic state modifiers combined smoothly using Template Literals */}
+          <button
+            className={`${styles.actionsBtn} ${styles.longBtn} ${isChatCollapsed ? styles.scnBtn : ""}`}
+            onClick={() => setIsChatCollapsed(!isChatCollapsed)}
+          >
+            <ChatOutlined />
+            Chat
+          </button>
         </div>
-        <div className="container">
-          <Group orientation="horizontal">
-            {/* PANEL 1: Left Menu */}
-            {!isFlowCollapsed && (
-              <>
-                <Panel defaultSize="33%" className="leftPanel" minSize="10%">
-                  <Flow onCollapse={() => setIsFlowCollapsed(true)} />
-                </Panel>
-              </>
-            )}
 
-            {/* 2. THE ACTUAL DRAG HANDLE */}
-            <Separator className="resize-handle" />
-
-            {/* PANEL 2: Main Content Area */}
-            {!isChatCollapsed && (
-              <>
-                <Panel defaultSize="23%" minSize="10%">
-                  <Chat onCollapse={() => setIsChatCollapsed(true)} />
-                </Panel>
-              </>
-            )}
-
-            {/* 3. THE ACTUAL DRAG HANDLE */}
-            <Separator className="resize-handle" />
-
-            {/* PANEL 3: Right Context Panel */}
-            <Panel defaultSize="43%" minSize="10%" className="rightPanel">
-              <Overview></Overview>
-            </Panel>
-          </Group>
+        <div className={styles.navActions}>
+          {contextLoading && (
+            <div className={`${styles.actionsBtn} ${styles.longBtn}`}>
+              <SaveOutlined />
+              Saving...
+            </div>
+          )}
+          <button className={styles.profileBtn} onClick={openProfile}>
+            <img
+              src={user.pfp}
+              alt="Profile"
+              className={styles.profileAvatar}
+            />
+          </button>
         </div>
-      </EventProvider>
-    </>
+      </div>
+
+      <div className={styles.container}>
+        <Group orientation="horizontal">
+          {/* PANEL 1: Left Menu */}
+          {!isFlowCollapsed && (
+            <>
+              <Panel
+                defaultSize="33%"
+                className={styles.leftPanel}
+                minSize="10%"
+              >
+                <Flow onCollapse={() => setIsFlowCollapsed(true)} />
+              </Panel>
+              <Separator className={styles.resizeHandle} />
+            </>
+          )}
+
+          {/* PANEL 2: Main Content Area */}
+          {!isChatCollapsed && (
+            <>
+              <Panel defaultSize="23%" minSize="10%">
+                <Chat onCollapse={() => setIsChatCollapsed(true)} />
+              </Panel>
+              <Separator className={styles.resizeHandle} />
+            </>
+          )}
+
+          {/* PANEL 3: Right Context Panel */}
+          <Panel defaultSize="43%" minSize="10%" className={styles.rightPanel}>
+            <Overview />
+          </Panel>
+        </Group>
+      </div>
+    </div>
   );
 };
 
