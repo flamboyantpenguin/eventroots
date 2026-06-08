@@ -102,6 +102,7 @@ async def chat(body: ThinkRequest, claims: dict = Depends(get_current_user_claim
             ),
         )
 
+        print(response.text)
         if not response.text:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

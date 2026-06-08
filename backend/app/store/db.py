@@ -227,7 +227,9 @@ class DatabaseStore:
         for key, value in updates.items():
             if key in json_columns and isinstance(value, dict):
                 keys_to_delete = [
-                    k for k, v in value.items() if v is None or len(v) == 0
+                    k
+                    for k, v in value.items()
+                    if v is None or (v == "") or (isinstance(v, (list, dict)) and not v)
                 ]
                 clean_updates = {
                     k: v

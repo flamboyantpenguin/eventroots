@@ -42,7 +42,6 @@ class EventDataStructure(BaseModel):
     progress_percentage: Optional[int] = Field(
         default=0, description="The execution progress bar scale from 0 to 100."
     )
-    # 💡 Added to capture tracking status lifecycle states
     status: Optional[str] = Field(
         default="Planning",
         description="Current lifecycle stage tracking token (e.g., Planning, Active).",

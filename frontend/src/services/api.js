@@ -127,12 +127,10 @@ export const editorAPI = {
   uploadEventBanner: async (eventId, file) => {
     const filePayload = new FormData();
     filePayload.append("file", file);
+
     const response = await apiClient.patch(
       `/events/banner/${eventId}`,
       filePayload,
-      {
-        headers: {},
-      },
     );
 
     return response;

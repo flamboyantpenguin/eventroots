@@ -202,25 +202,18 @@ export const EventProvider = ({ children }) => {
     });
   }, []);
 
-  /**
-   * 🛠️ Fixed & Formalized sendWorkspaceMessage
-   * Uses standard editorAPI definitions and safely pipes responses via onUpdate
-   */
   const sendWorkspaceMessage = useCallback(
     async (eventId, messageText) => {
       if (!eventId || !messageText) return "";
 
       try {
-        // Route query through your central editorAPI engine
         const response = await editorAPI.think(eventId, messageText);
         const payload = response?.data || response;
 
-        // Intercept and merge dynamic state updates into downstream views immediately
         if (payload?.updated_state) {
           onUpdate(payload.updated_state);
         }
 
-        // Return text summary content string to append back to the Chat layout feed
         return payload?.content || "";
       } catch (err) {
         console.error("Generative AI synchronization step failed:", err);
@@ -266,7 +259,7 @@ export const EventProvider = ({ children }) => {
       onUpdate,
       loadEvent,
       saveEvent,
-      sendWorkspaceMessage, // 💡 Exposed cleanly to context consumers
+      sendWorkspaceMessage,
     }),
     [
       formData,
