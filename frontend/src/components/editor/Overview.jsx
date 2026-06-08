@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from "react";
 import { useEventContext } from "/src/hooks/event/useEventContext";
 import { useError } from "/src/hooks/misc/useErrorContext";
+import { useLoading } from "/src/hooks/useLoadingContext";
 
 import {
   DeleteForeverOutlined,
@@ -34,10 +35,10 @@ export function Overview() {
   const { formData, updateFormData, saveEvent, uploadAndSetBanner } =
     useEventContext();
   const { triggerError } = useError();
+  const { startLoading, stopLoading, isLoading } = useLoading();
   const eventData = formData.data || {};
 
   const fileInputRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
 
   const staticKeys = [
     "type",
@@ -105,22 +106,27 @@ export function Overview() {
     await saveEvent(formData.id, backendPayload);
   };
 
-  const handleBannerUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleTriggerFileInput = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-    setUploading(true);
-    try {
-      // Elegant, decoupled action dispatching
-      await uploadAndSetBanner(formData.id, file);
-    } catch (err) {
-      triggerError("Banner Upload Failed", err);
-    } finally {
-      setUploading(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
-  console.log(formData);
+  const handleBannerUpload = async (e) => {
+    startLoading("Uploading Banner", "Please wait");
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
+      await uploadAndSetBanner(formData.id, file);
+    } catch (err) {
+      triggerError("Banner Upload Failed", err.message);
+    } finally {
+      stopLoading();
+    }
+  };
 
   return (
     <div className="inspectorBody">
@@ -141,11 +147,11 @@ export function Overview() {
             <button
               type="button"
               className="m3Button bannerUploadBtn"
-              disabled={uploading}
-              onClick={() => fileInputRef.current.click()}
+              disabled={isLoading}
+              onClick={handleTriggerFileInput}
             >
               <CameraAltOutlined style={{ fontSize: 18, marginRight: "6px" }} />
-              {uploading ? "Uploading Image..." : "Change Workspace Banner"}
+              {isLoading ? "Uploading Image..." : "Change Workspace Banner"}
             </button>
           </div>
         </div>

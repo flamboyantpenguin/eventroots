@@ -38,7 +38,9 @@ def get_current_user_claims(token: str = Depends(oauth2_scheme)) -> dict | JSONR
     """Interceptors the bearer header token, decodes it, and returns user claims."""
     claims = decode_access_token(token)
     if not claims:
-        return error("Session expired or token signature is invalid", status_code=401)
+        return error(
+            message="Session expired or token signature is invalid", status_code=401
+        )
     return claims
 
 
@@ -79,7 +81,7 @@ def _auth_payload(row: dict[str, Any], is_admin=False) -> dict[str, Any]:
 def signup(body: SignupRequest = Depends()):
     if db.get_user_by_email(body.email):
         return error(
-            "Email is already registered", status_code=status.HTTP_409_CONFLICT
+            message="Email is already registered", status_code=status.HTTP_409_CONFLICT
         )
 
     hashed = hash_password(body.password)
@@ -141,13 +143,13 @@ def login(body: LoginRequest):
 
     if not user_hash or db_row is None:
         return error(
-            "Invalid email or password credentials.",
+            message="Invalid email or password credentials.",
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
     if not verify_password(body.password, user_hash):
         return error(
-            "Invalid email or password credentials.",
+            message="Invalid email or password credentials.",
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 

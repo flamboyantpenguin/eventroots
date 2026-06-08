@@ -49,7 +49,6 @@ export const AuthProvider = ({ children }) => {
     return response;
   }, []);
 
-  // 2. Centralized Mounting Effect: Runs EXACTLY once when the provider boots up
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
 

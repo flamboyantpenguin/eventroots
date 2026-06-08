@@ -38,7 +38,6 @@ const Login = () => {
   return (
     <div className="login-main m3-theme">
       <div className="login-left">
-        {/* <img src={Banner} alt="Banner Graphic" /> */}
         <Face2Rounded
           style={{
             fontSize: "20rem",

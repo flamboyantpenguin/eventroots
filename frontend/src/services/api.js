@@ -27,6 +27,15 @@ apiClient.interceptors.response.use(
     return response?.data?.data || response.data;
   },
   (error) => {
+    const serverData = error.response?.data;
+
+    if (serverData) {
+      error.message =
+        serverData.message ||
+        serverData.detail?.[0]?.msg ||
+        serverData.detail ||
+        error.message;
+    }
     return Promise.reject(error);
   },
 );
