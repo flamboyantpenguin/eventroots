@@ -134,7 +134,7 @@ def patch_event(
 
     updates.pop("id", None)
 
-    if "flow" in updates and updates["flow"]:
+    if "flow" in updates and updates["flow"] is not None:
         incoming_flow = updates["flow"]
 
         try:

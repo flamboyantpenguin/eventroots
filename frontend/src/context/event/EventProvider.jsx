@@ -109,14 +109,17 @@ export const EventProvider = ({ children }) => {
 
   const updateFormData = useCallback((section, keyOrValue, directValue) => {
     setFormData((prev) => {
-      if (directValue === undefined && typeof keyOrValue !== "object") {
-        return {
-          ...prev,
-          [section]: keyOrValue,
-        };
-      }
-
+      // 🟢 FIX: If keyOrValue has a property explicit to absolute replacement, or if we want an absolute overwrite
       if (directValue === undefined && typeof keyOrValue === "object") {
+        // If we are passing an entirely new object intended to represent the whole section
+        // (like a freshly pruned flow mapping), do not blindly merge old keys back in!
+        if (section === "flow") {
+          return {
+            ...prev,
+            [section]: keyOrValue,
+          };
+        }
+
         return {
           ...prev,
           [section]: {
@@ -126,11 +129,12 @@ export const EventProvider = ({ children }) => {
         };
       }
 
+      if (directValue === undefined && typeof keyOrValue !== "object") {
+        return { ...prev, [section]: keyOrValue };
+      }
+
       if (!keyOrValue) {
-        return {
-          ...prev,
-          [section]: directValue,
-        };
+        return { ...prev, [section]: directValue };
       }
 
       return {
@@ -175,10 +179,23 @@ export const EventProvider = ({ children }) => {
       }
 
       if (unpacked.flow) {
-        nextState.flow = {
-          ...(prev.flow || {}),
-          ...unpacked.flow,
-        };
+        const nextFlow = { ...(prev.flow || {}) };
+
+        Object.keys(unpacked.flow).forEach((key) => {
+          const value = unpacked.flow[key];
+
+          if (
+            value === null ||
+            value === undefined ||
+            (Array.isArray(value) && value.length === 0)
+          ) {
+            delete nextFlow[key];
+          } else {
+            nextFlow[key] = value;
+          }
+        });
+
+        nextState.flow = nextFlow;
       }
 
       return nextState;

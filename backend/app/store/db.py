@@ -226,8 +226,14 @@ class DatabaseStore:
 
         for key, value in updates.items():
             if key in json_columns and isinstance(value, dict):
-                keys_to_delete = [k for k, v in value.items() if v is None]
-                clean_updates = {k: v for k, v in value.items() if v is not None}
+                keys_to_delete = [
+                    k for k, v in value.items() if v is None or len(v) == 0
+                ]
+                clean_updates = {
+                    k: v
+                    for k, v in value.items()
+                    if v is not None and k not in keys_to_delete
+                }
 
                 sql_expr = json_columns[key]
 

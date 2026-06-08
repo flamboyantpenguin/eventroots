@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useEventContext } from "/src/hooks/event/useEventContext";
 import styles from "./Flow.module.css";
 import {
@@ -19,7 +19,6 @@ const CATEGORY_ICONS = {
   catering: <CakeOutlined className={styles.flowCategoryIcon} />,
 };
 
-// Reusing the identical debounce layout engine from your Overview file
 const useDebounce = (callback, delay) => {
   const timeoutRef = useRef(null);
 
@@ -65,8 +64,8 @@ export function Flow() {
     availableVendors.find((v) => v.id === idOrName)?.name || idOrName;
 
   const handleFlowUpdate = (updatedFlow, isImmediate = false) => {
-    updateFormData("data", "flow", updatedFlow);
-    const payload = { data: { flow: updatedFlow } };
+    updateFormData("flow", updatedFlow);
+    const payload = { flow: updatedFlow };
 
     if (isImmediate) {
       saveEvent(formData.id, payload);
@@ -75,7 +74,6 @@ export function Flow() {
     }
   };
 
-  // 1. Structural Addition: Adds an empty category array structure (Fires immediately)
   const handleAddCategoryStep = async (e) => {
     e.preventDefault();
     if (!selectedCategoryId || flow[selectedCategoryId]) return;
@@ -89,17 +87,24 @@ export function Flow() {
     handleFlowUpdate(updatedFlow, true);
   };
 
-  // 2. Structural Deletion: Purges the layout block completely (Fires immediately)
   const handleDeleteCategoryStep = async (categoryId) => {
     cancelPendingSaves();
 
-    const updatedFlow = { ...flow };
-    delete updatedFlow[categoryId];
+    const localUpdatedFlow = { ...flow };
+    delete localUpdatedFlow[categoryId];
 
-    handleFlowUpdate(updatedFlow, true);
+    updateFormData("flow", localUpdatedFlow);
+
+    const backendPayload = {
+      flow: {
+        ...localUpdatedFlow,
+        [categoryId]: [],
+      },
+    };
+
+    await saveEvent(formData.id, backendPayload);
   };
 
-  // 3. Relational Association: appends a vendor link or text into a category sequence (Debounced)
   const handleLinkVendorNode = (categoryId, vendorIdOrName) => {
     if (!vendorIdOrName) return;
 
@@ -114,7 +119,6 @@ export function Flow() {
     handleFlowUpdate(updatedFlow, false);
   };
 
-  // 4. Relational Disconnection: removes an item from a category array path (Debounced)
   const handleUnlinkVendorNode = (categoryId, targetVendorIdOrName) => {
     const updatedFlow = {
       ...flow,

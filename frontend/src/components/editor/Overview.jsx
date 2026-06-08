@@ -41,6 +41,7 @@ export function Overview() {
 
   const staticKeys = [
     "type",
+    "flow",
     "budget",
     "guest_count",
     "progress_percentage",
@@ -118,6 +119,8 @@ export function Overview() {
       setUploading(false);
     }
   };
+
+  console.log(formData);
 
   return (
     <div className="inspectorBody">
