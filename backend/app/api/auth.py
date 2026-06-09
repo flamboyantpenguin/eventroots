@@ -49,7 +49,7 @@ def _format_user(row: dict[str, Any]) -> dict[str, Any]:
     user_id = row["id"]
     username = row.get("username")
     email = row["email"]
-    pfp = row["pfp"]
+    pfp = row["pfp"] if ("pfp" in row.keys()) else ""
 
     # Clean visual fallback string for names
     display_name = username or email.split("@")[0]
@@ -209,7 +209,11 @@ def get_current_active_identity(authorization: str | None = Header(None)):
     user_id = claims["user_id"]
     is_admin = claims["is_admin"]
 
-    user_profile = db.get_user_by_id(UUID(user_id))
+    user_profile = (
+        db.get_user_by_id(UUID(user_id))
+        if (not is_admin)
+        else db.get_admin_by_id(UUID(user_id))
+    )
     if not user_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
