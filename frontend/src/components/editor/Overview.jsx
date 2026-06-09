@@ -130,11 +130,12 @@ export function Overview() {
 
   return (
     <div className="inspectorBody">
-      {/* 💡 Elegant Banner Management Control Bar */}
       <div className="formSection bannerControlSection">
         <div
           className="bannerPreviewWrapper"
-          style={{ backgroundImage: `url(${formData.banner_url})` }}
+          style={{
+            backgroundImage: `url(${formData.banner_url}), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100%' height='100%' fill='%236750A4'/></svg>"`,
+          }}
         >
           <div className="bannerScrimOverlay">
             <input
@@ -271,7 +272,6 @@ export function Overview() {
         </div>
       </div>
 
-      {/* SECTION B: DYNAMIC PARAMETERS LEDGER MATRIX */}
       <div className="formSection dynamicSection">
         <div className="sectionDivider">
           <AccountBalanceWalletOutlined className="sectionIcon" />
