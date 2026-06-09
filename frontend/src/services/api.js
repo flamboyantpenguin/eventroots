@@ -81,6 +81,9 @@ export const adminAPI = {
 
   addUser: (data) => apiClient.post("/users", data),
   addVendor: (data) => apiClient.post("/vendor", data),
+  updateUser: (id, data) => apiClient.put(`/users/${id}`, data),
+  deleteUser: (userId) => apiClient.delete(`/users/${userId}`),
+  deleteVendor: (vendorId) => apiClient.delete(`/vendor/${vendorId}`),
 };
 
 export const dashboardAPI = {

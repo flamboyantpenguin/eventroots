@@ -197,6 +197,53 @@ class DatabaseStore:
         """
         self._execute_mutation(query, (username, email, hashed_password, pfp))
 
+    def update_user(
+        self,
+        user_id: str,
+        username: str | None = None,
+        email: str | None = None,
+        hashed_password: str | None = None,
+        pfp: str | None = None,
+        is_active: bool | None = None,
+    ) -> None:
+        """Updates an existing user profile record dynamically based on provided fields."""
+        fields_to_update = []
+        params = []
+
+        # Dynamically build the SET clauses so we only touch what changed
+        if username is not None:
+            fields_to_update.append("username = %s")
+            params.append(username)
+
+        if email is not None:
+            fields_to_update.append("email = %s")
+            params.append(email)
+
+        if hashed_password is not None:
+            fields_to_update.append("hashed_password = %s")
+            params.append(hashed_password)
+
+        if pfp is not None:
+            fields_to_update.append("pfp = %s")
+            params.append(pfp)
+
+        if is_active is not None:
+            fields_to_update.append("is_active = %s")
+            params.append(is_active)
+
+        if not fields_to_update:
+            return
+
+        params.append(user_id)
+
+        query = f"""
+            UPDATE users
+            SET {", ".join(fields_to_update)}
+            WHERE id = %s;
+        """
+
+        self._execute_mutation(query, tuple(params))
+
     def create_event(
         self,
         title: str,

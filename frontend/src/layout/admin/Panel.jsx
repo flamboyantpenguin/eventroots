@@ -153,6 +153,7 @@ const Panel = () => {
   const {
     users,
     vendors,
+    deleteItem,
     isUsersLoading,
     usersError,
     loadUsers,
@@ -161,7 +162,6 @@ const Panel = () => {
   } = usePanelDir();
 
   const [tab, setTab] = useState("users");
-
   const { logout } = useAuth();
 
   const handleLogout = async () => {
@@ -202,27 +202,28 @@ const Panel = () => {
   const [del, setDel] = useState(null);
   const [form, setForm] = useState({});
   const [errors, setErrors] = useState({});
+
   const onForm = (e) => {
     const { name, value } = e.target;
-
     if (name === "contact") {
       setForm((prev) => ({
         ...prev,
         data: { ...prev.data, contact_email: value },
       }));
     } else {
-      setForm({ ...form, [name]: value });
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
-    setErrors({ ...errors, [name]: "" });
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const filteredUsers = sortArr(
     (users || []).filter((u) => {
       const q = uSearch.toLowerCase();
       return (
-        (u.name?.toLowerCase().includes(q) ||
+        (u.username?.toLowerCase().includes(q) ||
           u.email?.toLowerCase().includes(q)) &&
-        (uStatus === "all" || u.status === uStatus) &&
+        (uStatus === "all" ||
+          (uStatus === "active" ? u.is_active : !u.is_active)) &&
         (uEvent === "all" || u.event === uEvent)
       );
     }),
@@ -245,23 +246,51 @@ const Panel = () => {
   const uRows = filteredUsers.slice((uPage - 1) * uSize, uPage * uSize);
   const vRows = filteredVendors.slice((vPage - 1) * vSize, vPage * vSize);
 
-  const saveEdit = () => {};
+  // 🟢 Fixed Stub: Handle PUT/PATCH requests via hook interface
+  const saveEdit = async () => {
+    const fieldToCheck = edit.type === "user" ? form.username : form.name;
+    if (!fieldToCheck) {
+      setErrors({
+        [edit.type === "user" ? "username" : "name"]: "Name field is required",
+      });
+      return;
+    }
+
+    try {
+      await saveItem(edit.type, form);
+      setEdit(null);
+    } catch (err) {
+      console.error(`Component - Update targeting ${edit.type} failed:`, err);
+    }
+  };
 
   const saveAdd = async () => {
-    if (!form.name) {
+    if (add === "user" && !form.username) {
+      setErrors({ username: "Username is required" });
+      return;
+    }
+    if (add === "vendor" && !form.name) {
       setErrors({ name: "Name is required" });
       return;
     }
 
     try {
       await saveItem(add, form);
-      setAdd(null); // Close modal only on success
+      setAdd(null);
     } catch (err) {
       console.error("Component - Submission failed:", err);
     }
   };
 
-  const confirmDel = () => {};
+  const confirmDel = async () => {
+    if (!del) return;
+    try {
+      await deleteItem(del.type, del.id);
+      setDel(null);
+    } catch (err) {
+      console.error(`Component - Deletion of ${del.type} failed:`, err);
+    }
+  };
 
   const openEdit = (type, item) => {
     setEdit({ type, item });
@@ -275,17 +304,57 @@ const Panel = () => {
   const openAdd = (type) => {
     setAdd(type);
     setForm(
-      type === "user" ? { status: "active" } : { data: { contact_email: "" } }, // Initialize with empty nested object
+      type === "user"
+        ? { is_active: true, username: "", email: "", password: "" } // 🟢 Added password parameter placeholder
+        : { name: "", category: "", location: "", data: { contact_email: "" } },
     );
     setErrors({});
   };
+
+  // Inside Panel.jsx update/edit modal mapping
+  const userFields = (
+    <>
+      <Field
+        label="Username"
+        name="name" // Matches 'name' parameter in UserUpdate schema
+        value={form.name || form.username || ""}
+        onChange={onForm}
+      />
+      <Field
+        label="Email Address"
+        name="email"
+        value={form.email || ""}
+        onChange={onForm}
+      />
+      <Field
+        label="Account Status"
+        name="status" // 🟢 Maps cleanly to body.status
+        value={form.status !== undefined ? form.status.toString() : "true"}
+        onChange={(e) =>
+          setForm((p) => ({ ...p, status: e.target.value === "true" }))
+        }
+        select
+        options={[
+          ["true", "Active Access Context"],
+          ["false", "Suspended / Inactive"],
+        ]}
+      />
+      <Field
+        label="Reset Password (Optional)"
+        name="password"
+        value={form.password || ""}
+        onChange={onForm}
+        placeholder="Leave blank to keep current"
+      />
+    </>
+  );
 
   const vendorFields = (
     <>
       <Field
         label="Name"
         name="name"
-        value={form.name}
+        value={form.name || ""}
         onChange={onForm}
         placeholder="Vendor name"
         error={errors.name}
@@ -293,7 +362,7 @@ const Panel = () => {
       <Field
         label="Category"
         name="category"
-        value={form.category}
+        value={form.category || ""}
         onChange={onForm}
         placeholder="e.g. Catering"
         error={errors.category}
@@ -301,7 +370,7 @@ const Panel = () => {
       <Field
         label="Location"
         name="location"
-        value={form.location}
+        value={form.location || ""}
         onChange={onForm}
         placeholder="City"
         error={errors.location}
@@ -316,6 +385,7 @@ const Panel = () => {
       />
     </>
   );
+
   return (
     <>
       <div className="admin">
@@ -372,8 +442,6 @@ const Panel = () => {
                     >
                       <option value="name-asc">Name A–Z</option>
                       <option value="name-desc">Name Z–A</option>
-                      <option value="event-asc">Event A–Z</option>
-                      <option value="event-desc">Event Z–A</option>
                     </select>
                   </div>
                 </div>
@@ -395,26 +463,10 @@ const Panel = () => {
                       <option value="inactive">Inactive</option>
                     </select>
                   </div>
-                  <div className="fg">
-                    <label>Event</label>
-                    <select
-                      value={uEvent}
-                      onChange={(e) => {
-                        setUEvent(e.target.value);
-                        setUPage(1);
-                      }}
-                    >
-                      <option value="all">All</option>
-                      {unique(users, "event").map((e) => (
-                        <option key={e}>{e}</option>
-                      ))}
-                    </select>
-                  </div>
                   <button
                     className="clear-btn"
                     onClick={() => {
                       setUStatus("all");
-                      setUEvent("all");
                       setUPage(1);
                     }}
                   >

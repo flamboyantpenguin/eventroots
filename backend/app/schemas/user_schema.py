@@ -14,7 +14,7 @@ class UserUpdate(BaseModel):
     name: str | None = None
     email: EmailStr | None = None
     event: str | None = None
-    status: bool
+    is_active: bool | None = None
 
 
 class UserResponse(UserBase):

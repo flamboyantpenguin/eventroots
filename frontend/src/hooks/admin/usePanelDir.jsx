@@ -65,10 +65,10 @@ export function usePanelDir() {
       try {
         if (type === "user") {
           await adminAPI.addUser(data);
-          await loadUsers(); // Refresh after success
+          await loadUsers();
         } else {
           await adminAPI.addVendor(data);
-          await loadVendors(); // Refresh after success
+          await loadVendors();
         }
       } catch (err) {
         setErrors((prev) => ({
@@ -86,9 +86,42 @@ export function usePanelDir() {
     [loadUsers, loadVendors, setErrors, setLoadingStates],
   );
 
+  const deleteItem = useCallback(
+    async (type, id) => {
+      setLoadingStates((prev) => ({
+        ...prev,
+        [type === "user" ? "users" : "vendors"]: true,
+      }));
+      setErrors((prev) => ({ ...prev, submit: null }));
+
+      try {
+        if (type === "user") {
+          await adminAPI.deleteUser(id);
+          await loadUsers();
+        } else {
+          await adminAPI.deleteVendor(id);
+          await loadVendors();
+        }
+      } catch (err) {
+        setErrors((prev) => ({
+          ...prev,
+          submit: err.message || `Failed to delete ${type}`,
+        }));
+        throw err;
+      } finally {
+        setLoadingStates((prev) => ({
+          ...prev,
+          [type === "user" ? "users" : "vendors"]: false,
+        }));
+      }
+    },
+    [loadUsers, loadVendors, setErrors, setLoadingStates],
+  );
+
   return {
     users,
     vendors,
+    deleteItem,
     isUsersLoading: loadingStates.users,
     isVendorsLoading: loadingStates.vendors,
     usersError: errors.users,
