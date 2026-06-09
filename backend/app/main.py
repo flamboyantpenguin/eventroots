@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api import auth, category, events, health, think, users, vendor
 from app.config import settings
 from app.jobs.scheduler import init_scheduler, scheduler
+from app.utils.response import register_error_handlers
 
 
 @asynccontextmanager
@@ -41,6 +42,8 @@ app.add_middleware(
 app.mount(
     settings.API_PREFIX + "/static", StaticFiles(directory="static"), name="static"
 )
+
+register_error_handlers(app)
 
 app.include_router(health.router, prefix=settings.API_PREFIX)
 app.include_router(auth.router, prefix=settings.API_PREFIX)
