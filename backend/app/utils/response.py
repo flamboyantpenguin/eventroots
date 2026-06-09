@@ -2,6 +2,7 @@ from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from psycopg import OperationalError
 
 
 class CustomException(Exception):
@@ -17,6 +18,21 @@ def register_error_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=exc.status_code,
             content={"success": False, "message": exc.message, "data": exc.data},
+        )
+
+    @app.exception_handler(OperationalError)
+    async def database_disconnect_exception_handler(
+        request: Request, exc: OperationalError
+    ):
+        print(f"CRITICAL DB ERROR: {exc}")
+
+        return JSONResponse(
+            status_code=503,
+            content={
+                "success": False,
+                "message": "Failed to connect to DB",
+                "data": None,
+            },
         )
 
 
