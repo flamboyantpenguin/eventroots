@@ -54,7 +54,7 @@ export function usePanelDir() {
     }
   }, [setVendors, setLoadingStates, setErrors]);
 
-  const saveItem = useCallback(
+  const addItem = useCallback(
     async (type, data) => {
       setLoadingStates((prev) => ({
         ...prev,
@@ -64,7 +64,39 @@ export function usePanelDir() {
 
       try {
         if (type === "user") {
-          await adminAPI.addUser(data);
+          await adminAPI.editUser(data);
+          await loadUsers();
+        } else {
+          await adminAPI.addVendor(data);
+          await loadVendors();
+        }
+      } catch (err) {
+        setErrors((prev) => ({
+          ...prev,
+          submit: err.message || `Failed to add ${type}`,
+        }));
+        throw err; // Re-throw so the component knows it failed
+      } finally {
+        setLoadingStates((prev) => ({
+          ...prev,
+          [type === "user" ? "users" : "vendors"]: false,
+        }));
+      }
+    },
+    [loadUsers, loadVendors, setErrors, setLoadingStates],
+  );
+
+  const saveItem = useCallback(
+    async (id, type, data) => {
+      setLoadingStates((prev) => ({
+        ...prev,
+        [type === "user" ? "users" : "vendors"]: true,
+      }));
+      setErrors((prev) => ({ ...prev, submit: null }));
+
+      try {
+        if (type === "user") {
+          await adminAPI.updateUser(id, data);
           await loadUsers();
         } else {
           await adminAPI.addVendor(data);
@@ -120,6 +152,7 @@ export function usePanelDir() {
 
   return {
     users,
+    addItem,
     vendors,
     deleteItem,
     isUsersLoading: loadingStates.users,

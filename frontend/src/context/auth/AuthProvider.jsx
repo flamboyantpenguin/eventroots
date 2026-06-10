@@ -8,10 +8,16 @@ import {
   LogoutOutlined,
   Person2Outlined,
 } from "@mui/icons-material";
+import { useLocation } from "react-router-dom";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const location = useLocation();
+
+  const isAdminPage = useMemo(() => {
+    return location.pathname.startsWith("/admin");
+  }, [location.pathname]);
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const token = localStorage.getItem("auth_token");
@@ -44,9 +50,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const fetchUserProfile = useCallback(async () => {
-    const response = await authAPI.getMe();
+    const response = isAdminPage ? adminAPI.getMe() : authAPI.getMe();
     return response;
-  }, []);
+  }, [isAdminPage]);
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");

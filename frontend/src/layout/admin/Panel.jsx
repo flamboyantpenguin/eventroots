@@ -16,6 +16,7 @@ import {
   ErrorOutlineOutlined,
   BlockOutlined,
   SettingsBackupRestoreOutlined,
+  RestoreOutlined,
 } from "@mui/icons-material";
 
 import { usePanelDir } from "../../hooks/admin/usePanelDir";
@@ -208,6 +209,7 @@ const Panel = ({ styles }) => {
   const [edit, setEdit] = useState(null);
   const [add, setAdd] = useState(null);
   const [del, setDel] = useState(null);
+  const [unDel, setUnDel] = useState(null);
   const [form, setForm] = useState({});
   const [errors, setErrors] = useState({});
 
@@ -272,7 +274,7 @@ const Panel = ({ styles }) => {
     }
 
     try {
-      await saveItem(edit.type, form);
+      await saveItem(form.id, edit.type, form);
       setEdit(null);
     } catch (err) {
       console.error(`Component - Update targeting ${edit.type} failed:`, err);
@@ -294,6 +296,16 @@ const Panel = ({ styles }) => {
       setAdd(null);
     } catch (err) {
       console.error("Component - Submission failed:", err);
+    }
+  };
+
+  const confirmUnDel = async () => {
+    if (!unDel) return;
+    try {
+      await deleteItem(del.type, del.id);
+      setDel(null);
+    } catch (err) {
+      console.error(`Component - Deletion of ${del.type} failed:`, err);
     }
   };
 
@@ -553,7 +565,7 @@ const Panel = ({ styles }) => {
                                   <button
                                     className={`${styles.ic} ${styles.spec}`}
                                     onClick={() =>
-                                      setDel({ type: "user", id: u.id })
+                                      setUnDel({ type: "user", id: u.id })
                                     }
                                   >
                                     <SettingsBackupRestoreOutlined />
@@ -714,7 +726,7 @@ const Panel = ({ styles }) => {
                               <div className={styles.actions}>
                                 <button
                                   className={`${styles.ic} ${styles.edit}`}
-                                  onClick={() => openEdit("vendor", v)}
+                                  onClick={() => unDel("vendor", v)}
                                 >
                                   <EditOutlined />
                                 </button>
@@ -793,6 +805,25 @@ const Panel = ({ styles }) => {
           </Modal>
         )}
 
+        {unDel && (
+          <Modal
+            styles={styles}
+            title="Restore User?"
+            onClose={() => setDel(null)}
+            onSave={confirmUnDel}
+            saveLabel={
+              <>
+                <RestoreOutlined /> Delete
+              </>
+            }
+            danger
+          >
+            <p className={styles.delMsg}>
+              Are you sure you want to restore this {del.type}?
+            </p>
+          </Modal>
+        )}
+
         {del && (
           <Modal
             styles={styles}
@@ -807,8 +838,7 @@ const Panel = ({ styles }) => {
             danger
           >
             <p className={styles.delMsg}>
-              Are you sure you want to delete this {del.type}? This cannot be
-              undone.
+              Are you sure you want to delete this {del.type}?
             </p>
           </Modal>
         )}
