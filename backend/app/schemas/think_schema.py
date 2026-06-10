@@ -1,7 +1,9 @@
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+from app.schemas.event_schema import EventModel, TemplateModel
 
 
 class ThinkRequest(BaseModel):
@@ -19,8 +21,7 @@ class ThinkResponse(BaseModel):
     content: str = Field(
         description="The conversational markdown message from the AI core."
     )
-    updated_state: Optional[Dict[str, Any]] = Field(
-        default=None,
+    updated_state: EventModel | TemplateModel = Field(
         description="The complete, updated JSON representation of the event entity row.",
     )
 
@@ -38,7 +39,6 @@ class EventDataStructure(BaseModel):
     guest_count: Optional[int] = Field(
         default=0, description="Total absolute guest headcount."
     )
-    # 💡 Added to track progress metrics matching frontend UI
     progress_percentage: Optional[int] = Field(
         default=0, description="The execution progress bar scale from 0 to 100."
     )
@@ -82,7 +82,6 @@ class ThinkStructure(BaseModel):
         default=None,
         description="The full updated dictionary payload for the event parameters object.",
     )
-    # 💡 Perfectly matches your UI Flow.jsx: Dictionary mapping Category IDs -> List of Vendor IDs
     new_flow: Optional[Dict[str, List[str]]] = Field(
         default=None,
         description="The full updated workflow layout tracking category allocations. Example: {'photography': ['vendor-uuid']}",

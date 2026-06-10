@@ -1,11 +1,29 @@
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic.fields import Field
+from pydantic.types import Json
 from typing_extensions import Optional
 
 EventStatus = Literal["Upcoming", "Completed", "Planning"]
+
+
+class EventModel(BaseModel):
+    id: UUID
+    user_id: UUID
+    title: str | None
+    banner_url: str | None
+    data: Json[Any] | None = Field(default_factory=dict)
+    flow: Json[Any] | None = Field(default_factory=dict)
+
+
+class TemplateModel(BaseModel):
+    id: UUID
+    title: str | None
+    banner_url: str | None
+    data: Json[Any] | None = Field(default_factory=dict)
+    flow: Json[Any] | None = Field(default_factory=dict)
 
 
 class EventCreateFromTemplate(BaseModel):

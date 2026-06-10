@@ -1,8 +1,8 @@
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from psycopg import OperationalError
 
 
 class CustomException(Exception):
@@ -20,25 +20,12 @@ def register_error_handlers(app: FastAPI) -> None:
             content={"success": False, "message": exc.message, "data": exc.data},
         )
 
-    @app.exception_handler(OperationalError)
-    async def database_disconnect_exception_handler(
-        request: Request, exc: OperationalError
-    ):
-        print(f"CRITICAL DB ERROR: {exc}")
-
-        return JSONResponse(
-            status_code=503,
-            content={
-                "success": False,
-                "message": "Failed to connect to DB",
-                "data": None,
-            },
-        )
-
 
 def success(
-    data: Any = None, message: str = "OK", status_code: int = 200
+    data: Any | None = None, message: str = "OK", status_code: int = 200
 ) -> JSONResponse:
+    if data is not None:
+        data = jsonable_encoder(data)
     return JSONResponse(
         status_code=status_code,
         content={"success": True, "message": message, "data": data},

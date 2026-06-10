@@ -9,6 +9,7 @@ class Settings:
     ACCESS_PFP: str = "/" + UPLOAD_PFP
     ACCESS_BANNER: str = "/" + UPLOAD_BANNER
     PFP_MAX_SIZE: int = 20 * 1024 * 1024
+    SESSION_TOKEN_EXPIRY_HOURS = 1
 
 
 settings = Settings()

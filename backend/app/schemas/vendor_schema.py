@@ -1,4 +1,16 @@
-from pydantic import BaseModel, Field
+from uuid import UUID
+
+from asyncpg.pool import Any
+from pydantic import BaseModel, Field, Json
+
+
+class VendorModel(BaseModel):
+    id: UUID
+    name: str
+    category_name: str
+    category_id: UUID
+    location: str
+    data: Json[Any] | None = Field(default_factory=dict)
 
 
 class VendorBase(BaseModel):
