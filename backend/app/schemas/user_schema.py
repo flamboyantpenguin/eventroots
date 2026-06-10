@@ -29,10 +29,10 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    name: str | None = None
+    username: str | None = None
     email: EmailStr | None = None
     event: str | None = None
-    status: bool | None = None
+    is_active: bool | None = None
     password: str | None = None
 
 

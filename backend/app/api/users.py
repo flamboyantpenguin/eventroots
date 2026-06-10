@@ -50,6 +50,7 @@ async def update_user(
     body: UserUpdate,
     claims: ClaimModel = Depends(get_current_user_claims),
 ):
+    print(body)
     is_admin = claims.is_admin
 
     current_user = await db.get_user_by_id(UUID(user_id))
@@ -79,9 +80,11 @@ async def update_user(
     else:
         final_password_hash = await db.get_user_password_by_email("password_hash")
 
-    updated_name = body.name if body.name is not None else current_user.username
+    updated_name = body.username if body.username is not None else current_user.username
     updated_email = body.email if body.email is not None else current_user.email
-    updated_status = body.status if body.status is not None else current_user.is_active
+    updated_status = (
+        body.is_active if body.is_active is not None else current_user.is_active
+    )
 
     await db.update_user(
         user_id=user_id,

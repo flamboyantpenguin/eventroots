@@ -175,7 +175,6 @@ const Panel = ({ styles }) => {
   const {
     users,
     vendors,
-    deleteItem,
     isUsersLoading,
     usersError,
     loadUsers,
@@ -208,17 +207,13 @@ const Panel = ({ styles }) => {
 
   const [edit, setEdit] = useState(null);
   const [add, setAdd] = useState(null);
-  const [del, setDel] = useState(null);
-  const [unDel, setUnDel] = useState(null);
+  const [switchDel, setSwitchDel] = useState(null);
   const [form, setForm] = useState({});
   const [errors, setErrors] = useState({});
 
   const onForm = useCallback((e) => {
     const { name, value } = e.target;
     setForm((prev) => {
-      if (name === "contact") {
-        return { ...prev, data: { ...prev.data, contact_email: value } };
-      }
       return { ...prev, [name]: value };
     });
     setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -243,7 +238,7 @@ const Panel = ({ styles }) => {
       return (
         (v.name?.toLowerCase().includes(q) ||
           v.location?.toLowerCase().includes(q)) &&
-        (vCat === "all" || v.category === vCat) &&
+        (vCat === "all" || v.category_name === vCat) &&
         (vLoc === "all" || v.location === vLoc)
       );
     });
@@ -251,7 +246,7 @@ const Panel = ({ styles }) => {
   }, [vendors, vSearch, vCat, vLoc, vSort]);
 
   const uniqueCategories = useMemo(
-    () => unique(vendors, "category"),
+    () => unique(vendors, "category_name"),
     [vendors],
   );
   const uniqueLocations = useMemo(() => unique(vendors, "location"), [vendors]);
@@ -299,23 +294,15 @@ const Panel = ({ styles }) => {
     }
   };
 
-  const confirmUnDel = async () => {
-    if (!unDel) return;
+  const confirmSwitchDel = async () => {
+    if (!switchDel) return;
     try {
-      await deleteItem(del.type, del.id);
-      setDel(null);
+      await saveItem(switchDel.id, switchDel.type, {
+        is_active: !switchDel.is_active,
+      });
+      setSwitchDel(null);
     } catch (err) {
-      console.error(`Component - Deletion of ${del.type} failed:`, err);
-    }
-  };
-
-  const confirmDel = async () => {
-    if (!del) return;
-    try {
-      await deleteItem(del.type, del.id);
-      setDel(null);
-    } catch (err) {
-      console.error(`Component - Deletion of ${del.type} failed:`, err);
+      console.error(`Component - Restore of ${switchDel.type} failed:`, err);
     }
   };
 
@@ -343,8 +330,8 @@ const Panel = ({ styles }) => {
       <Field
         styles={styles}
         label="Username"
-        name="name"
-        value={form.name || form.username || ""}
+        name="username"
+        value={form.username || ""}
         onChange={onForm}
       />
       <Field
@@ -357,10 +344,12 @@ const Panel = ({ styles }) => {
       <Field
         styles={styles}
         label="Account Status"
-        name="status"
-        value={form.status !== undefined ? form.status.toString() : "true"}
+        name="is_active"
+        value={
+          form.is_active !== undefined ? form.is_active.toString() : "true"
+        }
         onChange={(e) =>
-          setForm((p) => ({ ...p, status: e.target.value === "true" }))
+          setForm((p) => ({ ...p, is_active: e.target.value === "true" }))
         }
         select
         options={[
@@ -565,7 +554,11 @@ const Panel = ({ styles }) => {
                                   <button
                                     className={`${styles.ic} ${styles.spec}`}
                                     onClick={() =>
-                                      setUnDel({ type: "user", id: u.id })
+                                      setSwitchDel({
+                                        type: "user",
+                                        id: u.id,
+                                        is_active: u.is_active,
+                                      })
                                     }
                                   >
                                     <SettingsBackupRestoreOutlined />
@@ -575,7 +568,11 @@ const Panel = ({ styles }) => {
                                   <button
                                     className={`${styles.ic} ${styles.del}`}
                                     onClick={() =>
-                                      setDel({ type: "user", id: u.id })
+                                      setSwitchDel({
+                                        type: "user",
+                                        id: u.id,
+                                        is_active: u.is_active,
+                                      })
                                     }
                                   >
                                     <BlockOutlined />
@@ -719,21 +716,21 @@ const Panel = ({ styles }) => {
                         vRows.map((v) => (
                           <tr key={v.id}>
                             <td>{v.name}</td>
-                            <td>{v.category}</td>
+                            <td>{v.category_name}</td>
                             <td>{v.location}</td>
                             <td>{v.data?.contact_email}</td>
                             <td>
                               <div className={styles.actions}>
                                 <button
                                   className={`${styles.ic} ${styles.edit}`}
-                                  onClick={() => unDel("vendor", v)}
+                                  onClick={() => setSwitchDel("vendor", v)}
                                 >
                                   <EditOutlined />
                                 </button>
                                 <button
                                   className={`${styles.ic} ${styles.del}`}
                                   onClick={() =>
-                                    setDel({ type: "vendor", id: v.id })
+                                    setSwitchDel({ type: "vendor", id: v.id })
                                   }
                                 >
                                   <DeleteOutlineOutlined />
@@ -805,40 +802,33 @@ const Panel = ({ styles }) => {
           </Modal>
         )}
 
-        {unDel && (
+        {switchDel && (
           <Modal
             styles={styles}
-            title="Restore User?"
-            onClose={() => setDel(null)}
-            onSave={confirmUnDel}
+            title={switchDel.is_active ? "Delete User?" : "Restore User?"}
+            onClose={() => setSwitchDel(null)}
+            onSave={confirmSwitchDel}
             saveLabel={
               <>
-                <RestoreOutlined /> Delete
+                {switchDel.is_active ? (
+                  <>
+                    <DeleteOutlineOutlined /> Delete
+                  </>
+                ) : (
+                  <>
+                    <RestoreOutlined /> Restore
+                  </>
+                )}
               </>
             }
             danger
           >
             <p className={styles.delMsg}>
-              Are you sure you want to restore this {del.type}?
-            </p>
-          </Modal>
-        )}
-
-        {del && (
-          <Modal
-            styles={styles}
-            title="Confirm Delete"
-            onClose={() => setDel(null)}
-            onSave={confirmDel}
-            saveLabel={
-              <>
-                <DeleteOutlineOutlined /> Delete
-              </>
-            }
-            danger
-          >
-            <p className={styles.delMsg}>
-              Are you sure you want to delete this {del.type}?
+              {form.is_active ? (
+                <>Are you sure you want to delete this {switchDel.type}?</>
+              ) : (
+                <>Are you sure you want to restore this {switchDel.type}?</>
+              )}
             </p>
           </Modal>
         )}
