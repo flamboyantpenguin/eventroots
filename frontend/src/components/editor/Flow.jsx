@@ -198,6 +198,7 @@ export function Flow() {
           </div>
         ) : (
           activeCategoryIds.map((catId) => {
+            console.log(flow);
             const assignedItems = flow[catId] || [];
             const categoryName = getCategoryName(catId);
 

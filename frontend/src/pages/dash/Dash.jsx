@@ -16,6 +16,7 @@ import { AddOutlined } from "@mui/icons-material";
 export default function Dash() {
   const { user, openProfile } = useAuth();
   const {
+    error,
     events,
     templates,
     refreshDashboard,
@@ -29,7 +30,6 @@ export default function Dash() {
 
   const navigate = useNavigate();
 
-  // DRAG-TO-SCROLL ARCHITECTURE
   const scrollRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -40,30 +40,19 @@ export default function Dash() {
     async function initializeWorkspace() {
       try {
         await refreshDashboard();
+        if (error) {
+          let errorTitle = "Workspace Sync Error";
+          let errorDesc = error.message || "Failed to connect to backend";
+          triggerError(errorTitle, errorDesc);
+        }
       } catch (err) {
         let errorTitle = "Workspace Sync Error";
         let errorDesc = err.message || "Failed to connect to backend";
-
-        const backendDetail = err.response?.data?.detail;
-        if (backendDetail) {
-          if (typeof backendDetail === "string") {
-            errorTitle = backendDetail;
-          } else if (Array.isArray(backendDetail)) {
-            errorTitle = "Data Validation Failure";
-            errorDesc = backendDetail
-              .map((e) => `${e.loc.join(".")}: ${e.msg}`)
-              .join(" | ");
-          } else if (typeof backendDetail === "object") {
-            errorTitle = backendDetail.title || "Malformed Response Payload";
-            errorDesc =
-              backendDetail.description || JSON.stringify(backendDetail);
-          }
-        }
         triggerError(errorTitle, errorDesc);
       }
     }
     initializeWorkspace();
-  }, [refreshDashboard, triggerError]);
+  }, [refreshDashboard, triggerError, error]);
 
   const handleTemplateSelect = async (templateId, templateTitle) => {
     startLoading("Loading", `Creating an event based on "${templateTitle}"`);
@@ -74,7 +63,7 @@ export default function Dash() {
     } catch (err) {
       triggerError(
         "Event Creation Failed",
-        `Unable to create event from template: ${err}`,
+        `Unable to create event from template: ${err.message}`,
       );
     } finally {
       stopLoading();
@@ -90,7 +79,7 @@ export default function Dash() {
     } catch (err) {
       triggerError(
         "Event Creation Failed",
-        `Unable to create empty event: ${err}`,
+        `Unable to create empty event: ${err.message}`,
       );
     } finally {
       stopLoading();
@@ -105,7 +94,7 @@ export default function Dash() {
     } catch (err) {
       triggerError(
         "Loading Event Failed",
-        `Unable to load created event: ${err}`,
+        `Unable to load created event: ${err.message}`,
       );
     } finally {
       stopLoading();

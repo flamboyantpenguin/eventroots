@@ -41,8 +41,7 @@ export function useDashboardData() {
       setEvents(hydratedEvents);
       setTemplates(hydratedTemplates);
     } catch (err) {
-      console.error("Dashboard synchronization failure:", err);
-      setError(err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }

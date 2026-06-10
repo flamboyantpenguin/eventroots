@@ -18,6 +18,15 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    const serverData = error.response?.data;
+
+    if (serverData) {
+      error.message =
+        serverData.message ||
+        serverData.detail?.[0]?.msg ||
+        serverData.detail ||
+        error.message;
+    }
     return Promise.reject(error);
   },
 );
@@ -48,11 +57,10 @@ export const authAPI = {
       },
     }),
 
-  async login(email, password, is_admin = false) {
+  async login(email, password) {
     const response = await apiClient.post("/auth/login", {
       email,
       password,
-      is_admin,
     });
     return response?.data?.data || response;
   },
@@ -71,14 +79,31 @@ export const authAPI = {
 };
 
 export const adminAPI = {
+  async login(email, password) {
+    const response = await apiClient.post("/admin/login", {
+      email,
+      password,
+    });
+    return response?.data?.data || response;
+  },
+
+  async getMe() {
+    return apiClient.get("/admin/me");
+  },
+
+  async logout() {
+    try {
+      await apiClient.delete("/admin/logout");
+    } catch (error) {
+      console.warn("Backend session already stale or missing:", error.message);
+    }
+  },
   getUsers: async () => {
     return apiClient.get("/users");
   },
-
   getVendors: async () => {
     return apiClient.get("/vendor");
   },
-
   addUser: (data) => apiClient.post("/users", data),
   addVendor: (data) => apiClient.post("/vendor", data),
   updateUser: (id, data) => apiClient.put(`/users/${id}`, data),
@@ -91,7 +116,6 @@ export const dashboardAPI = {
   getTemplates: () => apiClient.get("/events/templates"),
   createEvent: async () => {
     const response = await apiClient.post("/events");
-    console.log(response);
     return response;
   },
   createEventFromTemplate: async (templateId) => {
@@ -134,6 +158,7 @@ export const editorAPI = {
     const response = await apiClient.patch(
       `/events/banner/${eventId}`,
       filePayload,
+      { headers: { "Content-Type": "multipart/form-data" } },
     );
 
     return response;

@@ -45,7 +45,7 @@ export const EventProvider = ({ children }) => {
 
       setFormData((prev) => ({
         ...prev,
-        banner_url: newUrl,
+        banner_url: getAssetUrl(newUrl),
       }));
 
       return newUrl;
@@ -109,40 +109,28 @@ export const EventProvider = ({ children }) => {
 
   const updateFormData = useCallback((section, keyOrValue, directValue) => {
     setFormData((prev) => {
-      // 🟢 FIX: If keyOrValue has a property explicit to absolute replacement, or if we want an absolute overwrite
-      if (directValue === undefined && typeof keyOrValue === "object") {
-        // If we are passing an entirely new object intended to represent the whole section
-        // (like a freshly pruned flow mapping), do not blindly merge old keys back in!
+      if (
+        directValue === undefined &&
+        typeof keyOrValue === "object" &&
+        keyOrValue !== null
+      ) {
         if (section === "flow") {
-          return {
-            ...prev,
-            [section]: keyOrValue,
-          };
+          return { ...prev, flow: keyOrValue };
         }
-
-        return {
-          ...prev,
-          [section]: {
-            ...(typeof prev[section] === "object" ? prev[section] : {}),
-            ...keyOrValue,
-          },
-        };
-      }
-
-      if (directValue === undefined && typeof keyOrValue !== "object") {
-        return { ...prev, [section]: keyOrValue };
+        const currentSection =
+          typeof prev[section] === "object" ? prev[section] : {};
+        return { ...prev, [section]: { ...currentSection, ...keyOrValue } };
       }
 
       if (!keyOrValue) {
         return { ...prev, [section]: directValue };
       }
 
+      const currentSection =
+        typeof prev[section] === "object" ? prev[section] : {};
       return {
         ...prev,
-        [section]: {
-          ...(typeof prev[section] === "object" ? prev[section] : {}),
-          [keyOrValue]: directValue,
-        },
+        [section]: { ...currentSection, [keyOrValue]: directValue },
       };
     });
   }, []);
@@ -153,49 +141,49 @@ export const EventProvider = ({ children }) => {
     const unpacked = newData.event || newData;
 
     setFormData((prev) => {
-      const nextState = {
-        ...prev,
-        ...unpacked,
-      };
+      const nextState = { ...prev, ...unpacked };
 
+      // 1. Sync and clean "data"
       if (unpacked.data) {
-        const incomingData = { ...unpacked.data };
+        const currentData = prev.data || {};
+        const updatedData = { ...currentData };
 
-        Object.keys(incomingData).forEach((key) => {
-          if (incomingData[key] === null) {
-            delete incomingData[key];
+        if (unpacked.banner_url || unpacked.image) {
+          const incomingBanner = unpacked.banner_url || unpacked.image;
+          nextState.banner_url = getAssetUrl(incomingBanner);
+        }
+
+        // Process every key present in the incoming data payload
+        Object.entries(unpacked.data).forEach(([key, value]) => {
+          if (value === null) {
+            delete updatedData[key]; // Explicit removal command
+          } else {
+            updatedData[key] = value; // Update or add value
           }
         });
-        nextState.data = {
-          ...(prev.data || {}),
-          ...incomingData,
-        };
 
-        Object.keys(prev.data || {}).forEach((key) => {
-          if (!(key in incomingData) && incomingData[key] === undefined) {
-            delete nextState.data[key];
-          }
-        });
+        nextState.data = updatedData;
       }
 
+      // 2. Sync and clean "flow"
       if (unpacked.flow) {
-        const nextFlow = { ...(prev.flow || {}) };
+        const currentFlow = prev.flow || {};
+        const updatedFlow = { ...currentFlow };
 
-        Object.keys(unpacked.flow).forEach((key) => {
-          const value = unpacked.flow[key];
-
-          if (
+        Object.entries(unpacked.flow).forEach(([key, value]) => {
+          const shouldDelete =
             value === null ||
             value === undefined ||
-            (Array.isArray(value) && value.length === 0)
-          ) {
-            delete nextFlow[key];
+            (Array.isArray(value) && value.length === 0);
+
+          if (shouldDelete) {
+            delete updatedFlow[key]; // Explicit removal command
           } else {
-            nextFlow[key] = value;
+            updatedFlow[key] = value; // Update or add value
           }
         });
 
-        nextState.flow = nextFlow;
+        nextState.flow = updatedFlow;
       }
 
       return nextState;

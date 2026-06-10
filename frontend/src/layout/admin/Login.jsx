@@ -7,18 +7,19 @@ export function AdminLogin({
   setPassword,
   error,
   onSubmit,
+  styles,
 }) {
   return (
-    <div className="admin-login-screen">
-      <div className="admin-login-card">
-        <div className="admin-lock-icon">
+    <div className={styles.adminLoginScreen}>
+      <div className={styles.adminLoginCard}>
+        <div className={styles.adminLockIcon}>
           <VpnKeyOutlined sx={{ fontSize: 32 }} />
         </div>
         <h2>Secure Admin Portal</h2>
-        <p>EventRoots System Management Control</p>
+        <p>EventRoots System Management Console</p>
 
         <form onSubmit={onSubmit}>
-          <div className="field">
+          <div className={styles.field}>
             <label>Master Email</label>
             <input
               type="email"
@@ -29,7 +30,7 @@ export function AdminLogin({
             />
           </div>
 
-          <div className="field">
+          <div className={styles.field}>
             <label>Password</label>
             <input
               type="password"
@@ -42,7 +43,7 @@ export function AdminLogin({
 
           {error && (
             <span
-              className="err"
+              className={styles.err}
               style={{ display: "block", marginTop: "0.5rem" }}
             >
               {error}
@@ -51,7 +52,7 @@ export function AdminLogin({
 
           <button
             type="submit"
-            className="btn-save"
+            className={styles.btnSave}
             style={{ width: "100%", marginTop: "1.5rem", padding: "0.75rem" }}
           >
             Authorize System Access

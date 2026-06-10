@@ -115,6 +115,8 @@ export function Overview() {
     }
   };
 
+  console.log(formData);
+
   const handleBannerUpload = async (e) => {
     startLoading("Uploading Banner", "Please wait");
     try {
