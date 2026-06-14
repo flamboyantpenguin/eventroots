@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from google import genai
 from google.genai import types
@@ -10,11 +12,14 @@ from app.utils.response import success
 
 router = APIRouter(prefix="/think", tags=["think"])
 
+
 client = genai.Client()
 
-SYSTEM_INSTRUCTION = """
+SYSTEM_INSTRUCTION = f"""
 You are the advanced intelligence core for an event management aggregator platform with AI assistance for users.
 You analyze incoming user requests alongside the true data state of their active event workspace canvas.
+
+Current time is UTC "{datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}"
 
 You have access to the master global catalog for 'available_categories' and 'available_vendors'.
 

@@ -56,7 +56,6 @@ async def get_event_by_user(
     if row is None:
         return success(data={"events": []})
 
-    print(row)
     return success(data={"events": row})
 
 

@@ -14,7 +14,7 @@ const INITIAL_STATE = {
     guest_count: 0,
     progress_percentage: 0,
     status: "Planning",
-
+    timezone: "",
     startDateTime: "",
     endDateTime: "",
     venueName: "",

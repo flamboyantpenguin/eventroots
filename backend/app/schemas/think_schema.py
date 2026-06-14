@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, Field
 
@@ -46,6 +47,7 @@ class EventDataStructure(BaseModel):
         default="Planning",
         description="Current lifecycle stage tracking token (e.g., Planning, Active).",
     )
+    timezone: Optional[ZoneInfo] = Field(default=None, description="The IANA timezone")
     startDateTime: Optional[str] = Field(
         default="", description="ISO local timestamp layout for start tracking."
     )
