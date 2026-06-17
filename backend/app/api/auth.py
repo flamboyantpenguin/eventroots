@@ -14,7 +14,7 @@ from fastapi import (
 from fastapi.security.oauth2 import OAuth2PasswordBearer
 from starlette.responses import JSONResponse
 
-from app.config import Settings
+from app.config import settings
 from app.core.security import (
     create_access_token,
     hash_password,
@@ -38,9 +38,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 oauth2_scheme_admin = OAuth2PasswordBearer(tokenUrl="/api/admin/login")
 
 
-UPLOAD_DIR = Settings.UPLOAD_PFP
-ACCESS_PFP = Settings.ACCESS_PFP
-MAX_FILE_SIZE = Settings.PFP_MAX_SIZE
+UPLOAD_PFP = settings.UPLOADS_DIR + "/pfp"
+MAX_FILE_SIZE = settings.PFP_MAX_SIZE
 
 
 async def get_current_user_claims(
@@ -89,7 +88,7 @@ def _create_auth_payload(row: UserModel | AdminModel, is_admin=False) -> dict[st
         "id": str(row.id),
         "username": row.username if type(row) is UserModel else row.email.split("@")[0],
         "email": row.email,
-        "pfp": row.pfp or "/static/pfp/default.svg",
+        "pfp": row.pfp or "/" + UPLOAD_PFP + "/default.jpg",
     }
 
     token = create_access_token()
@@ -110,7 +109,7 @@ async def signup(body: PublicSignupRequest = Depends()):
         )
 
     hashed = hash_password(body.password)
-    avatar_url = ACCESS_PFP + "/default.jpg"
+    avatar_url = "/" + UPLOAD_PFP + "/default.jpg"
     file_path = ""
 
     if body.pfp and body.pfp.filename:
@@ -126,12 +125,12 @@ async def signup(body: PublicSignupRequest = Depends()):
             return error("File size exceeds the maximum limit of 5MB.", status_code=413)
 
         unique_filename = f"{uuid4()}{file_extension}"
-        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+        file_path = os.path.join(UPLOAD_PFP, unique_filename)
 
         try:
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(body.pfp.file, buffer)
-            avatar_url = f"{ACCESS_PFP}/{unique_filename}"
+            avatar_url = f"/{UPLOAD_PFP}/{unique_filename}"
         except Exception:
             return error(
                 "Failed to save profile picture to local storage.", status_code=500
@@ -181,7 +180,7 @@ async def login(body: PublicLoginRequest):
             user_id=payload["user"]["id"],
             session_token=payload["access_token"],
             expires_at=datetime.now(timezone.utc)
-            + timedelta(hours=Settings.SESSION_TOKEN_EXPIRY_HOURS),
+            + timedelta(hours=settings.SESSION_TOKEN_EXPIRY_HOURS),
         )
         return success(data=payload, message="Login successful")
 
@@ -209,7 +208,7 @@ async def admin_login(body: AdminLoginRequest):
             user_id=payload["user"]["id"],
             session_token=payload["access_token"],
             expires_at=datetime.now(timezone.utc)
-            + timedelta(hours=Settings.SESSION_TOKEN_EXPIRY_HOURS),
+            + timedelta(hours=settings.SESSION_TOKEN_EXPIRY_HOURS),
             is_admin=True,
         )
         return success(data=payload, message="Login successful")

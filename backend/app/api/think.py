@@ -8,12 +8,12 @@ from app.api.auth import get_current_user_claims
 from app.schemas.auth_schema import ClaimModel
 from app.schemas.think_schema import ThinkRequest, ThinkResponse, ThinkStructure
 from app.store.db import db
+from app.config import settings
 from app.utils.response import success
 
 router = APIRouter(prefix="/think", tags=["think"])
 
-
-client = genai.Client()
+client: genai.Client | None = None
 
 SYSTEM_INSTRUCTION = f"""
 You are the advanced intelligence core for an event management aggregator platform with AI assistance for users.
@@ -42,6 +42,12 @@ Rules for updates:
 async def chat(
     body: ThinkRequest, claims: ClaimModel = Depends(get_current_user_claims)
 ):
+    if client is None:
+        return error(
+            status_code=status.HTTP_500_UNAUTHORIZED,
+            message="Think Backend not active",
+        )
+
     user_id_from_claim = claims.user_id
     if not user_id_from_claim:
         raise HTTPException(

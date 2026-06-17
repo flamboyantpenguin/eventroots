@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
-from os import getenv
+from os import makedirs
+from shutil import copytree
 
 import asyncpg
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from redis import asyncio as aioredis
+from google import genai
 
 from app.api import auth, category, events, health, think, users, vendor
 from app.config import settings
@@ -13,15 +15,16 @@ from app.jobs.scheduler import init_scheduler, scheduler
 from app.store import db
 from app.utils.response import register_error_handlers
 
-DB_URL = getenv("DATABASE_URL")
-REDIS_URL = getenv("REDIS_URL")
+DB_URL = settings.DATABASE_URL
+REDIS_URL = settings.REDIS_URL
+GEMINI_API_KEY = settings.GEMINI_API_KEY
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     print("Initializing DB...")
     if REDIS_URL is not None:
-        print("Redis not set, sessions will be stored in db")
+        print("Redis is set, sessions will be stored in Redis")
         db.redis_client = aioredis.from_url(REDIS_URL, decode_responses=True)
 
     if not DB_URL:
@@ -29,8 +32,23 @@ async def lifespan(_: FastAPI):
         exit(2)
     db.pg_pool = await asyncpg.create_pool(dsn=DB_URL, min_size=10, max_size=20)
 
+    print("Initializing Think...")
+    if GEMINI_API_KEY is None:
+        print("GEMINI_API_KEY_NOT_SET")
+        exit(4)
+    think.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
     print("Initializing schedulers...")
     init_scheduler()
+
+    print("Preparing Static Dir")
+    makedirs(settings.UPLOADS_DIR, exist_ok=True)
+    try:
+        copytree("static/uploads/templates", settings.UPLOADS_DIR + "/templates", dirs_exist_ok=True)
+    except Exception as _:
+        print(f"Skipped identical files")
+    makedirs(settings.UPLOADS_DIR + "/pfp", exist_ok=True)
+    makedirs(settings.UPLOADS_DIR + "/banners", exist_ok=True)
 
     yield
 
@@ -50,7 +68,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-cors_origins_str = getenv("CORS_ORIGINS", settings.DEFAULT_CORS)
+cors_origins_str = settings.CORS_ORIGINS
 
 app.add_middleware(
     CORSMiddleware,

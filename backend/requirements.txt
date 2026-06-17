@@ -12,3 +12,4 @@ redis
 asyncpg
 bcrypt
 psycopg[binary]
+pydantic-settings
