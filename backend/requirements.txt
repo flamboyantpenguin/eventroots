@@ -1,13 +1,14 @@
 fastapi
 uvicorn[standard]
 pydantic[email]
-python-jose[cryptography]
-bcrypt
 python-multipart
 httpx
 pytest
 google-genai
 pydantic
 dotenv
-psycopg[binary]
 apscheduler
+redis
+asyncpg
+bcrypt
+psycopg[binary]

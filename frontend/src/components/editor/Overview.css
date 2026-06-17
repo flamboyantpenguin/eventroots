@@ -185,13 +185,13 @@
 }
 
 /* Append Row Action Submit trigger button layout settings */
-.addRowBtn {
+.m3Button {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
+    background: var(--md-sys-color-secondary) !important;
     border: none;
-    color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-secondary);
     cursor: pointer;
     padding: 8px;
     border-radius: 100px;
@@ -201,8 +201,8 @@
 }
 
 .addRowBtn:hover:not(:disabled) {
-    color: var(--md-sys-color-primary);
-    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-secondary);
+    background-color: var(--md-sys-color-on-secondary);
     transform: scale(1.05);
 }
 

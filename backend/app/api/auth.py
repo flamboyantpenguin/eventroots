@@ -2,7 +2,7 @@ import os
 import shutil
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from fastapi import (
     APIRouter,
@@ -17,55 +17,82 @@ from starlette.responses import JSONResponse
 from app.config import Settings
 from app.core.security import (
     create_access_token,
-    decode_access_token,
     hash_password,
     verify_password,
 )
-from app.schemas.auth_schema import LoginRequest, SignupRequest
+from app.schemas.auth_schema import (
+    AdminLoginRequest,
+    ClaimModel,
+    PublicLoginRequest,
+    PublicSignupRequest,
+)
+from app.schemas.user_schema import AdminModel, UserModel
 from app.store.db import db
 from app.utils.response import error, success
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+public = APIRouter(prefix="/auth", tags=["auth"])
+admin = APIRouter(prefix="/admin", tags=["auth"])
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+oauth2_scheme_admin = OAuth2PasswordBearer(tokenUrl="/api/admin/login")
+
 
 UPLOAD_DIR = Settings.UPLOAD_PFP
 ACCESS_PFP = Settings.ACCESS_PFP
 MAX_FILE_SIZE = Settings.PFP_MAX_SIZE
 
 
-def get_current_user_claims(token: str = Depends(oauth2_scheme)) -> dict | JSONResponse:
+async def get_current_user_claims(
+    token: str = Depends(oauth2_scheme),
+) -> ClaimModel | JSONResponse:
     """Interceptors the bearer header token, decodes it, and returns user claims."""
-    claims = decode_access_token(token)
-    if not claims:
-        return error("Session expired or token signature is invalid", status_code=401)
-    return claims
+
+    if ":" not in token:
+        return error(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            message="Invalid token format. Expected user_id:token",
+        )
+
+    user_id, session_token = token.split(":", 1)
+    session = await db.get_session(user_id, session_token)
+    if not session:
+        return error(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            message="Token has expired or is invalid.",
+        )
+    return ClaimModel(user_id=session.user_id, is_admin=session.is_admin)
+
+async def get_current_admin_claims(
+    token: str = Depends(oauth2_scheme_admin),
+) -> ClaimModel | JSONResponse:
+    """Interceptors the bearer header token, decodes it, and returns user claims."""
+    if ":" not in token:
+        return error(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            message="Invalid token format. Expected user_id:token",
+        )
+    user_id, session_token = token.split(":", 1)
+    session = await db.get_session(user_id, token)
+    if not session:
+        return error(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            message="Token has expired or is invalid.",
+        )
+    return ClaimModel(user_id=session.user_id, is_admin=session.is_admin)
 
 
-def _format_user(row: dict[str, Any]) -> dict[str, Any]:
-    """Map a raw database dictionary row safely into a presentation-layer schema."""
-    user_id = row["id"]
-    username = row.get("username")
-    email = row["email"]
-    pfp = row["pfp"]
+def _create_auth_payload(row: UserModel | AdminModel, is_admin=False) -> dict[str, Any]:
+    """Generate authentication tracking primitives and return an active context envelope."""
 
-    # Clean visual fallback string for names
-    display_name = username or email.split("@")[0]
-
-    return {
-        "id": str(user_id),
-        "username": username or display_name,
-        "email": email,
-        "pfp": pfp,
+    user = {
+        "id": str(row.id),
+        "username": row.username if type(row) is UserModel else row.email.split("@")[0],
+        "email": row.email,
+        "pfp": row.pfp or "/static/pfp/default.svg",
     }
 
-
-def _auth_payload(row: dict[str, Any], is_admin=False) -> dict[str, Any]:
-    """Generate authentication tracking primitives and return an active context envelope."""
-    user = _format_user(row)
-
-    # Create the immutable cryptographic identity token
-    token = create_access_token(subject=user["id"], extra={"is_admin": is_admin})
+    token = create_access_token()
 
     return {
         "access_token": token,
@@ -75,11 +102,11 @@ def _auth_payload(row: dict[str, Any], is_admin=False) -> dict[str, Any]:
     }
 
 
-@router.post("/signup", status_code=201)
-def signup(body: SignupRequest = Depends()):
-    if db.get_user_by_email(body.email):
+@public.post("/signup", status_code=201)
+async def signup(body: PublicSignupRequest = Depends()):
+    if await db.get_user_by_email(body.email):
         return error(
-            "Email is already registered", status_code=status.HTTP_409_CONFLICT
+            message="Email is already registered", status_code=status.HTTP_409_CONFLICT
         )
 
     hashed = hash_password(body.password)
@@ -113,7 +140,7 @@ def signup(body: SignupRequest = Depends()):
             body.pfp.file.close()
 
     try:
-        db.create_user(
+        await db.create_user(
             username=body.username,
             email=body.email,
             hashed_password=hashed,
@@ -124,49 +151,78 @@ def signup(body: SignupRequest = Depends()):
             os.remove(file_path)
 
         return error(
-            "An unexpected system exception occurred during profiling.", status_code=500
+            "An unexpected system exception occurred while creating profile",
+            status_code=500,
         )
 
     return success(message="Signup successful")
 
 
-@router.post("/login")
-def login(body: LoginRequest):
-    if body.is_admin:
-        user_hash = db.get_admin_password_by_email(body.email)
-        db_row = db.get_admin_by_email(body.email)
-    else:
-        user_hash = db.get_user_password_by_email(body.email)
-        db_row = db.get_user_by_email(body.email)
+@public.post("/login")
+async def login(body: PublicLoginRequest):
+    user_hash = await db.get_user_password_by_email(body.email)
 
-    if not user_hash or db_row is None:
+    if not user_hash or not verify_password(body.password, user_hash):
         return error(
-            "Invalid email or password credentials.",
+            message="Invalid email or password credentials.",
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
 
-    if not verify_password(body.password, user_hash):
-        return error(
-            "Invalid email or password credentials.",
-            status_code=status.HTTP_401_UNAUTHORIZED,
+    db_row = await db.get_user_by_email(body.email)
+
+    if db_row is not None:
+        if not db_row.is_active:
+            return error(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                message="You are no longer priviged to login",
+            )
+        payload = _create_auth_payload(db_row)
+        await db.create_session(
+            user_id=payload["user"]["id"],
+            session_token=payload["access_token"],
+            expires_at=datetime.now(timezone.utc)
+            + timedelta(hours=Settings.SESSION_TOKEN_EXPIRY_HOURS),
         )
+        return success(data=payload, message="Login successful")
 
-    payload = _auth_payload(db_row, body.is_admin)
-
-    expiry_horizon = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
-
-    db.create_session(
-        user_id=payload["user"]["id"],
-        session_token=payload["access_token"],
-        expires_at=expiry_horizon,
+    return error(
+        message="Interesting error, contact admin",
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
-    return success(data=payload, message="Login successful")
+
+@admin.post("/login")
+async def admin_login(body: AdminLoginRequest):
+    hash = await db.get_admin_password_by_email(body.email)
+
+    if not hash or not verify_password(body.password, hash):
+        return error(
+            message="Invalid email or password credentials.",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    db_row = await db.get_admin_by_email(body.email)
+
+    if db_row is not None:
+        payload = _create_auth_payload(db_row, True)
+        await db.create_session(
+            user_id=payload["user"]["id"],
+            session_token=payload["access_token"],
+            expires_at=datetime.now(timezone.utc)
+            + timedelta(hours=Settings.SESSION_TOKEN_EXPIRY_HOURS),
+            is_admin=True,
+        )
+        return success(data=payload, message="Login successful")
+
+    return error(
+        message="Interesting error, contact admin",
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
 
 
-@router.delete("/logout")
-def logout(authorization: str | None = Header(None)):
-    """Terminate the active session context and invalidate the transmission token."""
+@admin.delete("/logout")
+async def admin_logout(authorization: str | None = Header(None)):
+    """Terminate the active session context and invalidate the session for public users"""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -176,7 +232,7 @@ def logout(authorization: str | None = Header(None)):
     token = authorization.split(" ")[1]
 
     try:
-        db.delete_session_by_token(token)
+        await db.delete_session_by_token(token)
     except Exception:
         return error(
             "An unexpected system exception occurred during session revocation.",
@@ -186,32 +242,63 @@ def logout(authorization: str | None = Header(None)):
     return success(message="Logout successful. Session cache invalidated.")
 
 
-@router.get("/me")
-def get_current_active_identity(authorization: str | None = Header(None)):
-    """Fetch the current context identity context using the bearer handshake string."""
+@public.delete("/logout")
+async def logout(authorization: str | None = Header(None)):
+    """Terminate the active session context and invalidate the session for public users"""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorization header context missing or malformed.",
         )
 
-    token = authorization.split(" ")[1]
+    composite_token = authorization.split(" ")[1]
 
-    claims = decode_access_token(token)
-    if not claims:
+    if ":" not in composite_token:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token signature has expired or is invalid.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Malformed token format. Expected user_id:token.",
         )
 
-    user_id = claims["user_id"]
-    is_admin = claims["is_admin"]
+    user_id, session_token = composite_token.split(":", 1)
 
-    user_profile = db.get_user_by_id(UUID(user_id))
+    try:
+        await db.delete_session(user_id, session_token)
+    except Exception:
+        return error(
+            "An unexpected system exception occurred during session revocation.",
+            status_code=500,
+        )
+
+    return success(message="Logout successful. Session cache invalidated.")
+
+
+@public.get("/me")
+async def get_current_active_identity(
+    claims: ClaimModel = Depends(get_current_user_claims),
+):
+    """Fetch the current context identity context using the bearer handshake string."""
+
+    user_profile = await db.get_user_by_id(claims.user_id)
     if not user_profile:
-        raise HTTPException(
+        return error(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User instance could not be found.",
+            message="User instance could not be found.",
         )
 
-    return success(_auth_payload(user_profile, is_admin))
+    return success(_create_auth_payload(user_profile, False))
+
+
+@admin.get("/me")
+async def get_current_active_identity_for_admin(
+    claims: ClaimModel = Depends(get_current_admin_claims),
+):
+    """Fetch the current context identity context using the bearer handshake string."""
+
+    user_profile = await db.get_admin_by_id(claims.user_id)
+    if not user_profile:
+        return error(
+            status_code=status.HTTP_404_NOT_FOUND,
+            message="User instance could not be found.",
+        )
+
+    return success(_create_auth_payload(user_profile, True))

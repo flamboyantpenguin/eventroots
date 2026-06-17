@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from "react";
 import { useEventContext } from "/src/hooks/event/useEventContext";
 import { useError } from "/src/hooks/misc/useErrorContext";
+import { useLoading } from "/src/hooks/useLoadingContext";
 
 import {
   DeleteForeverOutlined,
@@ -34,13 +35,14 @@ export function Overview() {
   const { formData, updateFormData, saveEvent, uploadAndSetBanner } =
     useEventContext();
   const { triggerError } = useError();
+  const { startLoading, stopLoading, isLoading } = useLoading();
   const eventData = formData.data || {};
 
   const fileInputRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
 
   const staticKeys = [
     "type",
+    "flow",
     "budget",
     "guest_count",
     "progress_percentage",
@@ -104,28 +106,38 @@ export function Overview() {
     await saveEvent(formData.id, backendPayload);
   };
 
-  const handleBannerUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleTriggerFileInput = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-    setUploading(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  console.log(formData);
+
+  const handleBannerUpload = async (e) => {
+    startLoading("Uploading Banner", "Please wait");
     try {
-      // Elegant, decoupled action dispatching
+      const file = e.target.files[0];
+      if (!file) return;
       await uploadAndSetBanner(formData.id, file);
     } catch (err) {
-      triggerError("Banner Upload Failed", err);
+      triggerError("Banner Upload Failed", err.message);
     } finally {
-      setUploading(false);
+      stopLoading();
     }
   };
 
   return (
     <div className="inspectorBody">
-      {/* 💡 Elegant Banner Management Control Bar */}
       <div className="formSection bannerControlSection">
         <div
           className="bannerPreviewWrapper"
-          style={{ backgroundImage: `url(${formData.banner_url})` }}
+          style={{
+            backgroundImage: `url(${formData.banner_url}), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100%' height='100%' fill='%236750A4'/></svg>"`,
+          }}
         >
           <div className="bannerScrimOverlay">
             <input
@@ -138,11 +150,11 @@ export function Overview() {
             <button
               type="button"
               className="m3Button bannerUploadBtn"
-              disabled={uploading}
-              onClick={() => fileInputRef.current.click()}
+              disabled={isLoading}
+              onClick={handleTriggerFileInput}
             >
               <CameraAltOutlined style={{ fontSize: 18, marginRight: "6px" }} />
-              {uploading ? "Uploading Image..." : "Change Workspace Banner"}
+              {isLoading ? "Uploading Image..." : "Change Workspace Banner"}
             </button>
           </div>
         </div>
@@ -262,7 +274,6 @@ export function Overview() {
         </div>
       </div>
 
-      {/* SECTION B: DYNAMIC PARAMETERS LEDGER MATRIX */}
       <div className="formSection dynamicSection">
         <div className="sectionDivider">
           <AccountBalanceWalletOutlined className="sectionIcon" />

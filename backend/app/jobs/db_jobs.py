@@ -5,11 +5,11 @@ from datetime import datetime, timezone
 from app.store.db import db
 
 
-def purge_expired_sessions():
+async def purge_expired_sessions():
     """Background task to remove dead sessions from the database."""
     try:
         now = datetime.now(timezone.utc)
-        deleted_count = db.delete_expired_sessions()
+        deleted_count = await db.delete_expired_sessions()
 
         if deleted_count > 0:
             print(f"[{now}] DB Housekeeping: Purged {deleted_count} expired sessions.")

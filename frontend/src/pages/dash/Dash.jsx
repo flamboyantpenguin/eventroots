@@ -10,10 +10,13 @@ import { useLoading } from "/src/hooks/useLoadingContext";
 import { useEventContext } from "/src/hooks/event/useEventContext";
 
 import styles from "./Dash.module.css";
+import Logo from "/src/assets/favicon.svg";
+import { AddOutlined } from "@mui/icons-material";
 
 export default function Dash() {
   const { user, openProfile } = useAuth();
   const {
+    error,
     events,
     templates,
     refreshDashboard,
@@ -27,7 +30,6 @@ export default function Dash() {
 
   const navigate = useNavigate();
 
-  // DRAG-TO-SCROLL ARCHITECTURE
   const scrollRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -38,32 +40,19 @@ export default function Dash() {
     async function initializeWorkspace() {
       try {
         await refreshDashboard();
+        if (error) {
+          let errorTitle = "Workspace Sync Error";
+          let errorDesc = error.message || "Failed to connect to backend";
+          triggerError(errorTitle, errorDesc);
+        }
       } catch (err) {
         let errorTitle = "Workspace Sync Error";
-        let errorDesc =
-          err.message ||
-          "Unable to establish a secure link to your active database cluster.";
-
-        const backendDetail = err.response?.data?.detail;
-        if (backendDetail) {
-          if (typeof backendDetail === "string") {
-            errorTitle = backendDetail;
-          } else if (Array.isArray(backendDetail)) {
-            errorTitle = "Data Validation Failure";
-            errorDesc = backendDetail
-              .map((e) => `${e.loc.join(".")}: ${e.msg}`)
-              .join(" | ");
-          } else if (typeof backendDetail === "object") {
-            errorTitle = backendDetail.title || "Malformed Response Payload";
-            errorDesc =
-              backendDetail.description || JSON.stringify(backendDetail);
-          }
-        }
+        let errorDesc = err.message || "Failed to connect to backend";
         triggerError(errorTitle, errorDesc);
       }
     }
     initializeWorkspace();
-  }, [refreshDashboard, triggerError]);
+  }, [refreshDashboard, triggerError, error]);
 
   const handleTemplateSelect = async (templateId, templateTitle) => {
     startLoading("Loading", `Creating an event based on "${templateTitle}"`);
@@ -74,7 +63,7 @@ export default function Dash() {
     } catch (err) {
       triggerError(
         "Event Creation Failed",
-        `Unable to create event from template: ${err}`,
+        `Unable to create event from template: ${err.message}`,
       );
     } finally {
       stopLoading();
@@ -90,7 +79,7 @@ export default function Dash() {
     } catch (err) {
       triggerError(
         "Event Creation Failed",
-        `Unable to create empty event: ${err}`,
+        `Unable to create empty event: ${err.message}`,
       );
     } finally {
       stopLoading();
@@ -105,19 +94,18 @@ export default function Dash() {
     } catch (err) {
       triggerError(
         "Loading Event Failed",
-        `Unable to load created event: ${err}`,
+        `Unable to load created event: ${err.message}`,
       );
     } finally {
       stopLoading();
     }
   };
 
-  // INTERACTION CAPTURE ROUTERS
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setStartX(e.pageX - scrollRef.current.offsetLeft);
     setScrollLeft(scrollRef.current.scrollLeft);
-    setDragDistance(0); // Reset distance tracker on touch start
+    setDragDistance(0);
   };
 
   const handleMouseLeaveOrUp = () => {
@@ -130,10 +118,8 @@ export default function Dash() {
     const x = e.pageX - scrollRef.current.offsetLeft;
     const currentWalk = x - startX;
 
-    // Accumulate total dragging distance variance
     setDragDistance((prev) => prev + Math.abs(currentWalk));
 
-    // Smooth standard sensitivity tracking multipliers
     scrollRef.current.scrollLeft = scrollLeft - currentWalk * 1.5;
   };
 
@@ -147,13 +133,15 @@ export default function Dash() {
     <div className={styles.dashContainer}>
       {/* Header */}
       <header className={styles.dashHeader}>
-        <div className={styles.logo}>EventRoots</div>
+        <div className={styles.logo}>
+          <img src={Logo} alt="Logo" />
+          EventRoots
+        </div>
 
         <div className={styles.headerActions}>
-          <button className={styles.iconBtn}>
+          <button className={`${styles.iconBtn} ${styles.ntfBtn}`}>
             <NotificationsNoneIcon fontSize="large" />
           </button>
-
           <div className={styles.profile} onClick={openProfile}>
             <img src={user?.pfp} alt="profile" />
           </div>
@@ -167,7 +155,7 @@ export default function Dash() {
       {/* Event Templates */}
       {templates && (
         <section className={styles.sectionCard}>
-          <h2>Event Templates</h2>
+          <h2>Get started with some generic templates</h2>
 
           <div
             ref={scrollRef}
@@ -208,6 +196,14 @@ export default function Dash() {
         </section>
       )}
 
+      <button
+        className={styles.fab}
+        aria-label="Create new event"
+        onClick={handleCreateEventSelect}
+      >
+        <AddOutlined></AddOutlined>
+      </button>
+
       {/* Your Events */}
       <section className={styles.sectionCard}>
         <h2>Your Events</h2>
@@ -226,7 +222,15 @@ export default function Dash() {
               key={event.id || index}
               onClick={() => handleEventSelect(event.id)}
             >
-              <img src={event.image} alt={event.title} />
+              <img
+                src={event.image}
+                alt={event.title}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src =
+                    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100%' height='100%' fill='%236750A4'/></svg>";
+                }}
+              />
 
               <div className={styles.eventContent}>
                 {event.data?.status && (
@@ -237,7 +241,7 @@ export default function Dash() {
                   </span>
                 )}
 
-                <h3>{event.title}</h3>
+                <h3>{event.title || "Untitled"}</h3>
 
                 <div className={styles.progressBar}>
                   <div

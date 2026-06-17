@@ -1,4 +1,22 @@
+from datetime import datetime
+from uuid import UUID
+
 from pydantic import BaseModel, EmailStr, Field
+
+
+class UserModel(BaseModel):
+    id: UUID
+    username: str
+    email: EmailStr
+    pfp: str | None = None
+    is_active: bool
+    last_online: datetime
+
+
+class AdminModel(BaseModel):
+    id: UUID
+    email: EmailStr
+    pfp: str | None = None
 
 
 class UserBase(BaseModel):
@@ -11,10 +29,11 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    name: str | None = None
+    username: str | None = None
     email: EmailStr | None = None
     event: str | None = None
-    status: bool
+    is_active: bool | None = None
+    password: str | None = None
 
 
 class UserResponse(UserBase):

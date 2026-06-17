@@ -66,8 +66,7 @@ export function Chat({ onCollapse }) {
         {
           id: `err-${Date.now()}`,
           role: "assistant",
-          content:
-            "⚠️ *System pipeline bottleneck encountered. Please check your query matrix parameters.*",
+          content: `⚠️ Chat Failed: ${error.message}`,
         },
       ]);
     } finally {

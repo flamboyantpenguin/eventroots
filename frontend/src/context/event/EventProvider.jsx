@@ -14,7 +14,7 @@ const INITIAL_STATE = {
     guest_count: 0,
     progress_percentage: 0,
     status: "Planning",
-
+    timezone: "",
     startDateTime: "",
     endDateTime: "",
     venueName: "",
@@ -45,7 +45,7 @@ export const EventProvider = ({ children }) => {
 
       setFormData((prev) => ({
         ...prev,
-        banner_url: newUrl,
+        banner_url: getAssetUrl(newUrl),
       }));
 
       return newUrl;
@@ -109,36 +109,28 @@ export const EventProvider = ({ children }) => {
 
   const updateFormData = useCallback((section, keyOrValue, directValue) => {
     setFormData((prev) => {
-      if (directValue === undefined && typeof keyOrValue !== "object") {
-        return {
-          ...prev,
-          [section]: keyOrValue,
-        };
-      }
-
-      if (directValue === undefined && typeof keyOrValue === "object") {
-        return {
-          ...prev,
-          [section]: {
-            ...(typeof prev[section] === "object" ? prev[section] : {}),
-            ...keyOrValue,
-          },
-        };
+      if (
+        directValue === undefined &&
+        typeof keyOrValue === "object" &&
+        keyOrValue !== null
+      ) {
+        if (section === "flow") {
+          return { ...prev, flow: keyOrValue };
+        }
+        const currentSection =
+          typeof prev[section] === "object" ? prev[section] : {};
+        return { ...prev, [section]: { ...currentSection, ...keyOrValue } };
       }
 
       if (!keyOrValue) {
-        return {
-          ...prev,
-          [section]: directValue,
-        };
+        return { ...prev, [section]: directValue };
       }
 
+      const currentSection =
+        typeof prev[section] === "object" ? prev[section] : {};
       return {
         ...prev,
-        [section]: {
-          ...(typeof prev[section] === "object" ? prev[section] : {}),
-          [keyOrValue]: directValue,
-        },
+        [section]: { ...currentSection, [keyOrValue]: directValue },
       };
     });
   }, []);
@@ -149,61 +141,67 @@ export const EventProvider = ({ children }) => {
     const unpacked = newData.event || newData;
 
     setFormData((prev) => {
-      const nextState = {
-        ...prev,
-        ...unpacked,
-      };
+      const nextState = { ...prev, ...unpacked };
 
+      // 1. Sync and clean "data"
       if (unpacked.data) {
-        const incomingData = { ...unpacked.data };
+        const currentData = prev.data || {};
+        const updatedData = { ...currentData };
 
-        Object.keys(incomingData).forEach((key) => {
-          if (incomingData[key] === null) {
-            delete incomingData[key];
+        if (unpacked.banner_url || unpacked.image) {
+          const incomingBanner = unpacked.banner_url || unpacked.image;
+          nextState.banner_url = getAssetUrl(incomingBanner);
+        }
+
+        // Process every key present in the incoming data payload
+        Object.entries(unpacked.data).forEach(([key, value]) => {
+          if (value === null) {
+            delete updatedData[key]; // Explicit removal command
+          } else {
+            updatedData[key] = value; // Update or add value
           }
         });
-        nextState.data = {
-          ...(prev.data || {}),
-          ...incomingData,
-        };
 
-        Object.keys(prev.data || {}).forEach((key) => {
-          if (!(key in incomingData) && incomingData[key] === undefined) {
-            delete nextState.data[key];
-          }
-        });
+        nextState.data = updatedData;
       }
 
+      // 2. Sync and clean "flow"
       if (unpacked.flow) {
-        nextState.flow = {
-          ...(prev.flow || {}),
-          ...unpacked.flow,
-        };
+        const currentFlow = prev.flow || {};
+        const updatedFlow = { ...currentFlow };
+
+        Object.entries(unpacked.flow).forEach(([key, value]) => {
+          const shouldDelete =
+            value === null ||
+            value === undefined ||
+            (Array.isArray(value) && value.length === 0);
+
+          if (shouldDelete) {
+            delete updatedFlow[key]; // Explicit removal command
+          } else {
+            updatedFlow[key] = value; // Update or add value
+          }
+        });
+
+        nextState.flow = updatedFlow;
       }
 
       return nextState;
     });
   }, []);
 
-  /**
-   * 🛠️ Fixed & Formalized sendWorkspaceMessage
-   * Uses standard editorAPI definitions and safely pipes responses via onUpdate
-   */
   const sendWorkspaceMessage = useCallback(
     async (eventId, messageText) => {
       if (!eventId || !messageText) return "";
 
       try {
-        // Route query through your central editorAPI engine
         const response = await editorAPI.think(eventId, messageText);
         const payload = response?.data || response;
 
-        // Intercept and merge dynamic state updates into downstream views immediately
         if (payload?.updated_state) {
           onUpdate(payload.updated_state);
         }
 
-        // Return text summary content string to append back to the Chat layout feed
         return payload?.content || "";
       } catch (err) {
         console.error("Generative AI synchronization step failed:", err);
@@ -249,7 +247,7 @@ export const EventProvider = ({ children }) => {
       onUpdate,
       loadEvent,
       saveEvent,
-      sendWorkspaceMessage, // 💡 Exposed cleanly to context consumers
+      sendWorkspaceMessage,
     }),
     [
       formData,

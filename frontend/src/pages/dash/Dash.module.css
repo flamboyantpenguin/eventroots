@@ -23,18 +23,36 @@
     padding: 20px;
     justify-content: center;
     color: var(--md-sys-color-on-surface);
+    text-decoration: underline wavy var(--md-sys-color-tertiary) 3px;
 }
 
 .logo {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem;
     font-family: var(--heading);
     font-size: 3rem;
     color: var(--md-sys-color-primary);
+    border-radius: 10px;
+}
+
+.logo img {
+    width: 4rem;
+}
+
+.logo:hover {
+    background-color: var(--md-sys-color-surface-container-low);
 }
 
 .headerActions {
     display: flex;
     align-items: center;
     gap: 16px;
+    background-color: var(--md-sys-color-surface-container-low);
+    padding: 0.5rem;
+    border-radius: 10px;
+    padding-left: 1rem;
+    padding-right: 1rem;
 }
 
 .iconBtn {
@@ -56,18 +74,34 @@
     background-color: var(--md-sys-color-on-primary);
 }
 
+.ntfBtn {
+    color: var(--md-sys-color-on-secondary);
+    background-color: var(--md-sys-color-secondary);
+}
+
+.ntfBtn:hover {
+    color: var(--md-sys-color-secondary);
+    background-color: var(--md-sys-color-on-secondary);
+    border: 2px solid var(--md-sys-color-secondary);
+}
+
 .profile {
     display: flex;
     align-items: center;
     gap: 10px;
     cursor: pointer;
+    border-radius: 50%;
 }
 
 .profile img {
-    width: 42px;
-    height: 42px;
+    width: 3rem;
+    height: 3rem;
     border-radius: 50%;
     object-fit: cover;
+}
+
+.profile:hover {
+    border: 3px solid var(--md-sys-color-tertiary);
 }
 
 /* SECTION STRUCTURES */
@@ -119,6 +153,15 @@
     object-fit: cover;
     user-select: none;
     -webkit-user-drag: none;
+}
+
+.templateCard:hover {
+    background-color: var(--md-sys-color-surface);
+}
+
+.templateCard:hover img {
+    -webkit-filter: blur(5px);
+    filter: blur(5px);
 }
 
 .templateContent {
@@ -184,6 +227,30 @@
     object-fit: cover;
 }
 
+.eventCard:hover {
+    background-color: var(--md-sys-color-surface);
+}
+
+.eventCard:hover img {
+    -webkit-filter: blur(5px);
+    filter: blur(5px);
+}
+
+.eventCard:hover .planning {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
+
+.eventCard:hover .upcoming {
+    background: var(--md-sys-color-secondary);
+    color: var(--md-sys-color-on-secondary);
+}
+
+.eventCard:hover .completed {
+    background: var(--md-sys-color-tertiary);
+    color: var(--md-sys-color-on-tertiary);
+}
+
 .eventContent {
     padding: 16px;
     font-size: 1.3rem;
@@ -194,7 +261,6 @@
     font-size: 1.5rem;
 }
 
-/* BADGES & RUNTIME METRICS */
 .badge {
     padding: 6px 12px;
     border-radius: 999px;
@@ -229,4 +295,42 @@
     height: 100%;
     border-radius: 999px;
     background: var(--md-sys-color-primary);
+}
+
+.fab {
+    position: fixed;
+    bottom: 4rem;
+    right: 4rem;
+    z-index: 999;
+
+    width: 5rem;
+    height: 5rem;
+    border-radius: 10px;
+    border: none;
+
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Aesthetics */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.fab:hover {
+    background-color: var(--md-sys-color-on-primary);
+    color: var(--md-sys-color-primary);
+    border: 1px solid var(--md-sys-color-primary);
+    transform: scale(1.05);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+.fab:active {
+    transform: scale(0.95);
 }

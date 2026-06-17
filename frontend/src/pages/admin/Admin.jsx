@@ -1,12 +1,12 @@
 import { useState } from "react";
-import "./Admin.css";
+import styles from "./Admin.module.css";
 import { AdminLogin } from "../../layout/admin/Login";
 import { useAuth } from "../../hooks/useAuth";
 import { useLoading } from "../../hooks/useLoadingContext";
 import Panel from "../../layout/admin/Panel";
 
 export default function Admin() {
-  const { login, logout, isAuthenticated, user, isAdmin } = useAuth();
+  const { adminLogin, adminLogout, isAuthenticated, user, isAdmin } = useAuth();
   const { startLoading, stopLoading } = useLoading();
 
   const [adminEmail, setAdminEmail] = useState("");
@@ -22,10 +22,10 @@ export default function Admin() {
     );
 
     try {
-      const data = await login(adminEmail, adminPassword, true);
+      const data = await adminLogin(adminEmail, adminPassword, true);
       if (!data.is_admin) {
         setLoginError("Access Denied: Account lacks administrative clearance.");
-        await logout();
+        await adminLogout();
       }
     } catch (err) {
       setLoginError(err.message || "Invalid system administrator credentials.");
@@ -44,6 +44,7 @@ export default function Admin() {
           setPassword={setAdminPassword}
           error={loginError}
           onSubmit={handleAdminLoginSubmit}
+          styles={styles}
         />
       </>
     );
@@ -51,7 +52,7 @@ export default function Admin() {
 
   return (
     <>
-      <Panel></Panel>
+      <Panel styles={styles}></Panel>
     </>
   );
 }
