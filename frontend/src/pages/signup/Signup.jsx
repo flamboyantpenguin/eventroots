@@ -7,7 +7,8 @@ import {
   CheckCircleRounded,
 } from "@mui/icons-material";
 
-import "./Signup.css"; // Appending to your existing styles cleanly
+import { Link } from "react-router-dom";
+import styles from "./Signup.module.css";
 import Logo from "/src/assets/favicon.svg";
 import { useAuth } from "../../hooks/useAuth";
 import { useLoading } from "../../hooks/useLoadingContext";
@@ -64,15 +65,15 @@ const Signup = () => {
   };
 
   return (
-    <div className="login-main m3-theme">
+    <div className={`${styles.loginMain} m3-theme`}>
       {/* 🔮 Left Column Panel: Shows structural graphics or avatar preview */}
-      <div className="login-left">
+      <div className={styles.loginLeft}>
         {pfpPreview ? (
-          <div className="signup-preview-frame">
+          <div className={styles.signupPreviewFrame}>
             <img
               src={pfpPreview}
               alt="Profile Preview"
-              className="signup-avatar-circle"
+              className={styles.signupAvatarCircle}
             />
           </div>
         ) : (
@@ -86,20 +87,20 @@ const Signup = () => {
       </div>
 
       {/* 📋 Right Column Panel: Registration Input fields */}
-      <div className="login-right">
-        <div className="login-right-container">
-          <div className="login-logo">
+      <div className={styles.loginRight}>
+        <div className={styles.loginRightContainer}>
+          <div className={styles.loginLogo}>
             <img src={Logo} alt="Logo" />
           </div>
 
-          <div className="login-center">
+          <div className={styles.loginCenter}>
             <h2>Create your account</h2>
             {!failed && <p>Get started with EventRoots platform</p>}
-            {failed && <p className="error">{failed}</p>}
+            {failed && <p className={styles.error}>{failed}</p>}
 
             <form onSubmit={handleSignupSubmit}>
               {/* 🟢 Username Field Input Group */}
-              <div className="m3-input-group">
+              <div className={styles.m3InputGroup}>
                 <input
                   type="text"
                   placeholder=" "
@@ -112,7 +113,7 @@ const Signup = () => {
               </div>
 
               {/* Email Field Input Group */}
-              <div className="m3-input-group">
+              <div className={styles.m3InputGroup}>
                 <input
                   type="email"
                   placeholder=" "
@@ -125,7 +126,9 @@ const Signup = () => {
               </div>
 
               {/* Password Field Input Group */}
-              <div className="m3-input-group pass-input-div">
+              <div
+                className={`${styles.m3InputGroup} ${styles.passInputContainer}`}
+              >
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder=" "
@@ -137,7 +140,7 @@ const Signup = () => {
                 <label htmlFor="password">Password</label>
 
                 <div
-                  className="m3-icon-button"
+                  className={styles.m3IconButton}
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -145,15 +148,17 @@ const Signup = () => {
               </div>
 
               {/* 🟢 Clean Custom M3 Multipart File Picker Dropzone */}
-              <div className="signup-file-wrapper">
+              <div className={styles.signupFileWrapper}>
                 <label
                   htmlFor="pfp-upload"
-                  className={`m3-file-label ${pfpFile ? "uploaded" : ""}`}
+                  className={`${styles.m3FileLabel} ${pfpFile ? styles.uploaded : ""}`}
                 >
                   {pfpFile ? (
-                    <CheckCircleRounded className="m3-file-icon success" />
+                    <CheckCircleRounded
+                      className={`${styles.m3FileIcon} ${styles.success}`}
+                    />
                   ) : (
-                    <CloudUploadRounded className="m3-file-icon" />
+                    <CloudUploadRounded className={styles.m3FileIcon} />
                   )}
                   <span>
                     {pfpFile
@@ -166,20 +171,23 @@ const Signup = () => {
                   type="file"
                   accept="image/png, image/jpeg, image/jpg, image/webp"
                   onChange={handleFileChange}
-                  style={{ display: "none" }} // Hide the native ugly browser button!
+                  style={{ display: "none" }}
                 />
               </div>
 
-              <div className="login-center-buttons">
-                <button type="submit" className="m3-btn m3-btn-filled">
+              <div className={styles.loginCenterButtons}>
+                <button
+                  type="submit"
+                  className={`${styles.m3Btn} ${styles.m3BtnFilled}`}
+                >
                   Sign Up
                 </button>
               </div>
             </form>
           </div>
 
-          <p className="login-bottom-p">
-            Already have an account? <a href="/login">Log In</a>
+          <p className={styles.loginBottomP}>
+            Already have an account? <Link to="/login">Log In</Link>
           </p>
         </div>
       </div>
