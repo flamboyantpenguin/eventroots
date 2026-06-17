@@ -59,12 +59,30 @@ class DatabaseStore:
         return None
 
     @staticmethod
-    async def _execute_write_on_volatile(key: str, value: dict, ttl: int) -> None:
+    async def _execute_write_on_volatile(
+        key: str, value: dict, ttl: int, indices: tuple | None = None
+    ) -> None:
         """Isolated helper execution thread keeping query logic DRY and connection-safe."""
         if not redis_client:
             raise RuntimeError("Redis engine is uninitialized.")
 
         await redis_client.set(name=key, value=json.dumps(value), ex=ttl)
+        if indices is not None:
+            for index in indices:
+                await redis_client.sadd(index[0], index[1])
+
+    @staticmethod
+    async def _execute_purge_on_volatile(
+        key: str, indices: tuple | None = None
+    ) -> None:
+        """Static method to delete records from volatile db"""
+        if not redis_client:
+            raise RuntimeError("Redis engine is uninitialized.")
+
+        await redis_client.delete(key)
+        if indices is not None:
+            for index in indices:
+                await redis_client.srem(index[0], index[1])
 
     async def status(self) -> bool:
         try:
@@ -389,26 +407,24 @@ class DatabaseStore:
             }
 
             key = (
-                f"session:admin:{session_token}"
+                f"session:admin:{user_id}:{session_token}"
                 if is_admin
-                else f"session:user:{session_token}"
+                else f"session:user:{user_id}:{session_token}"
             )
 
             await self._execute_write_on_volatile(
                 key, payload, int(expires_at.timestamp())
             )
 
-    async def get_session_by_token(self, session_token: str) -> SessionModel | None:
+    async def get_session(self, user_id: UUID, session_token: str) -> SessionModel | None:
         """Retrieve an active session footprint, prioritizing fast-pass cache with fallback."""
 
         if redis_client:
-            admin_key = f"session:admin:{session_token}"
-            user_key = f"session:user:{session_token}"
+            admin_key = f"session:admin:{user_id}:{session_token}"
+            user_key = f"session:user:{user_id}:{session_token}"
 
-            async with redis_client.pipeline() as pipe:
-                pipe.get(admin_key)
-                pipe.get(user_key)
-                admin_data, user_data = await pipe.execute()
+            admin_data = _execute_read_on_volatile(admin_key)
+            user_data = _execute_read_on_volatile(user_key)
 
             raw_cached = admin_data or user_data
             if raw_cached:
@@ -431,9 +447,9 @@ class DatabaseStore:
 
         if redis_client:
             key = (
-                f"session:admin:{session_token}"
+                f"session:admin:{user_id}:{session_token}"
                 if session_data["is_admin"]
-                else f"session:user:{session_token}"
+                else f"session:user:{user_id}:{session_token}"
             )
             payload = {
                 "user_id": str(session_data["user_id"]),
@@ -448,21 +464,35 @@ class DatabaseStore:
                     ).total_seconds()
                 ),
             )
-            await self._execute_write_on_volatile(key, payload, ttl=remaining_ttl)
+            await self._execute_write_on_volatile(
+                key,
+                payload,
+                remaining_ttl,
+            )
 
         return SessionModel.model_validate(session_data)
 
-    async def delete_session_by_token(self, session_token: str) -> None:
+    async def delete_session(self, user_id: UUID, token: str) -> None:
         """Purge an active session token row completely from all storage tiers upon logout."""
 
-        query = "DELETE FROM sessions WHERE session_token = $1;"
-        await self._execute_mutation(query, (session_token,))
+        if redis_client:
+            _execute_purge_on_volatile(f"session:user:{user_id}:{token}")
+            _execute_purge_on_volatile(f"session:admin:{user_id}:{token}")
+            return
+
+        query = "DELETE FROM sessions WHERE user_id = $1;"
+        await self._execute_mutation(query, (user_id,))
+
+    async def delete_all_sessions_of_user(self, user_id: UUID) -> None:
+        """Purge an active session token row completely from all storage tiers upon logout."""
 
         if redis_client:
-            async with redis_client.pipeline() as pipe:
-                pipe.delete(f"session:user:{session_token}")
-                pipe.delete(f"session:admin:{session_token}")
-                await pipe.execute()
+            _execute_purge_on_volatile(f"session:user:{user_id}")
+            _execute_purge_on_volatile(f"session:admin:{user_id}")
+            return
+
+        query = "DELETE FROM sessions WHERE user_id = $1;"
+        await self._execute_mutation(query, (user_id,))
 
     async def delete_expired_sessions(self) -> int:
         """Purge an active session token row completely from storage upon logout."""

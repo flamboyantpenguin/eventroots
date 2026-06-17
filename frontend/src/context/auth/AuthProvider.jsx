@@ -95,8 +95,9 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const userData = await authAPI.login(email, password);
-      if (userData?.access_token) {
-        localStorage.setItem("auth_token", userData.access_token);
+      if (userData?.access_token && userData?.user?.id) {
+        const compositeToken = `${userData.user?.id}:${userData.access_token}`;
+        localStorage.setItem("auth_token", compositeToken);
       }
       setUser(inflateUserPayload(userData.user));
       setIsAuthenticated(true);

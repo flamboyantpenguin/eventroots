@@ -47,7 +47,15 @@ async def get_current_user_claims(
     token: str = Depends(oauth2_scheme),
 ) -> ClaimModel | JSONResponse:
     """Interceptors the bearer header token, decodes it, and returns user claims."""
-    session = await db.get_session_by_token(token)
+
+    if ":" not in token:
+        return error(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            message="Invalid token format. Expected user_id:token",
+        )
+
+    user_id, session_token = token.split(":", 1)
+    session = await db.get_session(user_id, session_token)
     if not session:
         return error(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -55,12 +63,17 @@ async def get_current_user_claims(
         )
     return ClaimModel(user_id=session.user_id, is_admin=session.is_admin)
 
-
 async def get_current_admin_claims(
     token: str = Depends(oauth2_scheme_admin),
 ) -> ClaimModel | JSONResponse:
     """Interceptors the bearer header token, decodes it, and returns user claims."""
-    session = await db.get_session_by_token(token)
+    if ":" not in token:
+        return error(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            message="Invalid token format. Expected user_id:token",
+        )
+    user_id, session_token = token.split(":", 1)
+    session = await db.get_session(user_id, token)
     if not session:
         return error(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -158,6 +171,11 @@ async def login(body: PublicLoginRequest):
     db_row = await db.get_user_by_email(body.email)
 
     if db_row is not None:
+        if not db_row.is_active:
+            return error(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                message="You are no longer priviged to login",
+            )
         payload = _create_auth_payload(db_row)
         await db.create_session(
             user_id=payload["user"]["id"],
@@ -233,10 +251,18 @@ async def logout(authorization: str | None = Header(None)):
             detail="Authorization header context missing or malformed.",
         )
 
-    token = authorization.split(" ")[1]
+    composite_token = authorization.split(" ")[1]
+
+    if ":" not in composite_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Malformed token format. Expected user_id:token.",
+        )
+
+    user_id, session_token = composite_token.split(":", 1)
 
     try:
-        await db.delete_session_by_token(token)
+        await db.delete_session(user_id, session_token)
     except Exception:
         return error(
             "An unexpected system exception occurred during session revocation.",
@@ -248,7 +274,7 @@ async def logout(authorization: str | None = Header(None)):
 
 @public.get("/me")
 async def get_current_active_identity(
-    claims: ClaimModel = Depends(get_current_admin_claims),
+    claims: ClaimModel = Depends(get_current_user_claims),
 ):
     """Fetch the current context identity context using the bearer handshake string."""
 
@@ -264,7 +290,7 @@ async def get_current_active_identity(
 
 @admin.get("/me")
 async def get_current_active_identity_for_admin(
-    claims: ClaimModel = Depends(get_current_user_claims),
+    claims: ClaimModel = Depends(get_current_admin_claims),
 ):
     """Fetch the current context identity context using the bearer handshake string."""
 

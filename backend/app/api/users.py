@@ -116,5 +116,6 @@ async def delete_user(
         )
 
     await db.set_user_to_be_deleted_by_id(user_id)
+    await db.delete_all_sessions_of_user(user_id)
 
     return success(message="User account successfully flagged for termination.")
