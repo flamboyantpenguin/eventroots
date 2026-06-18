@@ -13,24 +13,45 @@ import Logo from "/src/assets/favicon.svg";
 import { useAuth } from "../../hooks/useAuth";
 import { useLoading } from "../../hooks/useLoadingContext";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // 🟢 Destructure your signup methods from your Auth module
   const { signup, failed, login } = useAuth();
   const { startLoading, stopLoading } = useLoading();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const [password, setPassword] = useState("");
 
   const [pfpFile, setPfpFile] = useState(null);
   const [pfpPreview, setPfpPreview] = useState(null);
 
+  useEffect(() => {
+    return () => {
+      if (pfpPreview) {
+        URL.revokeObjectURL(pfpPreview);
+      }
+    };
+  }, [pfpPreview]);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+    const safeSecureTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/svg+xml",
+    ];
+
+    if (!safeSecureTypes.includes(file.type)) {
+      setError("Please upload a valid image file (PNG, JPEG, or WebP).");
+      return;
+    }
     if (file) {
       setPfpFile(file);
       setPfpPreview(URL.createObjectURL(file));
@@ -66,13 +87,13 @@ const Signup = () => {
 
   return (
     <div className={`${styles.loginMain} m3-theme`}>
-      {/* 🔮 Left Column Panel: Shows structural graphics or avatar preview */}
       <div className={styles.loginLeft}>
         {pfpPreview ? (
           <div className={styles.signupPreviewFrame}>
             <img
               src={pfpPreview}
               alt="Profile Preview"
+              crossOrigin="anonymous"
               className={styles.signupAvatarCircle}
             />
           </div>
@@ -86,7 +107,6 @@ const Signup = () => {
         )}
       </div>
 
-      {/* 📋 Right Column Panel: Registration Input fields */}
       <div className={styles.loginRight}>
         <div className={styles.loginRightContainer}>
           <div className={styles.loginLogo}>
@@ -95,11 +115,11 @@ const Signup = () => {
 
           <div className={styles.loginCenter}>
             <h2>Create your account</h2>
-            {!failed && <p>Get started with EventRoots platform</p>}
+            {!failed && <p>Power up your Schedule with EventRoots</p>}
             {failed && <p className={styles.error}>{failed}</p>}
+            {error && <p className={styles.error}>{error}</p>}
 
             <form onSubmit={handleSignupSubmit}>
-              {/* 🟢 Username Field Input Group */}
               <div className={styles.m3InputGroup}>
                 <input
                   type="text"
@@ -112,7 +132,6 @@ const Signup = () => {
                 <label htmlFor="username">Username</label>
               </div>
 
-              {/* Email Field Input Group */}
               <div className={styles.m3InputGroup}>
                 <input
                   type="email"
@@ -125,7 +144,6 @@ const Signup = () => {
                 <label htmlFor="email">Email</label>
               </div>
 
-              {/* Password Field Input Group */}
               <div
                 className={`${styles.m3InputGroup} ${styles.passInputContainer}`}
               >
@@ -147,7 +165,6 @@ const Signup = () => {
                 </div>
               </div>
 
-              {/* 🟢 Clean Custom M3 Multipart File Picker Dropzone */}
               <div className={styles.signupFileWrapper}>
                 <label
                   htmlFor="pfp-upload"
