@@ -2,7 +2,7 @@ import os
 import shutil
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import (
     APIRouter,
@@ -54,13 +54,14 @@ async def get_current_user_claims(
         )
 
     user_id, session_token = token.split(":", 1)
-    session = await db.get_session(user_id, session_token)
+    session = await db.get_session(UUID(user_id), session_token)
     if not session:
         return error(
             status_code=status.HTTP_401_UNAUTHORIZED,
             message="Token has expired or is invalid.",
         )
     return ClaimModel(user_id=session.user_id, is_admin=session.is_admin)
+
 
 async def get_current_admin_claims(
     token: str = Depends(oauth2_scheme_admin),
@@ -72,7 +73,7 @@ async def get_current_admin_claims(
             message="Invalid token format. Expected user_id:token",
         )
     user_id, session_token = token.split(":", 1)
-    session = await db.get_session(user_id, token)
+    session = await db.get_session(UUID(user_id), token)
     if not session:
         return error(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -125,7 +126,12 @@ async def signup(body: PublicSignupRequest = Depends()):
             return error("File size exceeds the maximum limit of 5MB.", status_code=413)
 
         unique_filename = f"{uuid4()}{file_extension}"
-        file_path = os.path.join(UPLOAD_PFP, unique_filename)
+        file_path = os.path.normpath(os.path.join(UPLOAD_PFP, unique_filename))
+        if not file_path.startswith(UPLOAD_PFP):
+            return error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                message="Malicious file path detected.",
+            )
 
         try:
             with open(file_path, "wb") as buffer:
@@ -228,10 +234,18 @@ async def admin_logout(authorization: str | None = Header(None)):
             detail="Authorization header context missing or malformed.",
         )
 
-    token = authorization.split(" ")[1]
+    composite_token = authorization.split(" ")[1]
+
+    if ":" not in composite_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Malformed token format. Expected user_id:token.",
+        )
+
+    user_id, token = composite_token.split(":", 1)
 
     try:
-        await db.delete_session_by_token(token)
+        await db.delete_session(UUID(user_id), token)
     except Exception:
         return error(
             "An unexpected system exception occurred during session revocation.",
@@ -261,7 +275,7 @@ async def logout(authorization: str | None = Header(None)):
     user_id, session_token = composite_token.split(":", 1)
 
     try:
-        await db.delete_session(user_id, session_token)
+        await db.delete_session(UUID(user_id), session_token)
     except Exception:
         return error(
             "An unexpected system exception occurred during session revocation.",
