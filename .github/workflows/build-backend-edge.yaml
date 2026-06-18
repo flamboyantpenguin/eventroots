@@ -11,6 +11,10 @@ name: Build Soul Edge
       - ".github/workflows/build-backend-edge.yaml"
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-docker:
     runs-on: ubuntu-latest

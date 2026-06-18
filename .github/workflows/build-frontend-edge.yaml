@@ -12,6 +12,10 @@ name: Build Persona Edge
       - ".github/workflows/build-frontend-edge.yaml"
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-docker:
     runs-on: ubuntu-latest
