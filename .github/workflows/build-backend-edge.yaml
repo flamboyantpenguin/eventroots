@@ -8,7 +8,7 @@ name: Build Soul Edge
       - "backend/**"
       - "!backend/README.md"
       - "!backend/.gitignore"
-      - ".gitea/workflows/build-backend-edge.yaml"
+      - ".github/workflows/build-backend-edge.yaml"
   workflow_dispatch: {}
 
 jobs:

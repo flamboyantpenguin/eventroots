@@ -9,7 +9,7 @@ name: Build Persona Edge
       - "!frontend/README.md"
       - "!frontend/.gitignore"
       - "!frontend/bun.lock"
-      - ".gitea/workflows/build-frontend-edge.yaml"
+      - ".github/workflows/build-frontend-edge.yaml"
   workflow_dispatch: {}
 
 jobs:
