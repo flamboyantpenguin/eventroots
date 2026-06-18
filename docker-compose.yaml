@@ -1,0 +1,54 @@
+services:
+  bcknd:
+    build: backend
+    networks:
+      - api
+      - internal
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      UPLOAD_FOLDER: /var/uploads
+      DATABASE_URL: postgres://${PG_USER}:${PG_PASS}@db/eventroots
+      REDIS_URL: redis://cache:6379
+      DEBUG_SEED_DATA: true
+    volumes:
+      - .data/uploads:/var/uploads
+    depends_on:
+      db:
+        condition: service_started
+      cache:
+        condition: service_started
+
+  frontend:
+    build: frontend
+    networks:
+      - api
+    ports:
+      - 3000:80
+    depends_on:
+      - bcknd
+
+  db:
+    image: docker.io/postgres:18.4-alpine
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASS}
+      POSTGRES_DB: eventroots
+    networks:
+      - internal
+    volumes:
+      - .data/db:/var/lib/postgresql
+    shm_size: 128mb
+
+  cache:
+    image: docker.io/redis:alpine
+    networks:
+      - internal
+    restart: always
+    volumes:
+      - .data/cache:/data
+
+networks:
+  api:
+    driver: bridge
+  internal:
+    driver: bridge

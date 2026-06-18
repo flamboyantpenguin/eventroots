@@ -1,12 +1,13 @@
+import asyncio
 import os
 import sys
 
-import psycopg
+import asyncpg
 from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_NAME = "erdb0"
+DB_NAME = "eventroots"
 
 DB_URL = os.getenv(
     "DATABASE_URL", f"postgresql://postgres:postgres@localhost:5432/{DB_NAME}"
@@ -353,22 +354,24 @@ WHERE NOT EXISTS (SELECT 1 FROM event_templates WHERE title = 'Competitive Espor
 """
 
 
-def run_migrations():
+async def run_migrations_async():
     print("⚙️🌱🚀")
     try:
-        with psycopg.connect(DB_URL) as conn:
-            with conn.cursor() as cur:
-                print("⚙️🟡")
+        conn = await asyncpg.connect(DB_URL)
+        try:
+            print("⚙️🟡")
+            await conn.execute(MIGRATION_SQL)
+            print("⚙️🟢")
 
-                cur.execute(MIGRATION_SQL)
-                print("⚙️🟢")
+            if SHOULD_SEED:
+                print("🌱🟡")
+                await conn.execute(SEED_SQL)
+                print("🌱🟢")
+            else:
+                print("🌱🔵")
 
-                if SHOULD_SEED:
-                    print("🌱🟡")
-                    cur.execute(SEED_SQL)
-                    print("🌱🟢")
-                else:
-                    print("🌱🔵")
+        finally:
+            await conn.close()
 
     except Exception as e:
         print(
@@ -376,6 +379,10 @@ def run_migrations():
             file=sys.stderr,
         )
         sys.exit(1)
+
+
+def run_migrations():
+    asyncio.run(run_migrations_async())
 
 
 if __name__ == "__main__":

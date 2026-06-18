@@ -6,8 +6,8 @@ import asyncpg
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from redis import asyncio as aioredis
 from google import genai
+from redis import asyncio as aioredis
 
 from app.api import auth, category, events, health, think, users, vendor
 from app.config import settings
@@ -44,7 +44,11 @@ async def lifespan(_: FastAPI):
     print("Preparing Static Dir")
     makedirs(settings.UPLOADS_DIR, exist_ok=True)
     try:
-        copytree("static/uploads/templates", settings.UPLOADS_DIR + "/templates", dirs_exist_ok=True)
+        copytree(
+            "static/uploads/templates",
+            settings.UPLOADS_DIR + "/templates",
+            dirs_exist_ok=True,
+        )
     except Exception as _:
         print(f"Skipped identical files")
     makedirs(settings.UPLOADS_DIR + "/pfp", exist_ok=True)

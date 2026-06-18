@@ -416,19 +416,21 @@ class DatabaseStore:
                 key, payload, int(expires_at.timestamp())
             )
 
-    async def get_session(self, user_id: UUID, session_token: str) -> SessionModel | None:
+    async def get_session(
+        self, user_id: UUID, session_token: str
+    ) -> SessionModel | None:
         """Retrieve an active session footprint, prioritizing fast-pass cache with fallback."""
 
         if redis_client:
             admin_key = f"session:admin:{user_id}:{session_token}"
             user_key = f"session:user:{user_id}:{session_token}"
 
-            admin_data = _execute_read_on_volatile(admin_key)
-            user_data = _execute_read_on_volatile(user_key)
+            admin_data = await self._execute_read_on_volatile(admin_key)
+            user_data = await self._execute_read_on_volatile(user_key)
 
             raw_cached = admin_data or user_data
             if raw_cached:
-                return SessionModel.model_validate_json(raw_cached)
+                return SessionModel.model_validate(raw_cached)
 
         query = """
             SELECT user_id, is_admin, expires_at
@@ -476,8 +478,8 @@ class DatabaseStore:
         """Purge an active session token row completely from all storage tiers upon logout."""
 
         if redis_client:
-            _execute_purge_on_volatile(f"session:user:{user_id}:{token}")
-            _execute_purge_on_volatile(f"session:admin:{user_id}:{token}")
+            await self._execute_purge_on_volatile(f"session:user:{user_id}:{token}")
+            await self._execute_purge_on_volatile(f"session:admin:{user_id}:{token}")
             return
 
         query = "DELETE FROM sessions WHERE user_id = $1;"
@@ -487,8 +489,8 @@ class DatabaseStore:
         """Purge an active session token row completely from all storage tiers upon logout."""
 
         if redis_client:
-            _execute_purge_on_volatile(f"session:user:{user_id}")
-            _execute_purge_on_volatile(f"session:admin:{user_id}")
+            await self._execute_purge_on_volatile(f"session:user:{user_id}")
+            await self._execute_purge_on_volatile(f"session:admin:{user_id}")
             return
 
         query = "DELETE FROM sessions WHERE user_id = $1;"
