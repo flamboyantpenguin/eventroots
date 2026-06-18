@@ -35,7 +35,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: backend
-          file: ./frontend/Containerfile
+          file: ./backend/Containerfile
           push: true
           tags: ghcr.io/flamboyantpenguin/eventroots/soul:edge
           platforms: linux/amd64,linux/arm64
