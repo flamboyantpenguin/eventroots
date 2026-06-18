@@ -8,7 +8,7 @@ name: PR Test Soul
       - "backend/**"
       - "!backend/README.md"
       - "!backend/.gitignore"
-      - ".github/workflows/build-backend-edge.yaml"
+      - ".github/workflows/pr-backend.yaml"
   workflow_dispatch: {}
 
 jobs:

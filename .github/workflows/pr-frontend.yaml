@@ -9,7 +9,7 @@ name: PR Test Persona
       - "!frontend/README.md"
       - "!frontend/.gitignore"
       - "!frontend/bun.lock"
-      - ".github/workflows/build-frontend-edge.yaml"
+      - ".github/workflows/pr-frontend.yaml"
   workflow_dispatch: {}
 
 jobs:
