@@ -125,7 +125,7 @@ async def create_empty_event(
 
     id = await db.create_event(
         title=body.title if body.title is not None else "",
-        banner_url=f"/{UPLOADS_DIR}/templates/default.avif",
+        banner_url=f"/{settings.UPLOADS_DIR}/templates/default.avif",
         user_id=user_id,
         data=dict(),
         flow=dict(),
@@ -215,7 +215,12 @@ async def upload_event_banner(
         )
 
     file_name = f"{event_id}{extension}"
-    file_path = os.path.join(UPLOAD_BANNER, file_name)
+    file_path = os.path.normpath(os.path.join(UPLOAD_BANNER, file_name))
+    if not file_path.startswith(UPLOAD_BANNER):
+        return error(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            message="Malicious file path detected.",
+        )
 
     try:
         with open(file_path, "wb") as buffer:
