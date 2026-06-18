@@ -1,5 +1,14 @@
 # Deploying EventRoots on your Server
 
+## Builds
+
+All deployment binaries or container images are released in two variants.
+
+- release: Releases tagged as `latest` and `v*` are release builds. These are the stable variants of the application
+- edge: Releases tagges as `edge` and `edge-$commit` are edge builds. These are the unstable variants of the application, derived from the master branch. That is, the latest master update build is `edge`.
+
+It is recommended that you use the release variants for production deployments.
+
 ## The Docker way
 
 EventRoots is currently developed as two modules - persona and soul. Persona is the React JavaScript powered frontend and Soul is the Python FastAPI powered backend. Thus, you need to run both of these as seperate containers along with the database and optionally a redis container for hosting EventRoots on your server.
@@ -21,3 +30,5 @@ Copy the files under [quadlets](https://github.com/flamboyantpenguin/eventroots/
 ```bash
 systemctl --user daemon-reload
 ```
+
+TBA...
