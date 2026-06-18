@@ -63,7 +63,7 @@ const Desktop = () => {
             >
               <input
                 type="text"
-                className="m3Input titleInput" // Keep global styles naked if they don't live in Desktop.module.css
+                className="m3Input titleInput"
                 value={transientTitle}
                 onChange={(e) => setTransientTitle(e.target.value)}
                 onBlur={handleSaveTitle}
@@ -131,11 +131,7 @@ const Desktop = () => {
           {/* PANEL 1: Left Menu */}
           {!isFlowCollapsed && (
             <>
-              <Panel
-                defaultSize="33%"
-                className={styles.leftPanel}
-                minSize="10%"
-              >
+              <Panel defaultSize="33%" className={styles.panel} minSize="10%">
                 <Flow onCollapse={() => setIsFlowCollapsed(true)} />
               </Panel>
               <Separator className={styles.resizeHandle} />
@@ -145,7 +141,7 @@ const Desktop = () => {
           {/* PANEL 2: Main Content Area */}
           {!isChatCollapsed && (
             <>
-              <Panel defaultSize="23%" minSize="10%">
+              <Panel defaultSize="23%" minSize="10%" className={styles.panel}>
                 <Chat onCollapse={() => setIsChatCollapsed(true)} />
               </Panel>
               <Separator className={styles.resizeHandle} />
@@ -153,7 +149,7 @@ const Desktop = () => {
           )}
 
           {/* PANEL 3: Right Context Panel */}
-          <Panel defaultSize="43%" minSize="10%" className={styles.rightPanel}>
+          <Panel defaultSize="43%" minSize="10%" className={styles.panel}>
             <Overview />
           </Panel>
         </Group>

@@ -2,8 +2,7 @@
 .chatWrapper {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    width: 100%;
+    flex: 1;
     background-color: var(--md-sys-color-surface);
     overflow: hidden;
     font-family: sans-serif;
@@ -25,6 +24,8 @@
     overflow-y: auto;
     padding: 16px;
     background-color: var(--md-sys-color-surface);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 .composerArea {
