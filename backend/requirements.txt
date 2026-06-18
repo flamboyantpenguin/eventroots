@@ -1,6 +1,7 @@
 fastapi
 uvicorn[standard]
 pydantic[email]
+email-validator
 python-multipart
 httpx
 pytest
@@ -11,4 +12,4 @@ apscheduler
 redis
 asyncpg
 bcrypt
-psycopg[binary]
+pydantic-settings

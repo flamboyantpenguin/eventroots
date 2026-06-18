@@ -1,0 +1,49 @@
+#=========
+# STAGE 1
+#=========
+FROM docker.io/python:3.14-alpine AS builder
+
+# Prevents Python from writing .pyc files to disk
+ENV PYTHONDONTWRITEBYTECODE=1
+# Ensures stdout/stderr logs are sent straight to terminal without buffering
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# (psycopg, bcrypt, uvloop)
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    libffi-dev \
+    build-base
+
+COPY requirements.txt .
+
+RUN pip install --root-user-action ignore --no-cache-dir --upgrade pip && \
+    pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
+
+#=========
+# STAGE 2
+#=========
+FROM docker.io/python:3.14-alpine
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY --from=builder /app/wheels /images/wheels
+RUN pip install --root-user-action ignore --no-cache-dir --upgrade pip && \
+    pip install --root-user-action ignore --no-cache-dir /images/wheels/* && \
+    rm -rf /images/wheels
+
+COPY . .
+
+RUN adduser -D -u 1001 erbck && \
+    chmod +x ./entrypoint.sh && \
+    chown -R erbck:erbck /app
+
+USER erbck
+
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["python", "run.py"]

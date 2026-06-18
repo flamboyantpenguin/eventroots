@@ -1,34 +1,37 @@
-import Admin from "./pages/admin/Admin";
-import Hello from "./pages/hello/Hello";
-import Login from "./pages/login/Login";
-import Editor from "./pages/event/Editor";
-import Signup from "./pages/signup/Signup";
-import Dash from "./pages/dash/Dash";
-import { ProtectedRoute } from "./components/route/ProtectedRoute";
+import { lazy, Suspense } from "react";
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
+import { ProtectedRoute } from "./components/route/ProtectedRoute";
 import { LoadingProvider } from "./context/LoadingProvider";
 import { PanelProvider } from "./context/admin/PanelProvider";
-import { ErrorProvider } from "./context/misc/ErrorProvider";
 import { AuthProvider } from "./context/auth/AuthProvider";
 import { EventProvider } from "./context/event/EventProvider";
+import { ErrorProvider } from "./context/misc/ErrorProvider";
 
-import NotFound from "./pages/misc/Error";
-import SystemError from "./pages/misc/Error";
+import {
+  default as NotFound,
+  default as SystemError,
+} from "./pages/misc/Error";
+
+const Hello = lazy(() => import("./pages/hello/Hello"));
+const Login = lazy(() => import("./pages/login/Login"));
+const Signup = lazy(() => import("./pages/signup/Signup"));
+const Dash = lazy(() => import("./pages/dash/Dash"));
+const Editor = lazy(() => import("./pages/event/Editor"));
+const Admin = lazy(() => import("./pages/admin/Admin"));
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: (
       <AuthProvider>
-        <Outlet />
+        <Suspense>
+          <Outlet />
+        </Suspense>
       </AuthProvider>
     ),
     errorElement: <SystemError />,
     children: [
-      {
-        path: "",
-        element: <Hello />,
-      },
+      { path: "", element: <Hello /> },
       {
         path: "login",
         element: (
@@ -75,10 +78,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      {
-        path: "*",
-        element: <NotFound />,
-      },
+      { path: "*", element: <NotFound /> },
     ],
   },
 ]);

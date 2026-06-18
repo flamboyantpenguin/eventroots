@@ -1,35 +1,16 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState } from "react";
+
 import { useEventContext } from "/src/hooks/event/useEventContext";
 import { useError } from "/src/hooks/misc/useErrorContext";
 import { useLoading } from "/src/hooks/useLoadingContext";
+import { useDebounce } from "../../hooks/useDebounce";
 
 import {
   DeleteForeverOutlined,
   AccountBalanceWalletOutlined,
-  CameraAltOutlined, // Added for elegant asset picker action
+  CameraAltOutlined,
 } from "@mui/icons-material";
 import "./Overview.css";
-
-export const useDebounce = (callback, delay) => {
-  const timeoutRef = useRef(null);
-
-  const debouncedCallback = useCallback(
-    (...args) => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => callback(...args), delay);
-    },
-    [callback, delay],
-  );
-
-  const cancel = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-  }, []);
-
-  return [debouncedCallback, cancel];
-};
 
 export function Overview() {
   const { formData, updateFormData, saveEvent, uploadAndSetBanner } =

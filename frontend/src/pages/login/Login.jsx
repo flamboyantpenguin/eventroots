@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+
 import { Face2Rounded, Visibility, VisibilityOff } from "@mui/icons-material";
 
-import "./Login.css";
+import styles from "./Login.module.css";
 
 import Logo from "/src/assets/favicon.svg";
 import { useAuth } from "../../hooks/useAuth";
@@ -36,29 +38,29 @@ const Login = () => {
   };
 
   return (
-    <div className="login-main m3-theme">
-      <div className="login-left">
+    <div className={`${styles.loginMain} m3-theme`}>
+      <div className={styles.loginLeft}>
         <Face2Rounded
           style={{
             fontSize: "20rem",
             color: "var(--md-sys-color-on-tertiary)",
           }}
-        ></Face2Rounded>
+        />
       </div>
 
-      <div className="login-right">
-        <div className="login-right-container">
-          <div className="login-logo">
+      <div className={styles.loginRight}>
+        <div className={styles.loginRightContainer}>
+          <div className={styles.loginLogo}>
             <img src={Logo} alt="Logo" />
           </div>
 
-          <div className="login-center">
+          <div className={styles.loginCenter}>
             <h2>Welcome back!</h2>
             {!failed && <p>Login to continue</p>}
-            {failed && <p className="error">{failed}</p>}
+            {failed && <p className={styles.error}>{failed}</p>}
 
             <form onSubmit={(e) => e.preventDefault()}>
-              <div className="m3-input-group">
+              <div className={styles.m3InputGroup}>
                 <input
                   type="email"
                   placeholder=" "
@@ -70,7 +72,9 @@ const Login = () => {
                 <label htmlFor="email">Email</label>
               </div>
 
-              <div className="m3-input-group pass-input-div">
+              <div
+                className={`${styles.m3InputGroup} ${styles.passInputContainer}`}
+              >
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder=" "
@@ -81,30 +85,30 @@ const Login = () => {
                 <label htmlFor="password">Password</label>
 
                 <div
-                  className="m3-icon-button"
+                  className={styles.m3IconButton}
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <VisibilityOff /> : <Visibility />}
                 </div>
               </div>
 
-              <div className="login-center-options">
-                <div className="remember-div">
-                  <label className="m3-checkbox-container">
+              <div className={styles.loginCenterOptions}>
+                <div className={styles.rememberDiv}>
+                  <label className={styles.m3CheckboxContainer}>
                     <input type="checkbox" id="remember-checkbox" />
-                    <span className="m3-checkbox-mark"></span>
+                    <span className={styles.m3CheckboxMark}></span>
                     Remember for 30 days
                   </label>
                 </div>
-                <a href="#" className="forgot-pass-link">
+                <Link to="/forgot-password" id={styles.forgotPassLink}>
                   Forgot password?
-                </a>
+                </Link>
               </div>
 
-              <div className="login-center-buttons">
+              <div className={styles.loginCenterButtons}>
                 <button
                   type="submit"
-                  className="m3-btn m3-btn-filled"
+                  className={`${styles.m3Btn} ${styles.m3BtnFilled}`}
                   onClick={handleLoginSubmit}
                 >
                   Log In
@@ -113,8 +117,8 @@ const Login = () => {
             </form>
           </div>
 
-          <p className="login-bottom-p">
-            Don't have an account? <a href="/signup">Sign Up</a>
+          <p className={styles.loginBottomP}>
+            Don't have an account? <Link to="/signup">Sign Up</Link>
           </p>
         </div>
       </div>

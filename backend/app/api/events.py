@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, UploadFile, status
 
 from app.api.auth import get_current_user_claims
-from app.config import Settings
+from app.config import settings
 from app.schemas.auth_schema import ClaimModel
 from app.schemas.event_schema import (
     EventCreateEmpty,
@@ -18,7 +18,7 @@ from app.schemas.event_schema import (
 from app.store.db import db
 from app.utils.response import error, success
 
-UPLOAD_BANNER = Settings.UPLOAD_BANNER
+UPLOAD_BANNER = settings.UPLOADS_DIR + "/banners"
 
 
 async def _verify_perms(user_id: UUID | None, event_id: UUID):
@@ -125,7 +125,7 @@ async def create_empty_event(
 
     id = await db.create_event(
         title=body.title if body.title is not None else "",
-        banner_url="/static/uploads/templates/default.avif",
+        banner_url=f"/{UPLOADS_DIR}/templates/default.avif",
         user_id=user_id,
         data=dict(),
         flow=dict(),

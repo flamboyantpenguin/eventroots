@@ -1,78 +1,87 @@
-.login-main {
+.loginMain {
     display: flex;
     background-color: var(--md-sys-color-surface);
+    min-height: 100vh;
+    width: 100%;
 }
 
-.login-left {
-    flex-grow: 1;
+.loginLeft {
+    flex: 1;
     height: 100vh;
-    background-color: var(--md-sys-color-surface-variant);
+    background-color: var(--md-sys-color-tertiary);
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.login-left img {
+@media (max-width: 768px) {
+    .loginLeft {
+        display: none;
+    }
+}
+
+.loginLeft img {
     width: 400px;
     border-radius: var(--md-shape-corner-extra-large);
 }
 
-.login-right {
+.loginRight {
     height: 100vh;
-    flex-grow: 1;
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.login-right-container {
-    height: 100%;
-    width: 80%;
-    max-width: 440px;
+.loginRightContainer {
+    height: auto;
+    width: 85%;
+    max-width: 400px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-.login-logo {
+.loginLogo {
     align-self: center;
     margin-bottom: 24px;
 }
 
-.login-logo img {
+.loginLogo img {
     width: 64px;
 }
 
-.login-center h2 {
+.loginCenter h2 {
     font-size: 3.2rem;
     font-weight: 700;
     color: var(--md-sys-color-on-surface);
     margin-bottom: 8px;
+    letter-spacing: -0.5px;
 }
 
-.login-center p {
+.loginCenter p {
     font-weight: 400;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     color: var(--md-sys-color-on-surface-variant);
     margin-bottom: 32px;
 }
 
-.login-center p.error {
-    font-weight: 400;
-    font-size: 1.2rem;
+.loginCenter p.error {
+    font-weight: 500;
+    font-size: 1.4rem;
     color: var(--md-sys-color-error);
     margin-bottom: 32px;
 }
 
 /* --- Material 3 Dynamic Floating Label Inputs --- */
-.m3-input-group {
+.m3InputGroup {
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     width: 100%;
 }
 
-.m3-input-group input {
+.m3InputGroup input {
     width: 100%;
     padding: 16px;
     font-size: 1.6rem;
@@ -84,9 +93,10 @@
     transition:
         border-color 0.2s,
         box-shadow 0.2s;
+    box-sizing: border-box;
 }
 
-.m3-input-group label {
+.m3InputGroup label {
     position: absolute;
     left: 16px;
     top: 50%;
@@ -96,32 +106,36 @@
     color: var(--md-sys-color-on-surface-variant);
     font-size: 1.6rem;
     pointer-events: none;
-    transition: 0.2s ease all;
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1) all;
 }
 
-/* Float logic animation using pseudo selectors */
-.m3-input-group input:focus ~ label,
-.m3-input-group input:not(:placeholder-shown) ~ label {
+/* Float logic animation using pseudo selectors inside the CSS module hash engine */
+.m3InputGroup input:focus ~ label,
+.m3InputGroup input:not(:placeholder-shown) ~ label {
     top: 0px;
     font-size: 1.2rem;
     color: var(--md-sys-color-primary);
     font-weight: 500;
 }
 
-.m3-input-group input:focus {
+.m3InputGroup input:focus {
     border: 2px solid var(--md-sys-color-primary);
-    padding: 15px; /* Adjusting for border width mutation */
 }
 
-/* Icon Position Adjustments */
-.pass-input-div {
-    display: flex;
-    align-items: center;
+/* Password Input Context Grouping isolation */
+.passInputContainer {
+    position: relative;
 }
 
-.m3-icon-button {
+.passInputContainer input {
+    padding-right: 52px;
+}
+
+.m3IconButton {
     position: absolute;
-    right: 12px;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
     cursor: pointer;
     color: var(--md-sys-color-on-surface-variant);
     display: flex;
@@ -133,82 +147,26 @@
     transition: background-color 0.2s;
 }
 
-.m3-icon-button:hover {
-    background-color: var(--md-sys-color-tertiary);
-    color: var(--md-sys-color-on-tertiary);
-}
-
-/* --- Options & Checkboxes --- */
-.login-center-options {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 8px;
-    margin-bottom: 32px;
-}
-
-.m3-checkbox-container {
-    display: flex;
-    align-items: center;
-    position: relative;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--md-sys-color-on-surface-variant);
-    user-select: none;
-}
-
-.m3-checkbox-container input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-}
-
-.m3-checkbox-mark {
-    height: 18px;
-    width: 18px;
-    border: 2px solid var(--md-sys-color-outline);
-    border-radius: 4px;
-    margin-right: 10px;
-    display: inline-block;
-    transition:
-        background-color 0.15s,
-        border-color 0.15s;
-}
-
-.m3-checkbox-container input:checked ~ .m3-checkbox-mark {
-    background-color: var(--md-sys-color-primary);
-    border-color: var(--md-sys-color-primary);
-}
-
-.forgot-pass-link {
-    text-decoration: none;
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--md-sys-color-primary);
-}
-
-.forgot-pass-link:hover {
-    text-decoration: underline;
+.m3IconButton:hover {
+    background-color: var(
+        --md-sys-color-surface-container-high,
+        rgba(0, 0, 0, 0.06)
+    );
 }
 
 /* --- Material 3 High-Rounded Buttons --- */
-.login-center-buttons {
+.loginCenterButtons {
     display: flex;
     flex-direction: column;
 }
 
-.m3-btn {
+.m3Btn {
     font-family: inherit;
     font-size: 1.6rem;
     font-weight: 600;
     padding: 14px 24px;
     border: none;
-    border-radius: var(
-        --md-shape-corner-full
-    ); /* Complete M3 stadium pill shape */
+    border-radius: var(--md-shape-corner-full);
     cursor: pointer;
     transition:
         background-color 0.2s,
@@ -216,89 +174,93 @@
         box-shadow 0.2s;
 }
 
-.m3-btn-filled {
+.m3BtnFilled {
     background-color: var(--md-sys-color-primary);
     color: var(--md-sys-color-on-primary);
 }
 
-.m3-btn-filled:hover {
-    background-color: var(--md-sys-color-tertiary);
-    color: var(--md-sys-color-on-tertiary);
+.m3BtnFilled:hover {
+    background-image: linear-gradient(
+        rgba(255, 255, 255, 0.08),
+        rgba(255, 255, 255, 0.08)
+    );
+    box-shadow: var(--md-elevation-shadow-1);
 }
 
-.m3-btn-filled:active {
+.m3BtnFilled:active {
     transform: scale(0.98);
 }
 
-.login-bottom-p {
+.loginBottomP {
     text-align: center;
     font-size: 1.4rem;
     color: var(--md-sys-color-on-surface-variant);
     margin-top: 32px;
 }
 
-.login-bottom-p a {
+.loginBottomP a {
     text-decoration: none;
     font-weight: 600;
     color: var(--md-sys-color-primary);
 }
 
-.login-bottom-p a:hover {
+.loginBottomP a:hover {
     text-decoration: underline;
 }
 
-/* Custom Additions for the Signup Multi-Part Form Elements */
-
-.signup-file-wrapper {
+/* --- Custom File Picker Dropzone --- */
+.signupFileWrapper {
     margin-top: 1.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     width: 100%;
 }
 
-.m3-file-label {
+.m3FileLabel {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     padding: 1rem 1.25rem;
-    border: 2px dashed var(--md-sys-color-outline, #79747e);
-    border-radius: 12px;
+    border: 2px dashed var(--md-sys-color-outline);
+    border-radius: var(--md-shape-corner-medium);
     cursor: pointer;
     background-color: transparent;
     transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
     color: var(--md-sys-color-on-surface-variant);
+    font-size: 1.4rem;
     font-weight: 500;
+    box-sizing: border-box;
 }
 
-.m3-file-label:hover {
+.m3FileLabel:hover {
     background-color: rgba(var(--md-sys-color-primary-rgb, 103, 80, 164), 0.08);
-    border-color: var(--md-sys-color-primary, #6750a4);
+    border-color: var(--md-sys-color-primary);
 }
 
-.m3-file-label.uploaded {
-    border: 2px solid var(--md-sys-color-primary, #6750a4);
+.m3FileLabel.uploaded {
+    border: 2px solid var(--md-sys-color-primary);
     background-color: rgba(var(--md-sys-color-primary-rgb, 103, 80, 164), 0.04);
 }
 
-.m3-file-icon {
+.m3FileIcon {
     color: var(--md-sys-color-outline);
 }
 
-.m3-file-icon.success {
-    color: #388e3c; /* Standard crisp M3 safe success color */
+.m3FileIcon.success {
+    color: #388e3c;
 }
 
-/* Rounded Profile Frame container inside left layout wrapper */
-.signup-preview-frame {
+/* --- Profile Avatar Preview Frame --- */
+.signupPreviewFrame {
     width: 22rem;
     height: 22rem;
     border-radius: 50%;
     overflow: hidden;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-    border: 6px solid var(--md-sys-color-surface-variant, #e7e0ec);
+    border: 6px solid var(--md-sys-color-surface-variant);
     animation: scaleInPfp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.signup-avatar-circle {
+.signupAvatarCircle {
     width: 100%;
     height: 100%;
     object-fit: cover;
