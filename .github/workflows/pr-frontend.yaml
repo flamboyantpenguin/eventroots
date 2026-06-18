@@ -36,7 +36,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
 
       - name: Upload Image Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: persona-pr-image
           path: /tmp/persona-pr-image.tar
