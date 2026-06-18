@@ -1,0 +1,45 @@
+---
+name: PR Test Soul
+"on":
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "backend/**"
+      - "!backend/README.md"
+      - "!backend/.gitignore"
+      - ".github/workflows/pr-backend.yaml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: backend
+          file: ./backend/Containerfile
+          push: false
+          tags: ghcr.io/flamboyantpenguin/eventroots/soul:pr-${{ github.event.number }}
+          outputs: type=oci,dest=/tmp/soul-pr-image.tar
+          platforms: linux/amd64,linux/arm64
+
+      - name: Upload Image Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: soul-pr-image
+          path: /tmp/soul-pr-image.tar
+          retention-days: 4
