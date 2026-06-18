@@ -1,5 +1,7 @@
 # EventRoots
 
+<img width="1663" height="1001" alt="image" src="https://github.com/user-attachments/assets/13152a15-4c76-4dbc-a176-531679fae1f0" />
+
 Say hello to EventRoots, an all in one aggregrator platform for event management. EventRoots is an aggregrator platform that provides assistance to users and vendors alike for event management of any scale - small memorial events to global concerts.
 
 EventRoots is a dichotomic platform - dashboard for vendors to manage quotes and schedules - dashboard for users to manage events and quotes from vendors. The application is an AI driven app, meant to assist the user in all possible ways throughout the workflow.
@@ -31,3 +33,5 @@ Last Updated: 19 Jun 2026
 
 EventRoots
 ```
+
+<img width="64" height="64" alt="favicon" src="https://github.com/user-attachments/assets/c7f332e8-9ce3-4c41-9dea-45e48e8e6200" />
