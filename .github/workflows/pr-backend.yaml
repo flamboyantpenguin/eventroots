@@ -28,6 +28,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: backend
+          file: ./frontend/Containerfile
           push: false
           tags: ghcr.io/flamboyantpenguin/eventroots/soul:pr-${{ github.event.number }}
           outputs: type=oci,dest=/tmp/soul-pr-image.tar
