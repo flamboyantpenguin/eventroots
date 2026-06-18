@@ -1,16 +1,9 @@
 ---
-name: Build Persona Edge
+name: Build Soul Release
 "on":
   push:
-    branches:
-      - master
-    paths:
-      - "frontend/**"
-      - "!frontend/README.md"
-      - "!frontend/.gitignore"
-      - "!frontend/bun.lock"
-      - ".github/workflows/build-frontend-edge.yaml"
-  workflow_dispatch: {}
+    tags:
+      - "v*"
 
 jobs:
   build-docker:
@@ -35,8 +28,10 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
-          context: frontend
-          file: ./frontend/Containerfile
+          context: backend
+          file: ./backend/Containerfile
           push: true
-          tags: ghcr.io/flamboyantpenguin/eventroots/persona:edge
+          tags: |
+            ghcr.io/flamboyantpenguin/eventroots/soul:latest
+            ghcr.io/flamboyantpenguin/eventroots/soul:${{ github.ref }}
           platforms: linux/amd64,linux/arm64

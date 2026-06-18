@@ -1,7 +1,7 @@
 ---
-name: Build Soul Edge
+name: PR Test Soul
 "on":
-  push:
+  pull_request:
     branches:
       - master
     paths:
@@ -24,18 +24,19 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Login to registry
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ vars.maintainer }}
-          password: ${{ secrets.TOKEN }}
-
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
           context: backend
           file: ./backend/Containerfile
-          push: true
-          tags: ghcr.io/flamboyantpenguin/eventroots/soul:edge
+          push: false
+          tags: ghcr.io/flamboyantpenguin/eventroots/soul:pr-${{ github.event.number }}
+          outputs: type=oci,dest=/tmp/soul-pr-image.tar
           platforms: linux/amd64,linux/arm64
+
+      - name: Upload Image Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: soul-pr-image
+          path: /tmp/soul-pr-image.tar
+          retention-days: 4
