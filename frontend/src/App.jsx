@@ -1,14 +1,16 @@
 import { lazy, Suspense } from "react";
-import { ProtectedRoute } from "./components/route/ProtectedRoute";
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
+import { ProtectedRoute } from "./components/route/ProtectedRoute";
 import { LoadingProvider } from "./context/LoadingProvider";
 import { PanelProvider } from "./context/admin/PanelProvider";
-import { ErrorProvider } from "./context/misc/ErrorProvider";
 import { AuthProvider } from "./context/auth/AuthProvider";
 import { EventProvider } from "./context/event/EventProvider";
+import { ErrorProvider } from "./context/misc/ErrorProvider";
 
-import NotFound from "./pages/misc/Error";
-import SystemError from "./pages/misc/Error";
+import {
+  default as NotFound,
+  default as SystemError,
+} from "./pages/misc/Error";
 
 const Hello = lazy(() => import("./pages/hello/Hello"));
 const Login = lazy(() => import("./pages/login/Login"));
