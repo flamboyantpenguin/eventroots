@@ -7,7 +7,7 @@ from app.utils.response import success
 router = APIRouter(prefix="/categories", tags=["categories"])
 
 
-@router.get("/")
+@router.get("")
 async def get_categories(
     _=Depends(get_current_user_claims),
 ):

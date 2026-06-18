@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "EventRoots"
     PROJECT_VERSION: str = "0.0.1"
     PROJECT_DESC: str = "Backend for EventRoots"
-    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1"
+    CORS_ORIGINS_STR: str = "http://localhost,http://[::1]"
     API_PREFIX: str = "/api"
     DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/eventroots"
     REDIS_URL: str | None = None
@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     PFP_MAX_SIZE: int = 20 * 1024 * 1024
     SESSION_TOKEN_EXPIRY_HOURS: int = 1
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    @property
+    def CORS_ORIGINS(self) -> list[str]:
+        return [origin.strip() for origin in self.CORS_ORIGINS_STR.split(",")]
 
 
 @lru_cache
