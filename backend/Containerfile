@@ -10,12 +10,13 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# (psycopg, bcrypt, uvloop)
-RUN apk add --no-cache \
-    gcc \
-    musl-dev \
-    libffi-dev \
-    build-base
+# No longer required 👇
+# (uvloop)
+#RUN apk add --no-cache \
+#    gcc \
+#    musl-dev \
+#    build-base
+# No longer required 👆
 
 COPY requirements.txt .
 

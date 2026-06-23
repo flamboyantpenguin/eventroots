@@ -1,5 +1,6 @@
 fastapi
-uvicorn[standard]
+argon2-cffi
+uvicorn
 pydantic[email]
 email-validator
 python-multipart
@@ -11,5 +12,4 @@ dotenv
 apscheduler
 redis
 asyncpg
-bcrypt
 pydantic-settings

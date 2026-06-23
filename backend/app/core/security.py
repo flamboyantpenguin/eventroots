@@ -1,15 +1,20 @@
-import secrets
+from secrets import token_urlsafe
 
-import bcrypt
+from argon2 import hash_password as hash
+from argon2 import verify_password as verify
 
 
 def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    return hash(password.encode("utf-8")).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+    try:
+        verify(hashed.encode("utf-8"), plain.encode("utf-8"))
+    except Exception as _:
+        return False
+    return True
 
 
 def create_access_token() -> str:
-    return secrets.token_urlsafe(32)
+    return token_urlsafe(32)
